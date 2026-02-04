@@ -69,6 +69,8 @@ Please consider starring or contributing to this project.
 
 Please refer to the [wiki page](https://github.com/MarkEdit-app/MarkEdit/wiki/Manual) for details.
 
+Additionally, check out [MarkEdit-skill](https://github.com/MarkEdit-app/MarkEdit-skill) if you're interested in managing MarkEdit with an AI agent.
+
 ## Development
 
 Please refer to the [wiki page](https://github.com/MarkEdit-app/MarkEdit/wiki/Development) for details.
