@@ -99,14 +99,6 @@ extension AppTheme: CaseIterable, Hashable {
     [
       GitHubLight, GitHubDark,
       XcodeLight, XcodeDark,
-      Dracula,
-      Cobalt,
-      WinterIsComingLight, WinterIsComingDark,
-      MinimalLight, MinimalDark,
-      SynthWave84,
-      NightOwl,
-      RosePineDawn, RosePine,
-      SolarizedLight, SolarizedDark,
     ]
   }
 
@@ -150,150 +142,12 @@ extension AppTheme: CaseIterable, Hashable {
     )
   }
 
-  static var Dracula: Self {
-    Self(
-      isDark: true,
-      editorTheme: "dracula",
-      windowBackground: NSColor(hexCode: 0x282a36),
-      colorPattern: ["#282a36", "#f8f8f2", "#bd93f9", "#ff79c6", "#f1fa8c", "#6272a4"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var Cobalt: Self {
-    Self(
-      isDark: true,
-      editorTheme: "cobalt",
-      windowBackground: NSColor(hexCode: 0x193549),
-      colorPattern: ["#193549", "#e1efff", "#ffc600", "#ff9d00", "#a5ff90", "#0088ff"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var WinterIsComingLight: Self {
-    Self(
-      isDark: false,
-      editorTheme: "winter-is-coming-light",
-      windowBackground: NSColor(hexCode: 0xffffff),
-      colorPattern: ["#ffffff", "#3e3e3e", "#034c7c", "#0991b6", "#a44185", "#357b42"],
-      prefersTintedColors: false
-    )
-  }
-
-  static var WinterIsComingDark: Self {
-    Self(
-      isDark: true,
-      editorTheme: "winter-is-coming-dark",
-      windowBackground: NSColor(hexCode: 0x282822),
-      colorPattern: ["#282822", "#ffffff", "#5abeb0", "#00bff9", "#bcf0c0", "#999999"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var MinimalLight: Self {
-    Self(
-      isDark: false,
-      editorTheme: "minimal-light",
-      windowBackground: NSColor(hexCode: 0xffffff),
-      colorPattern: ["#ffffff", "#3a3a3c", "#000000", "#3a3a3c", "#000000", "#8e8e93"],
-      prefersTintedColors: false
-    )
-  }
-
-  static var MinimalDark: Self {
-    Self(
-      isDark: true,
-      editorTheme: "minimal-dark",
-      windowBackground: NSColor(hexCode: 0x1e1e1e),
-      colorPattern: ["#1e1e1e", "#d1d1d6", "#ffffff", "#d1d1d6", "#ffffff", "#8e8e93"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var SynthWave84: Self {
-    Self(
-      isDark: true,
-      editorTheme: "synthwave84",
-      windowBackground: NSColor(hexCode: 0x262335),
-      colorPattern: ["#262335", "#f0eff1", "#f92aad", "#f4eee4", "#ff8b39", "#848bbd"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var NightOwl: Self {
-    Self(
-      isDark: true,
-      editorTheme: "night-owl",
-      windowBackground: NSColor(hexCode: 0x011627),
-      colorPattern: ["#011627", "#d6deeb", "#82b1ff", "#c792ea", "#ecc48d", "#637777"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var RosePineDawn: Self {
-    Self(
-      isDark: false,
-      editorTheme: "rose-pine-dawn",
-      windowBackground: NSColor(hexCode: 0xfaf4ed),
-      colorPattern: ["#faf4ed", "#575279", "#56949f", "#286983", "#ea9d34", "#9893a5"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var RosePine: Self {
-    Self(
-      isDark: true,
-      editorTheme: "rose-pine",
-      windowBackground: NSColor(hexCode: 0x191724),
-      colorPattern: ["#191724", "#e0def4", "#9ccfd8", "#31748f", "#f6c177", "#6e6a86"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var SolarizedLight: Self {
-    Self(
-      isDark: false,
-      editorTheme: "solarized-light",
-      windowBackground: NSColor(hexCode: 0xfdf6e3),
-      colorPattern: ["#fdf6e3", "#586e75", "#268bd2", "#859900", "#2aa198", "#93a1a1"],
-      prefersTintedColors: true
-    )
-  }
-
-  static var SolarizedDark: Self {
-    Self(
-      isDark: true,
-      editorTheme: "solarized-dark",
-      windowBackground: NSColor(hexCode: 0x002b36),
-      colorPattern: ["#002b36", "#93a1a1", "#268bd2", "#859900", "#2aa198", "#657b83"],
-      prefersTintedColors: true
-    )
-  }
-
   var displayName: String {
     switch self {
     case Self.GitHubLight, Self.GitHubDark:
       return "GitHub"
     case Self.XcodeLight, Self.XcodeDark:
       return "Xcode"
-    case Self.Dracula:
-      return "Dracula"
-    case Self.Cobalt:
-      return "Cobalt"
-    case Self.WinterIsComingLight, Self.WinterIsComingDark:
-      return "Winter is Coming"
-    case Self.MinimalLight, Self.MinimalDark:
-      return "Minimal"
-    case Self.SynthWave84:
-      return "SynthWave '84"
-    case Self.NightOwl:
-      return "Night Owl"
-    case Self.RosePineDawn:
-      return "Rosé Pine Dawn"
-    case Self.RosePine:
-      return "Rosé Pine"
-    case Self.SolarizedLight, Self.SolarizedDark:
-      return "Solarized"
     default:
       fatalError("Invalid theme was found")
     }
