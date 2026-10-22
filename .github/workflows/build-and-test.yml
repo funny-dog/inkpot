@@ -1,0 +1,60 @@
+name: Kernmark build and test
+
+on:
+  push:
+    branches: ['main']
+  pull_request:
+    branches: ['main']
+    types: [synchronize, opened, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  kernmark:
+    runs-on: xcode-27
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22.x'
+
+      - name: Build and test CoreEditor
+        working-directory: CoreEditor
+        run: |
+          node .yarn/releases/yarn-4.18.0.cjs install --immutable
+          node .yarn/releases/yarn-4.18.0.cjs build
+          node .yarn/releases/yarn-4.18.0.cjs test --runInBand
+
+      # 固定上游已有版本与校验和，仅解压 macOS 工具，不挂入应用构建。
+      - name: Install SwiftLint 0.65.1
+        run: |
+          curl --fail --location --retry 3 https://github.com/realm/SwiftLint/releases/download/0.65.1/SwiftLintBinary.artifactbundle.zip --output "$RUNNER_TEMP/swiftlint.zip"
+          printf '%s  %s\n' c3a1d77647ca18c1b7e9be7dbc6cd4490d26422f28814b76370244ff61970869 "$RUNNER_TEMP/swiftlint.zip" | shasum -a 256 --check
+          unzip -q "$RUNNER_TEMP/swiftlint.zip" 'SwiftLintBinary.artifactbundle/macos/*' -d "$RUNNER_TEMP/swiftlint"
+
+      - name: Lint Swift
+        run: '"$RUNNER_TEMP/swiftlint/SwiftLintBinary.artifactbundle/macos/swiftlint" lint --strict --config .swiftlint.yml'
+
+      - name: Build Kernmark
+        run: |
+          xcodebuild build -project MarkEdit.xcodeproj -scheme MarkEditMac -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Test Swift packages
+        run: |
+          for scheme in MarkEditCoreTests MarkEditKitTests ModulesTests; do
+            xcodebuild test -project MarkEdit.xcodeproj -scheme "$scheme" -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          done
+
+      - name: Test Kernmark application
+        run: |
+          xcodebuild test -project MarkEdit.xcodeproj -scheme MarkEditMac -only-testing:MarkEditMacTests -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO

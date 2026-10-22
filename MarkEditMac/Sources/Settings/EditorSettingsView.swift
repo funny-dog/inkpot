@@ -230,5 +230,4 @@ private extension EditorSettingsView {
       .tag(theme.editorTheme)
     }
   }
-
 }

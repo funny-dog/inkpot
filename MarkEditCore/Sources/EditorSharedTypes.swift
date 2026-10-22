@@ -109,3 +109,29 @@ public struct SelectionRange: Codable, Sendable {
     try container.encode(head, forKey: "head")
   }
 }
+
+public struct TextTokenizeAnchor: Codable, Sendable {
+  public var text: String
+  public var pos: Int
+  public var offset: Int
+
+  public init(text: String, pos: Int, offset: Int) {
+    self.text = text
+    self.pos = pos
+    self.offset = offset
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: BridgeFieldKey.self)
+    text = try container.value("text")
+    pos = try container.value("pos")
+    offset = try container.value("offset")
+  }
+
+  public func encode(to encoder: any Encoder) throws {
+    var container = encoder.container(keyedBy: BridgeFieldKey.self)
+    try container.encode(text, forKey: "text")
+    try container.encode(pos, forKey: "pos")
+    try container.encode(offset, forKey: "offset")
+  }
+}

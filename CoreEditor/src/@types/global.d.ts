@@ -2,6 +2,7 @@ import { Config, Dynamics } from '../config';
 import { WebModule } from '../bridge/webModule';
 import { NativeModuleCore } from '../bridge/native/core';
 import { NativeModuleCompletion } from '../bridge/native/completion';
+import { NativeModuleTokenizer } from '../bridge/native/tokenizer';
 import { NativeModuleAPI } from '../bridge/native/api';
 import { NativeModuleFoundationModels } from '../bridge/native/foundationModels';
 import { NativeModuleTranslation } from '../bridge/native/translation';
@@ -43,6 +44,7 @@ declare global {
     nativeModules: {
       core: NativeModuleCore;
       completion: NativeModuleCompletion;
+      tokenizer: NativeModuleTokenizer;
       api: NativeModuleAPI;
       foundationModels: NativeModuleFoundationModels;
       translation: NativeModuleTranslation;
