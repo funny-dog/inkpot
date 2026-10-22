@@ -130,3 +130,22 @@ final class NativeBridgeCompletion: NativeBridge {
     return .success(nil)
   }
 }
+
+public struct TextTokenizeAnchor: Decodable, Sendable {
+  public var text: String
+  public var pos: Int
+  public var offset: Int
+
+  public init(text: String, pos: Int, offset: Int) {
+    self.text = text
+    self.pos = pos
+    self.offset = offset
+  }
+
+  public init(from decoder: any Decoder) throws {
+    let container = try decoder.container(keyedBy: BridgeFieldKey.self)
+    text = try container.value("text")
+    pos = try container.value("pos")
+    offset = try container.value("offset")
+  }
+}

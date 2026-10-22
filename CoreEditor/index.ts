@@ -18,7 +18,6 @@ import { pseudoDocument } from './test/utils/mock';
 import { createNativeModule } from './src/bridge/nativeModule';
 import { NativeModuleCore } from './src/bridge/native/core';
 import { NativeModuleCompletion } from './src/bridge/native/completion';
-import { NativeModuleTokenizer } from './src/bridge/native/tokenizer';
 import { NativeModuleAPI } from './src/bridge/native/api';
 import { NativeModuleFoundationModels } from './src/bridge/native/foundationModels';
 import { NativeModuleTranslation } from './src/bridge/native/translation';
@@ -68,7 +67,6 @@ const config = import.meta.env.PROD ? window.config : {
 window.nativeModules = {
   core: createNativeModule<NativeModuleCore>('core'),
   completion: createNativeModule<NativeModuleCompletion>('completion'),
-  tokenizer: createNativeModule<NativeModuleTokenizer>('tokenizer'),
   api: createNativeModule<NativeModuleAPI>('api'),
   foundationModels: createNativeModule<NativeModuleFoundationModels>('foundationModels'),
   translation: createNativeModule<NativeModuleTranslation>('translation'),

@@ -132,7 +132,6 @@ final class EditorViewController: NSViewController {
     let modules = NativeModules(modules: [
       EditorModuleCore(delegate: self),
       EditorModuleCompletion(delegate: self),
-      EditorModuleTokenizer(),
       EditorModuleAPI(delegate: self),
       EditorModuleFoundationModels(delegate: self),
       EditorModuleTranslation(),
