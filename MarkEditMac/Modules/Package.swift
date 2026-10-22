@@ -26,20 +26,12 @@ let package = Package(
       targets: ["AppKitExtensions"]
     ),
     .library(
-      name: "DiffKit",
-      targets: ["DiffKit"]
-    ),
-    .library(
       name: "ExtensionCore",
       targets: ["ExtensionCore"]
     ),
     .library(
       name: "FileDrop",
       targets: ["FileDrop"]
-    ),
-    .library(
-      name: "FileVersion",
-      targets: ["FileVersion"]
     ),
     .library(
       name: "FontPicker",
@@ -86,13 +78,6 @@ let package = Package(
       path: "Sources/AppKitExtensions"
     ),
     .target(
-      name: "DiffKit",
-      path: "Sources/DiffKit",
-      resources: [
-        .process("Resources"),
-      ]
-    ),
-    .target(
       name: "ExtensionCore",
       dependencies: ["AppKitExtensions", "MarkEditCore", "MarkEditKit"],
       path: "Sources/ExtensionCore"
@@ -101,11 +86,6 @@ let package = Package(
       name: "FileDrop",
       dependencies: ["AppKitExtensions", "MarkEditKit", "TextBundle"],
       path: "Sources/FileDrop"
-    ),
-    .target(
-      name: "FileVersion",
-      dependencies: ["SharedUI", "MarkEditKit", "DiffKit"],
-      path: "Sources/FileVersion"
     ),
     .target(
       name: "FontPicker",

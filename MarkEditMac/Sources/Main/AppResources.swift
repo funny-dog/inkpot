@@ -227,12 +227,6 @@ enum Localized {
   }
 
   enum FileVersion {
-    static let revertTitle = String(localized: "Revert to This Version", comment: "Title for button to select a file version")
-    static let modeTitles = [
-      String(localized: "Diff Lines", comment: "Diff by lines"),
-      String(localized: "Diff Words", comment: "Diff by words"),
-      String(localized: "Diff Chars", comment: "Diff by characters"),
-    ]
     static let noVersionsTitle = String(localized: "No versions match the specified condition.", comment: "Alert title for no versions found")
     static let foundVersionsFormat = String(localized: "Found %lld versions, would you like to delete them?", comment: "Alert title (format) for number of versions found")
     static let cannotBeUndone = String(localized: "This action cannot be undone.", comment: "Alert message for cannot undo")

@@ -21,7 +21,6 @@
 		0A1100013010000000000003 /* AppDelegate+QuickSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */; };
 		0A1100023010000000000001 /* QuickSearchCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1100023010000000000002 /* QuickSearchCore */; };
 		84FB00F02C6C4AED00850E94 /* AppWritingTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FB00EF2C6C4AED00850E94 /* AppWritingTools.swift */; };
-		8701D0A42CC12321006AF8C2 /* FileVersion in Frameworks */ = {isa = PBXBuildFile; productRef = 8701D0A32CC12321006AF8C2 /* FileVersion */; };
 		8703C175303E7DD300A896D0 /* QuickLookWindowSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8703C171303E7DCF00A896D0 /* QuickLookWindowSize.swift */; };
 		87067E2729755D5C0052E795 /* EditorStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87067E2629755D5C0052E795 /* EditorStatusView.swift */; };
 		87091B9A2A963C6B00F5EF0D /* EditorTextInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87091B992A963C6B00F5EF0D /* EditorTextInput.swift */; };
@@ -108,7 +107,6 @@
 		87B0D1022F1A4C0100B0D101 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 87B0D1012F1A4C0100B0D101 /* Localizable.xcstrings */; };
 		87B3ED5A2CBCA97D001FA6CE /* AppDocumentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B3ED592CBCA97D001FA6CE /* AppDocumentController.swift */; };
 		87B3ED5D2CBCADD6001FA6CE /* NSDocumentController+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B3ED5C2CBCADD6001FA6CE /* NSDocumentController+Extras.swift */; };
-		87B3ED8F2CBE1E12001FA6CE /* DiffKit in Frameworks */ = {isa = PBXBuildFile; productRef = 87B3ED8E2CBE1E12001FA6CE /* DiffKit */; };
 		87BB5A2C2E929BAA00A17C14 /* AppExceptionCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BB5A292E929BA700A17C14 /* AppExceptionCatcher.swift */; };
 		87BDF6E42976C97100548079 /* EditorViewController+GotoLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BDF6E32976C97100548079 /* EditorViewController+GotoLine.swift */; };
 		87BEF30129A88F6800596E17 /* AppCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BEF30029A88F6800596E17 /* AppCustomization.swift */; };
@@ -351,8 +349,6 @@
 				870F17902985775B00003DA7 /* AppKitExtensions in Frameworks */,
 				8790ABDB2A98FF610083825C /* Statistics in Frameworks */,
 				87CC48FD29CC01E100BE1441 /* TextBundle in Frameworks */,
-				87B3ED8F2CBE1E12001FA6CE /* DiffKit in Frameworks */,
-				8701D0A42CC12321006AF8C2 /* FileVersion in Frameworks */,
 				CC000020300000000000FD01 /* FileDrop in Frameworks */,
 				EE200001EEEE000000000001 /* ExtensionCore in Frameworks */,
 				8775A77B29867012005867BF /* FontPicker in Frameworks */,
@@ -841,8 +837,6 @@
 				874823CD29B0BD980067EC49 /* TextCompletion */,
 				87CC48FC29CC01E100BE1441 /* TextBundle */,
 				8790ABDA2A98FF610083825C /* Statistics */,
-				87B3ED8E2CBE1E12001FA6CE /* DiffKit */,
-				8701D0A32CC12321006AF8C2 /* FileVersion */,
 				CC000020300000000000FD02 /* FileDrop */,
 				EE200002EEEE000000000002 /* ExtensionCore */,
 			);
@@ -1631,10 +1625,6 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = QuickSearchCore;
 		};
-		8701D0A32CC12321006AF8C2 /* FileVersion */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FileVersion;
-		};
 		870F177C29855CA500003DA7 /* MarkEditKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = MarkEditKit;
@@ -1662,10 +1652,6 @@
 		8790ABDA2A98FF610083825C /* Statistics */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Statistics;
-		};
-		87B3ED8E2CBE1E12001FA6CE /* DiffKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = DiffKit;
 		};
 		87CC48FC29CC01E100BE1441 /* TextBundle */ = {
 			isa = XCSwiftPackageProductDependency;
