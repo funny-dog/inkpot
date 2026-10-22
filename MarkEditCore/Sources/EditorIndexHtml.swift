@@ -51,7 +51,10 @@ public enum EditorIndexHtml {
 
       try data.write(to: targetURL, options: .atomic)
     } catch {
-      assertionFailure("Failed to copy index.html to shared container: \(error)")
+      // Kernmark: 这里在后台队列执行，且失败只影响 QuickLook 扩展共用 index.html 的能力，
+      // 不该让主应用无法启动（沙盒未配置 App Group 时原样会触发 assertionFailure 崩溃）。
+      // QuickLook 侧会通过 sharedFileExists 检查自行降级为提示页。
+      os_logger.log(level: .error, "Failed to copy index.html to shared container: \(error)")
     }
   }
 
