@@ -1405,23 +1405,6 @@
         }
       }
     },
-    "Enabled Extensions" : {
-      "comment" : "Enabled theme extensions section title",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已启用的扩展"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已啟用的擴充功能"
-          }
-        }
-      }
-    },
     "Enter the line number and hit return" : {
       "comment" : "Help text for goto line window",
       "localizations" : {
@@ -2705,23 +2688,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "macOS / Unix (LF)"
-          }
-        }
-      }
-    },
-    "Manage…" : {
-      "comment" : "Open installed theme extensions",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "管理…"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "管理…"
           }
         }
       }

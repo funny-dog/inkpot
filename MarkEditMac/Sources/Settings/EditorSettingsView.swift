@@ -11,7 +11,6 @@ import SwiftUI
 import FontPicker
 import SettingsUI
 import SharedUI
-import ExtensionCore
 import MarkEditCore
 import MarkEditKit
 
@@ -31,7 +30,6 @@ struct EditorSettingsView: View {
   @State private var lineHeight = AppPreferences.Editor.lineHeight
   @State private var tabKeyBehavior = AppPreferences.Editor.tabKeyBehavior
   @State private var indentUnit = AppPreferences.Editor.indentUnit
-  @State private var extensionsModel = ExtensionsModel()
 
   var body: some View {
     VStack(spacing: 0) {
@@ -45,26 +43,18 @@ struct EditorSettingsView: View {
       SettingsForm {
         Section {
           Picker(Localized.Settings.lightTheme, selection: $lightTheme) {
-            createThemePicker(isDarkMode: false)
+            createThemePicker()
           }
           .onChange(of: lightTheme) {
-            if let target = extensionTarget(for: lightTheme) {
-              showExtensions(target: target, selection: $lightTheme, revertTo: AppPreferences.Editor.lightTheme)
-            } else {
-              AppPreferences.Editor.lightTheme = lightTheme
-            }
+            AppPreferences.Editor.lightTheme = lightTheme
           }
           .formMenuPicker()
 
           Picker(Localized.Settings.darkTheme, selection: $darkTheme) {
-            createThemePicker(isDarkMode: true)
+            createThemePicker()
           }
           .onChange(of: darkTheme) {
-            if let target = extensionTarget(for: darkTheme) {
-              showExtensions(target: target, selection: $darkTheme, revertTo: AppPreferences.Editor.darkTheme)
-            } else {
-              AppPreferences.Editor.darkTheme = darkTheme
-            }
+            AppPreferences.Editor.darkTheme = darkTheme
           }
           .formMenuPicker()
         }
@@ -184,23 +174,12 @@ struct EditorSettingsView: View {
         }
       }
     }
-    .onAppear {
-      extensionsModel.primeFromCache()
-    }
-    .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
-      extensionsModel.primeFromCache()
-    }
   }
 }
 
 // MARK: - Private
 
 private extension EditorSettingsView {
-  enum Constants {
-    static let manageThemesTag = "$manageThemes"
-    static let themeExtensionTagPrefix = "$themeExtension:"
-  }
-
   var fontPickerConfiguration: FontPickerConfiguration {
     FontPickerConfiguration(
       selectedFontStyle: AppPreferences.Editor.fontStyle,
@@ -228,32 +207,13 @@ private extension EditorSettingsView {
   }
 
   @ViewBuilder
-  func createThemePicker(isDarkMode: Bool) -> some View {
+  func createThemePicker() -> some View {
     Section(Localized.Settings.lightThemes) {
       createThemePicker(isDark: false)
     }
 
     Section(Localized.Settings.darkThemes) {
       createThemePicker(isDark: true)
-    }
-
-    Section(Localized.Settings.themeExtensions) {
-      ForEach(extensionsModel.installedThemes.filter(\.isEnabled)) { theme in
-        Label {
-          Text(theme.name.hasSuffix(" Theme") ? String(theme.name.dropLast(" Theme".count)) : theme.name)
-        } icon: {
-          if let image = themePatternImage(theme, isDarkMode: isDarkMode) {
-            Image(nsImage: image)
-              .renderingMode(.original)
-              .accessibilityHidden(true)
-          }
-        }
-        .labelStyle(.titleAndIcon)
-        .tag(Constants.themeExtensionTagPrefix + theme.id)
-      }
-
-      Text(Localized.Settings.manageThemes)
-        .tag(Constants.manageThemesTag)
     }
   }
 
@@ -271,63 +231,4 @@ private extension EditorSettingsView {
     }
   }
 
-  func themePatternImage(_ theme: ExtensionsModel.Item, isDarkMode: Bool) -> NSImage? {
-    guard let patterns = theme.colorPatterns, !patterns.isEmpty else {
-      return nil
-    }
-
-    let index = theme.colorScheme == .both && isDarkMode && patterns.count >= 2 ? 1 : 0
-    let colors = patterns[index]
-      .split(separator: ",")
-      .map { $0.trimmingCharacters(in: .whitespaces) }
-      .filter { !$0.isEmpty }
-      .map { color in
-        if color.hasPrefix("#"), color.count == 4 {
-          return "#" + color.dropFirst().map { String(repeating: String($0), count: 2) }.joined()
-        }
-        return color
-      }
-
-    guard !colors.isEmpty else {
-      return nil
-    }
-
-    guard colors.allSatisfy({ $0.hasPrefix("#") && $0.count == 7 && UInt32($0.dropFirst(), radix: 16) != nil }) else {
-      Logger.log(.error, "Invalid color pattern for theme extension \(theme.id)")
-      return nil
-    }
-
-    let isDark = theme.colorScheme == .dark || (theme.colorScheme == .both && index == 1)
-    return AppTheme.patternImage(colorPattern: colors, isDark: isDark)
-  }
-
-  func extensionTarget(for selection: String) -> ExtensionsScrollTarget? {
-    if selection == Constants.manageThemesTag {
-      if let theme = extensionsModel.installedThemes.first(where: \.isEnabled) {
-        return .item(id: theme.id, highlight: false)
-      }
-
-      return .category(.theme)
-    }
-
-    guard selection.hasPrefix(Constants.themeExtensionTagPrefix) else {
-      return nil
-    }
-
-    return .item(id: String(selection.dropFirst(Constants.themeExtensionTagPrefix.count)))
-  }
-
-  func showExtensions(target: ExtensionsScrollTarget, selection: Binding<String>, revertTo value: String) {
-    ExtensionsWindowController.shared.present(mode: .installed, scrollTo: target)
-    NSApp.windows.forEach {
-      if $0.contentViewController is SettingsRootViewController {
-        $0.close()
-      }
-    }
-
-    // In macOS Tahoe, this requires a delay to work
-    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-      selection.wrappedValue = value
-    }
-  }
 }
