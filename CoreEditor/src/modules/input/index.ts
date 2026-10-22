@@ -9,7 +9,6 @@ import { startCompletion, isPanelVisible } from '../completion';
 import { hasRecentKeyPress } from '../events';
 import { isContentDirty, setHistoryExplictlyMoved } from '../history';
 import { adjustActiveLineGutter, adjustGutterPositions } from '../lines';
-import { tokenizePosition } from '../tokenizer';
 import { refreshEditFocus, scrollCaretToVisible, scrollToSelection, selectedLineColumn, updateActiveLine } from '../../modules/selection';
 
 import hasSelection from '../selection/hasSelection';
@@ -68,24 +67,6 @@ export function filterTransaction(transaction: Transaction) {
   }
 
   return transaction;
-}
-
-/**
- * Tokenize words at the click position, especially useful for languages like Chinese and Japanese.
- */
-export function wordTokenizer() {
-  return EditorView.mouseSelectionStyle.of((editor, event) => {
-    if (tokenizePosition(event) === null) {
-      return null;
-    }
-
-    // There isn't an async way to get selection in CodeMirror,
-    // we simply just leave the selection as is and handle the updates in a "dblclick" event handler.
-    return {
-      get(_event, _extend, _multiple) { return editor.state.selection; },
-      update(_update) { /* no-op */ },
-    };
-  });
 }
 
 /**

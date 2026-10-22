@@ -3,7 +3,6 @@ import { globalState, editingState } from '../../common/store';
 
 import * as completion from '../../modules/completion';
 import * as selection from '../../modules/selection';
-import * as tokenizer from '../../modules/tokenizer';
 import * as invisible from '../../styling/nodes/invisible';
 import * as link from '../../styling/nodes/link';
 import * as task from '../../styling/nodes/task';
@@ -11,7 +10,6 @@ import * as task from '../../styling/nodes/task';
 export function startObserving() {
   document.addEventListener('mousedown', event => {
     selection.selectWholeLineIfNeeded(event);
-    storage.mouseDownTime = Date.now();
   });
 
   document.addEventListener('keydown', event => {
@@ -111,7 +109,6 @@ export function startObserving() {
     globalState.contextMenuOpenTime = Date.now();
   });
 
-  observeEventsForTokenization();
   observeEventsForCompletion();
 }
 
@@ -133,21 +130,6 @@ export function resetKeyStates() {
 
   link.stopClickable();
   task.stopClickable();
-}
-
-function observeEventsForTokenization() {
-  document.addEventListener('dblclick', event => {
-    if (Date.now() - storage.mouseDownTime > 500) {
-      // Mouse up after a significant delay, text selection might have changed
-      return;
-    }
-
-    tokenizer.handleDoubleClick(event);
-  });
-
-  document.addEventListener('keydown', event => {
-    tokenizer.handleKeyDown(event);
-  }, true);
 }
 
 function observeEventsForCompletion() {
@@ -196,14 +178,12 @@ const storage: {
   scrollTimer: ReturnType<typeof setTimeout> | undefined;
   isMouseDown: boolean;
   isMetaKeyDown: boolean;
-  mouseDownTime: number;
   keyPressTime: number;
   selectedTextBeforeCompose: boolean;
 } = {
   scrollTimer: undefined,
   isMouseDown: false,
   isMetaKeyDown: false,
-  mouseDownTime: 0,
   keyPressTime: 0,
   selectedTextBeforeCompose: false,
 };

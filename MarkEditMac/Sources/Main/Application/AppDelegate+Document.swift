@@ -42,19 +42,11 @@ extension AppDelegate {
     return menu
   }
 
-  func createNewFile(fileName: String? = nil, initialContent: String? = nil, isIntent: Bool = false) {
+  func createNewFile(fileName: String? = nil, initialContent: String? = nil) {
     // In EditorDocument, this is used as an external filename
     AppDocumentController.suggestedFilename = fileName
 
-    // Activating the app also creates a new file if new window behavior is `newDocument`,
-    // prevent duplicate creation from Shortcuts like `CreateNewDocumentIntent`.
-    if !isIntent || (Date.timeIntervalSinceReferenceDate - States.untitledFileOpenedDate > 0.2) {
-      NSDocumentController.shared.newDocument(nil)
-    }
-
-    if isIntent {
-      NSApp.activate(ignoringOtherApps: true)
-    }
+    NSDocumentController.shared.newDocument(nil)
 
     if let initialContent {
       DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
@@ -112,7 +104,6 @@ extension AppDelegate {
 private extension AppDelegate {
   enum States {
     @MainActor static var openPanelShownDate: TimeInterval = 0
-    @MainActor static var untitledFileOpenedDate: TimeInterval = 0
   }
 
   @discardableResult
@@ -131,7 +122,6 @@ private extension AppDelegate {
       quickSearch(sender)
       return false
     case .newDocument:
-      States.untitledFileOpenedDate = Date.timeIntervalSinceReferenceDate
       return true
     }
   }

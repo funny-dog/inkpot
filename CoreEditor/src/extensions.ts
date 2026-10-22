@@ -35,7 +35,7 @@ import { playSystemBeep } from './common/utils';
 import { isActive as isWritingToolsActive } from './modules/writingTools';
 import { localizePhrases } from './modules/localization';
 import { indentationKeymap } from './modules/indentation';
-import { filterTransaction, wordTokenizer, observeChanges, interceptInputs } from './modules/input';
+import { filterTransaction, observeChanges, interceptInputs } from './modules/input';
 import { smartQuotesHandler } from './modules/smartQuotes';
 import { customizedCommandsKeymap, emojiDeletionKeymap } from './modules/commands';
 import { autocompleteExtensions, standardLinkCompletion, referenceLinkCompletion } from './modules/completion';
@@ -169,7 +169,6 @@ export function extensions(options: { lineBreak?: string }) {
     vimModeExtension(),
 
     // Input handling
-    wordTokenizer(),
     interceptInputs(),
     observeChanges(),
     smartQuotesHandler,

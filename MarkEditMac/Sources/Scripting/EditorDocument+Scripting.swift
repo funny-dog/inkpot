@@ -29,33 +29,6 @@ extension EditorDocument {
     }
   }
 
-  /// Rich text of the document.
-  @objc var scriptingRichText: NSTextStorage? {
-    let markdownOptions = AttributedString.MarkdownParsingOptions(
-      allowsExtendedAttributes: true,
-      interpretedSyntax: .full,
-      failurePolicy: .returnPartiallyParsedIfPossible,
-      appliesSourcePositionAttributes: true
-    )
-
-    // Process lines separately to ensure they stay distinct
-    let newlineString = NSAttributedString(string: "\n")
-    let attributedSource = scriptingSource.components(separatedBy: .newlines)
-      .map { component in
-        do {
-          return try NSMutableAttributedString(markdown: component, options: markdownOptions)
-        } catch {
-          return NSMutableAttributedString(string: component)
-        }
-      }
-      .reduce(into: NSMutableAttributedString()) { result, element in
-        element.append(newlineString)
-        result.append(element)
-      }
-
-    return NSTextStorage(attributedString: attributedSource)
-  }
-
   @objc var scriptingSelectedText: String {
     get {
       guard let command = currentScriptCommand(),
