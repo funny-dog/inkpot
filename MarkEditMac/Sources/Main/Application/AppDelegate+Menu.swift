@@ -269,32 +269,20 @@ private extension AppDelegate {
     NSDocumentController.shared.saveAllDocuments(nil)
   }
 
-  @IBAction func openDevelopmentGuide(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Development")
-  }
-
   @IBAction func manageExtensions(_ sender: Any?) {
     ExtensionsWindowController.shared.present()
   }
 
-  @IBAction func openCustomizationGuide(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Customization")
-  }
-
   @IBAction func showHelp(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki")
+    NSWorkspace.shared.safelyOpenURL(string: AppLinks.repository)
   }
 
   @IBAction func openIssueTracker(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/issues")
+    NSWorkspace.shared.safelyOpenURL(string: "\(AppLinks.repository)/issues")
   }
 
   @IBAction func openVersionHistory(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/releases")
-  }
-
-  @IBAction func openUpdateBehavior(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#generalupdatebehavior")
+    NSWorkspace.shared.safelyOpenURL(string: "\(AppLinks.repository)/commits/main")
   }
 
   @IBAction func toggleLiveMode(_ sender: Any?) {

@@ -73,13 +73,6 @@
                                                             <action selector="launchSafeMode:" target="Voe-Tx-rLC" id="sSM-qM-GZb"/>
                                                         </connections>
                                                     </menuItem>
-                                                    <menuItem isSeparatorItem="YES" id="USk-ey-oWO"/>
-                                                    <menuItem title="Development Guide" id="aSl-kC-hp8">
-                                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                                        <connections>
-                                                            <action selector="openDevelopmentGuide:" target="Voe-Tx-rLC" id="uTv-ru-P3h"/>
-                                                        </connections>
-                                                    </menuItem>
                                                 </items>
                                             </menu>
                                         </menuItem>
@@ -939,12 +932,6 @@ Gw
                                                 <action selector="openDocumentsFolder:" target="Voe-Tx-rLC" id="cGC-yM-BaF"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Customization Guide" id="jNi-CL-4bf">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="openCustomizationGuide:" target="Voe-Tx-rLC" id="dXE-Va-wF2"/>
-                                            </connections>
-                                        </menuItem>
                                     </items>
                                     <connections>
                                         <outlet property="delegate" destination="Voe-Tx-rLC" id="bdE-rU-LpO"/>
@@ -1077,13 +1064,6 @@ Gw
                                         </menuItem>
                                         <menuItem secondaryImage="bell.slash" catalog="system" id="he5-WD-tCA">
                                             <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="baQ-7g-DLL"/>
-                                        <menuItem title="Update Behavior…" secondaryImage="arrow.up.right.square" catalog="system" id="Jxm-Gq-txn">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="openUpdateBehavior:" target="Voe-Tx-rLC" id="QjM-Oj-9Xp"/>
-                                            </connections>
                                         </menuItem>
                                     </items>
                                 </menu>

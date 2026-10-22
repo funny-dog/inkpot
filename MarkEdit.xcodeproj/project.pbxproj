@@ -305,7 +305,6 @@
 		87BB5A292E929BA700A17C14 /* AppExceptionCatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppExceptionCatcher.swift; sourceTree = "<group>"; };
 		87BDF6E32976C97100548079 /* EditorViewController+GotoLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+GotoLine.swift"; sourceTree = "<group>"; };
 		87BEF30029A88F6800596E17 /* AppCustomization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCustomization.swift; sourceTree = "<group>"; };
-		87BFF238298AAC75006C31E4 /* MarkEditTools */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MarkEditTools; sourceTree = "<group>"; };
 		87C3CBFA29545944002A3436 /* MarkEditKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MarkEditKit; sourceTree = "<group>"; };
 		87C600000000000000000002 /* EditorDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorDocumentTests.swift; sourceTree = "<group>"; };
 		87C600000000000000000004 /* MarkEditMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkEditMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -396,7 +395,6 @@
 			children = (
 				870F17752985546500003DA7 /* MarkEditCore */,
 				87C3CBFA29545944002A3436 /* MarkEditKit */,
-				87BFF238298AAC75006C31E4 /* MarkEditTools */,
 				870A51A4294700DE0095C7EB /* MarkEditMac */,
 				872924042951525C007156B1 /* QuickLookMac */,
 				87DA0000000000000000E001 /* UpdateInstaller */,
@@ -828,7 +826,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				87BFF24E298AB754006C31E4 /* PBXTargetDependency */,
 				8729240F2951525C007156B1 /* PBXTargetDependency */,
 				87DA0000000000000000E009 /* PBXTargetDependency */,
 			);
@@ -865,7 +862,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				87A221FF30382785008F7D6F /* PBXTargetDependency */,
 			);
 			name = QuickLookMac;
 			packageProductDependencies = (
@@ -902,7 +898,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				87A2220530382789008F7D6F /* PBXTargetDependency */,
 			);
 			name = UpdateInstaller;
 			packageProductDependencies = (
@@ -1183,18 +1178,6 @@
 			isa = PBXTargetDependency;
 			target = 872923FF2951525C007156B1 /* QuickLookMac */;
 			targetProxy = 8729240E2951525C007156B1 /* PBXContainerItemProxy */;
-		};
-		87A221FF30382785008F7D6F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87A221FE30382785008F7D6F /* SwiftLint */;
-		};
-		87A2220530382789008F7D6F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87A2220430382789008F7D6F /* SwiftLint */;
-		};
-		87BFF24E298AB754006C31E4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87BFF24D298AB754006C31E4 /* SwiftLint */;
 		};
 		87C60000000000000000000A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -1680,21 +1663,9 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = Statistics;
 		};
-		87A221FE30382785008F7D6F /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
-		};
-		87A2220430382789008F7D6F /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
-		};
 		87B3ED8E2CBE1E12001FA6CE /* DiffKit */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = DiffKit;
-		};
-		87BFF24D298AB754006C31E4 /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
 		};
 		87CC48FC29CC01E100BE1441 /* TextBundle */ = {
 			isa = XCSwiftPackageProductDependency;

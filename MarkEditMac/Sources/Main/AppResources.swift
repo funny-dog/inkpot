@@ -358,3 +358,14 @@ extension EditorLocalizable {
     )
   }
 }
+
+/**
+ 对外链接集中管理。
+
+ 分叉自 MarkEdit 后，上游 wiki / issues / releases 与本应用无关，
+ 统一指向 Kernmark 自己的仓库，避免把用户带到另一个项目。
+ */
+enum AppLinks {
+  /// Kernmark 源码仓库。
+  static let repository = "https://github.com/funny-dog/kernmark"
+}

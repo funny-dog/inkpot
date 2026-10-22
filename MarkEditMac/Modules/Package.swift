@@ -65,111 +65,71 @@ let package = Package(
   dependencies: [
     .package(path: "../MarkEditCore"),
     .package(path: "../MarkEditKit"),
-    .package(path: "../MarkEditTools"),
   ],
   targets: [
     .target(
       name: "QuickSearchUI",
       dependencies: ["QuickSearchCore", "AppKitExtensions"],
-      path: "Sources/QuickSearchUI",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/QuickSearchUI"
     ),
     .target(
       name: "QuickSearchCore",
-      path: "Sources/QuickSearchCore",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/QuickSearchCore"
     ),
     .target(
       name: "SharedUI",
       dependencies: ["AppKitExtensions"],
-      path: "Sources/SharedUI",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/SharedUI"
     ),
     .target(
       name: "AppKitExtensions",
-      path: "Sources/AppKitExtensions",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/AppKitExtensions"
     ),
     .target(
       name: "DiffKit",
       path: "Sources/DiffKit",
       resources: [
         .process("Resources"),
-      ],
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
       ]
     ),
     .target(
       name: "ExtensionCore",
       dependencies: ["AppKitExtensions", "MarkEditCore", "MarkEditKit"],
-      path: "Sources/ExtensionCore",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/ExtensionCore"
     ),
     .target(
       name: "FileDrop",
       dependencies: ["AppKitExtensions", "MarkEditKit", "TextBundle"],
-      path: "Sources/FileDrop",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/FileDrop"
     ),
     .target(
       name: "FileVersion",
       dependencies: ["SharedUI", "MarkEditKit", "DiffKit"],
-      path: "Sources/FileVersion",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/FileVersion"
     ),
     .target(
       name: "FontPicker",
       dependencies: ["AppKitExtensions"],
-      path: "Sources/FontPicker",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/FontPicker"
     ),
     .target(
       name: "SettingsUI",
       dependencies: ["AppKitExtensions"],
-      path: "Sources/SettingsUI",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/SettingsUI"
     ),
     .target(
       name: "Statistics",
       dependencies: ["AppKitExtensions", "MarkEditKit"],
-      path: "Sources/Statistics",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/Statistics"
     ),
     .target(
       name: "TextBundle",
-      path: "Sources/TextBundle",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/TextBundle"
     ),
     .target(
       name: "TextCompletion",
       dependencies: ["AppKitExtensions"],
-      path: "Sources/TextCompletion",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources/TextCompletion"
     ),
 
     .testTarget(
@@ -188,9 +148,6 @@ let package = Package(
       path: "Tests",
       resources: [
         .copy("Files/sample.textbundle"),
-      ],
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
       ]
     ),
   ]

@@ -17,24 +17,17 @@ let package = Package(
   ],
   dependencies: [
     .package(path: "../MarkEditCore"),
-    .package(path: "../MarkEditTools"),
   ],
   targets: [
     .target(
       name: "MarkEditKit",
       dependencies: ["MarkEditCore"],
-      path: "Sources",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Sources"
     ),
     .testTarget(
       name: "MarkEditKitTests",
       dependencies: ["MarkEditCore", "MarkEditKit"],
-      path: "Tests",
-      plugins: [
-        .plugin(name: "SwiftLint", package: "MarkEditTools"),
-      ]
+      path: "Tests"
     ),
   ]
 )
