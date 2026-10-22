@@ -57,6 +57,9 @@ extension AppDelegate: NSMenuItemValidation {
       return NSPasteboard.general.hasText
     case #selector(reopenClosedTab(_:)):
       return EditorClosedTabHistory.shared.hasEntries
+    case #selector(toggleLiveMode(_:)):
+      menuItem.state = AppPreferences.Editor.liveMode ? .on : .off
+      return true
     default:
       return true
     }
@@ -292,5 +295,9 @@ private extension AppDelegate {
 
   @IBAction func openUpdateBehavior(_ sender: Any?) {
     NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#generalupdatebehavior")
+  }
+
+  @IBAction func toggleLiveMode(_ sender: Any?) {
+    AppPreferences.Editor.liveMode.toggle()
   }
 }

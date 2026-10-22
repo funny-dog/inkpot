@@ -11,6 +11,7 @@ export default [
     ignores: [
       '.yarn',
       'dist/*',
+      'public/EditorAssets/**',
       'src/@vendor/*',
     ],
   },

@@ -71,6 +71,9 @@ export interface Config extends EditorConfig {
   visibleWhitespaceCharacter?: string;
   visibleLineBreakCharacter?: string;
   searchNormalizers?: { [key: string]: string };
+  // Kernmark：实时模式（所见即所得）
+  liveMode?: boolean;
+  vimMode?: boolean;
 }
 
 /**

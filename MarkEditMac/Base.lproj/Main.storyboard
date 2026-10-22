@@ -135,6 +135,12 @@
                                                 <action selector="openDocument:" target="Ady-hI-5gd" id="bVn-NM-KNZ"/>
                                             </connections>
                                         </menuItem>
+                                        <menuItem title="Open Folder…" keyEquivalent="o" id="km-file-openFolder">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="openKernmarkFolder:" target="Ady-hI-5gd" id="km-file-openFolder-act"/>
+                                            </connections>
+                                        </menuItem>
                                         <menuItem title="Quick Search…" keyEquivalent="O" id="OQ1-op-enQ">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
@@ -956,6 +962,19 @@ Gw
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="PIb-KM-OZU"/>
+                                        <menuItem title="Live Mode" keyEquivalent="l" id="km-vm-liveMode">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleLiveMode:" target="Ady-hI-5gd" id="km-vm-liveMode-act"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Sidebar" keyEquivalent="b" id="km-vm-sidebar">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleKernmarkSidebar:" target="Ady-hI-5gd" id="km-vm-sidebar-act"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="km-vm-liveMode-sep"/>
                                         <menuItem title="Actual Size" keyEquivalent="0" id="Sqh-CT-2fi">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
@@ -1120,6 +1139,7 @@ Gw
                         <outlet property="restartUpdateItem" destination="CtF-Ha-tmF" id="2Nf-Yp-0T9"/>
                         <outlet property="textFormatMenu" destination="yy7-cF-JbT" id="FfG-yi-NE6"/>
                         <outlet property="windowFloatingItem" destination="0C5-FE-fvI" id="hM7-gl-t1f"/>
+                        <outlet property="viewLiveModeItem" destination="km-vm-liveMode" id="km-app-liveMode-outlet"/>
                     </connections>
                 </customObject>
                 <customObject id="YLy-65-1bz" customClass="NSFontManager"/>

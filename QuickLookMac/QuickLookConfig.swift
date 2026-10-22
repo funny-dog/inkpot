@@ -90,6 +90,8 @@ extension EditorConfig {
       visibleWhitespaceCharacter: nil,
       visibleLineBreakCharacter: nil,
       searchNormalizers: nil,
+      liveMode: false, // 快速预览保持纯源码渲染，避免引入实时模式装饰
+      vimMode: false,
       theme: "github-light", // Ignored (follow the system color scheme)
       fontSize: 12,
       showLineNumbers: false,

@@ -80,6 +80,14 @@ extension EditorViewController {
     bridge.config.setFocusMode(enabled: enabled)
   }
 
+  func setLiveMode(enabled: Bool) {
+    bridge.config.setLiveMode(enabled: enabled)
+  }
+
+  func setVimMode(enabled: Bool) {
+    bridge.config.setVimMode(enabled: enabled)
+  }
+
   func setLineWrapping(enabled: Bool) {
     bridge.config.setLineWrapping(enabled: enabled)
   }

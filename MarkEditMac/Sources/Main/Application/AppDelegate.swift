@@ -55,6 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   @IBOutlet weak var formatMathItem: NSMenuItem?
   @IBOutlet weak var formatMathBlockItem: NSMenuItem?
   @IBOutlet weak var windowFloatingItem: NSMenuItem?
+  @IBOutlet weak var viewLiveModeItem: NSMenuItem?
 
   @IBOutlet weak var mainUpdateItem: NSMenuItem?
   @IBOutlet weak var presentUpdateItem: NSMenuItem?
@@ -136,6 +137,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
       Task {
         await ExtensionUpdater.checkForUpdates()
+      }
+
+      Task { @MainActor in
+        LiveModeManager.checkExtensionConflictIfNeeded()
       }
 
       DispatchQueue.global(qos: .utility).async {

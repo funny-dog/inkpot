@@ -160,8 +160,10 @@ enum Localized {
     static let trailing = String(localized: "Trailing", comment: "Show trailing invisibles")
     static let always = String(localized: "Always", comment: "Always show invisibles")
     static let editBehavior = String(localized: "Edit Behavior:", comment: "Editor behavior like focus mode and typewriter mode")
+    static let liveModeTitle = String(localized: "Live Mode (WYSIWYG)", comment: "Explanation for live mode")
     static let typewriterModeTitle = String(localized: "Keep caret in the middle", comment: "Explanation for typewriter mode")
     static let focusModeTitle = String(localized: "Dim inactive lines", comment: "Explanation for focus mode")
+    static let vimModeTitle = String(localized: "Vim Mode", comment: "Option for vim mode")
     static let lineWrappingLabel = String(localized: "Line Wrapping:", comment: "Label for line wrapping option")
     static let lineWrappingDescription = String(localized: "Wrap lines to editor width", comment: "Explanation for line wrapping option")
     static let lineHeight = String(localized: "Line Height:", comment: "Label for line height option")
@@ -271,6 +273,11 @@ enum Localized {
     static let skipThisVersion = String(localized: "Skip This Version", comment: "Title for the \"Skip This Version\" button")
     static let disableUpdateChecks = String(localized: "Disable Update Checks", comment: "Title for the \"Disable Update Checks\" button")
     static let checkVersionHistory = String(localized: "Check Version History", comment: "Title for the \"Check Version History\" button")
+  }
+
+  enum Kernmark {
+    static let previewConflictTitle = String(localized: "MarkEdit-preview Extension Detected", comment: "Alert title when MarkEdit-preview is installed")
+    static let previewConflictMessage = String(localized: "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings.", comment: "Alert message explaining preview extension conflict")
   }
 }
 

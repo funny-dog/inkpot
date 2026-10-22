@@ -1840,6 +1840,54 @@
         }
       }
     },
+    "km-file-openFolder.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Open Folder…\"; ObjectID = \"km-file-openFolder\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Open Folder…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "打开文件夹…"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "開啟檔案夾…"
+          }
+        }
+      }
+    },
+    "km-vm-sidebar.title" : {
+      "comment" : "Class = \"NSMenuItem\"; title = \"Sidebar\"; ObjectID = \"km-vm-sidebar\";",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Sidebar"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "侧栏"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "側欄"
+          }
+        }
+      }
+    },
     "H8h-7b-M4v.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"View\"; ObjectID = \"H8h-7b-M4v\";",
       "extractionState" : "extracted_with_value",

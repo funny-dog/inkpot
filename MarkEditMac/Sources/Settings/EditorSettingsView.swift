@@ -23,8 +23,10 @@ struct EditorSettingsView: View {
   @State private var showActiveLineIndicator = AppPreferences.Editor.showActiveLineIndicator
   @State private var showSelectionStatus = AppPreferences.Editor.showSelectionStatus
   @State private var invisiblesBehavior = AppPreferences.Editor.invisiblesBehavior
+  @State private var liveMode = AppPreferences.Editor.liveMode
   @State private var typewriterMode = AppPreferences.Editor.typewriterMode
   @State private var focusMode = AppPreferences.Editor.focusMode
+  @State private var vimMode = AppPreferences.Editor.vimMode
   @State private var lineWrapping = AppPreferences.Editor.lineWrapping
   @State private var lineHeight = AppPreferences.Editor.lineHeight
   @State private var tabKeyBehavior = AppPreferences.Editor.tabKeyBehavior
@@ -106,6 +108,13 @@ struct EditorSettingsView: View {
 
         Section {
           VStack(alignment: .leading) {
+            Toggle(isOn: $liveMode) {
+              Text(Localized.Settings.liveModeTitle)
+            }
+            .onChange(of: liveMode) {
+              AppPreferences.Editor.liveMode = liveMode
+            }
+
             Toggle(isOn: $typewriterMode) {
               Text(Localized.Settings.typewriterModeTitle)
             }
@@ -118,6 +127,13 @@ struct EditorSettingsView: View {
             }
             .onChange(of: focusMode) {
               AppPreferences.Editor.focusMode = focusMode
+            }
+
+            Toggle(isOn: $vimMode) {
+              Text(Localized.Settings.vimModeTitle)
+            }
+            .onChange(of: vimMode) {
+              AppPreferences.Editor.vimMode = vimMode
             }
           }
           .formLabel(alignment: .top, Localized.Settings.editBehavior)

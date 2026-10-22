@@ -128,10 +128,24 @@ enum AppPreferences {
       }
     }
 
+    @Storage(key: "editor.live-mode", defaultValue: true)
+    static var liveMode: Bool {
+      didSet {
+        performUpdates { $0.setLiveMode(enabled: liveMode) }
+      }
+    }
+
     @Storage(key: "editor.focus-mode", defaultValue: false)
     static var focusMode: Bool {
       didSet {
         performUpdates { $0.setFocusMode(enabled: focusMode) }
+      }
+    }
+
+    @Storage(key: "editor.vim-mode", defaultValue: false)
+    static var vimMode: Bool {
+      didSet {
+        performUpdates { $0.setVimMode(enabled: vimMode) }
       }
     }
 
@@ -315,6 +329,8 @@ extension AppPreferences {
       visibleWhitespaceCharacter: AppRuntimeConfig.visibleWhitespaceCharacter,
       visibleLineBreakCharacter: AppRuntimeConfig.visibleLineBreakCharacter,
       searchNormalizers: AppRuntimeConfig.searchNormalizers,
+      liveMode: Editor.liveMode,
+      vimMode: Editor.vimMode,
       theme: theme,
       fontSize: Editor.fontSize,
       showLineNumbers: Editor.showLineNumbers,

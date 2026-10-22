@@ -7,6 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		KM0000042026102300000001 /* LiveModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000032026102300000001 /* LiveModeManager.swift */; };
+		KM0000062026102300000001 /* EditorAssets in Resources */ = {isa = PBXBuildFile; fileRef = KM0000052026102300000001 /* EditorAssets */; };
+		KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000072026102300000001 /* KernmarkAssetLoader.swift */; };
+		KM0000232026102300000001 /* KernmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000222026102300000001 /* KernmarkTests.swift */; };
+		KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000102026102300000001 /* EditorViewController+Sidebar.swift */; };
+		KM0000202610230000000002 /* SidebarCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000112026102300000001 /* SidebarCellView.swift */; };
+		KM0000202610230000000003 /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000122026102300000001 /* SidebarItem.swift */; };
+		KM0000202610230000000005 /* SidebarSecurityScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000142026102300000001 /* SidebarSecurityScope.swift */; };
+		KM0000202610230000000006 /* SidebarStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000152026102300000001 /* SidebarStrings.swift */; };
+		KM0000202610230000000007 /* SidebarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000162026102300000001 /* SidebarViewController.swift */; };
 		0A1100013010000000000001 /* QuickSearchUI in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1100013010000000000002 /* QuickSearchUI */; };
 		0A1100013010000000000003 /* AppDelegate+QuickSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */; };
 		0A1100023010000000000001 /* QuickSearchCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1100023010000000000002 /* QuickSearchCore */; };
@@ -191,6 +201,16 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		KM0000032026102300000001 /* LiveModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveModeManager.swift; sourceTree = "<group>"; };
+		KM0000052026102300000001 /* EditorAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = EditorAssets; path = CoreEditor/dist/EditorAssets; sourceTree = SOURCE_ROOT; };
+		KM0000072026102300000001 /* KernmarkAssetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkAssetLoader.swift; sourceTree = "<group>"; };
+		KM0000222026102300000001 /* KernmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkTests.swift; sourceTree = "<group>"; };
+		KM0000102026102300000001 /* EditorViewController+Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Sidebar.swift"; sourceTree = "<group>"; };
+		KM0000112026102300000001 /* SidebarCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarCellView.swift; sourceTree = "<group>"; };
+		KM0000122026102300000001 /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarItem.swift; sourceTree = "<group>"; };
+		KM0000142026102300000001 /* SidebarSecurityScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSecurityScope.swift; sourceTree = "<group>"; };
+		KM0000152026102300000001 /* SidebarStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarStrings.swift; sourceTree = "<group>"; };
+		KM0000162026102300000001 /* SidebarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarViewController.swift; sourceTree = "<group>"; };
 		0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+QuickSearch.swift"; sourceTree = "<group>"; };
 		84FB00EF2C6C4AED00850E94 /* AppWritingTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppWritingTools.swift; sourceTree = "<group>"; };
 		8703C171303E7DCF00A896D0 /* QuickLookWindowSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookWindowSize.swift; sourceTree = "<group>"; };
@@ -427,6 +447,7 @@
 		870A51C229470D5C0095C7EB /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				KM0000052026102300000001 /* EditorAssets */,
 				870A51C8294752530095C7EB /* index.html */,
 				870A51A9294700E00095C7EB /* Assets.xcassets */,
 				876D70862E7A8E9D00E308A4 /* AppIcon.icon */,
@@ -454,6 +475,7 @@
 		870A51C52947103A0095C7EB /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				KM0000012026102300000001 /* Kernmark */,
 				873D6403295FD2FF0095DEF7 /* Main */,
 				870A51C429470D830095C7EB /* Editor */,
 				87A35DF830026B720079CF08 /* Extension */,
@@ -465,6 +487,45 @@
 				87850C8429482A6A00D1A952 /* Extras */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		KM0000012026102300000001 /* Kernmark */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000022026102300000001 /* LiveMode */,
+				KM0000092026102300000001 /* EditorAssets */,
+				KM0000172026102300000001 /* Sidebar */,
+			);
+			path = Kernmark;
+			sourceTree = "<group>";
+		};
+		KM0000022026102300000001 /* LiveMode */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000032026102300000001 /* LiveModeManager.swift */,
+			);
+			path = LiveMode;
+			sourceTree = "<group>";
+		};
+		KM0000092026102300000001 /* EditorAssets */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000072026102300000001 /* KernmarkAssetLoader.swift */,
+			);
+			path = EditorAssets;
+			sourceTree = "<group>";
+		};
+		KM0000172026102300000001 /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000102026102300000001 /* EditorViewController+Sidebar.swift */,
+				KM0000112026102300000001 /* SidebarCellView.swift */,
+				KM0000122026102300000001 /* SidebarItem.swift */,
+				KM0000142026102300000001 /* SidebarSecurityScope.swift */,
+				KM0000152026102300000001 /* SidebarStrings.swift */,
+				KM0000162026102300000001 /* SidebarViewController.swift */,
+			);
+			path = Sidebar;
 			sourceTree = "<group>";
 		};
 		870F1797298577A000003DA7 /* Panels */ = {
@@ -733,6 +794,7 @@
 				87B000000000000000000103 /* BookmarkStoreTests.swift */,
 				87D700000000000000000002 /* QuickSearchMenuTests.swift */,
 				87D800000000000000000002 /* ContextMenuTests.swift */,
+				KM0000222026102300000001 /* KernmarkTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -904,6 +966,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				KM0000062026102300000001 /* EditorAssets in Resources */,
 				870A51C9294752530095C7EB /* index.html in Resources */,
 				87132AA32C188FE900FD262B /* AppShortcuts.xcstrings in Resources */,
 				870A51AA294700E00095C7EB /* Assets.xcassets in Resources */,
@@ -975,6 +1038,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				KM0000042026102300000001 /* LiveModeManager.swift in Sources */,
+				KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */,
+				KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */,
+				KM0000202610230000000002 /* SidebarCellView.swift in Sources */,
+				KM0000202610230000000003 /* SidebarItem.swift in Sources */,
+				KM0000202610230000000005 /* SidebarSecurityScope.swift in Sources */,
+				KM0000202610230000000006 /* SidebarStrings.swift in Sources */,
+				KM0000202610230000000007 /* SidebarViewController.swift in Sources */,
 				8725E0822977EF46006A4961 /* EditorViewController+Toolbar.swift in Sources */,
 				874BE6F429BB37FA002F83BA /* IntentProvider.swift in Sources */,
 				87B3ED5D2CBCADD6001FA6CE /* NSDocumentController+Extras.swift in Sources */,
@@ -1090,6 +1161,7 @@
 				87B000000000000000000104 /* BookmarkStoreTests.swift in Sources */,
 				87D700000000000000000001 /* QuickSearchMenuTests.swift in Sources */,
 				87D800000000000000000001 /* ContextMenuTests.swift in Sources */,
+				KM0000232026102300000001 /* KernmarkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
