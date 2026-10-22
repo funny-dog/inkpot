@@ -244,12 +244,6 @@ private extension AppDelegate {
     NSApp.relaunchSafely(sender, safeMode: true)
   }
 
-  @IBAction func checkForUpdates(_ sender: Any?) {
-    Task {
-      await AppUpdater.checkForUpdates(explicitly: true)
-    }
-  }
-
   @IBAction func openDocumentsFolder(_ sender: Any?) {
     NSWorkspace.shared.open(.documentsDirectory)
   }

@@ -242,33 +242,6 @@ enum Localized {
     static let extensionMismatchErrorMessage = String(localized: "Wrong file extension for type “%@”, use “.%@” instead.", comment: "Script save error when the path extension does not match the output type")
   }
 
-  enum Updater {
-    static let upToDateTitle = String(localized: "You’re up-to-date!", comment: "Title for the up-to-date info")
-    static let upToDateMessage = String(localized: "Kernmark %@ is currently the latest version.", comment: "Message for the up-to-date info")
-    static let updateAvailableTitle = String(localized: "Kernmark %@ is available!", comment: "Title for new version available")
-    static let updateFailedTitle = String(localized: "Failed to get the update.", comment: "Title for failed to get the update")
-    static let updateFailedMessage = String(localized: "Please check your network connection or get the latest release from the version history.", comment: "Message for failed to get the update")
-    static let needsOSUpdateMessage = String(localized: "This release requires macOS %@ or later and cannot be installed without upgrading your operating system.", comment: "Message for minimum required OS version")
-    static let updateToMenuTitle = String(localized: "✨ Update to %@", comment: "Menu title format for a new version available")
-    static let downloadingMenuTitle = String(localized: "Downloading%@", comment: "Menu title format for the update download, the placeholder is an animated ellipsis")
-    static let updateReadyTitle = String(localized: "Kernmark %@ is ready to install!", comment: "Title for a downloaded update waiting to be installed")
-    static let updateReadyMessage = String(localized: "The update will be applied the next time Kernmark launches.", comment: "Message for a downloaded update waiting to be installed")
-    static let updateReadyMenuTitle = String(localized: "✨ %@ is ready", comment: "Menu title format for a downloaded update waiting to be installed")
-    static let releaseNotesTitle = String(localized: "What’s new in %@", comment: "Title for the release notes of an installed or staged update")
-    static let installFailedTitle = String(localized: "Failed to install the update.", comment: "Title for failed to install the update")
-    static let installFailedMessage = String(localized: "Please try again later or get the latest release from the version history.", comment: "Message for failed to install the update")
-    static let updateNow = String(localized: "Update Now", comment: "Title for the \"Update Now\" button")
-    static let restartNow = String(localized: "Restart Now", comment: "Title for the \"Restart Now\" button")
-    static let installOnQuit = String(localized: "Install on Quit", comment: "Title for declining an immediate restart, the staged update is applied on quit")
-    static let viewReleaseDetails = String(localized: "View Release Details…", comment: "Menu title that brings up the update dialog, where the release notes and actions live")
-    static let viewReleasePage = String(localized: "View Release Page", comment: "Title for the \"View Release Page\" button")
-    static let notNow = String(localized: "Not Now", comment: "Title for the \"Not Now\" button")
-    static let remindMeLater = String(localized: "Remind Me Later", comment: "Title for the \"Remind Me Later\" button")
-    static let skipThisVersion = String(localized: "Skip This Version", comment: "Title for the \"Skip This Version\" button")
-    static let disableUpdateChecks = String(localized: "Disable Update Checks", comment: "Title for the \"Disable Update Checks\" button")
-    static let checkVersionHistory = String(localized: "Check Version History", comment: "Title for the \"Check Version History\" button")
-  }
-
   enum Kernmark {
     static let previewConflictTitle = String(localized: "MarkEdit-preview Extension Detected", comment: "Alert title when MarkEdit-preview is installed")
     static let previewConflictMessage = String(localized: "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings.", comment: "Alert message explaining preview extension conflict")

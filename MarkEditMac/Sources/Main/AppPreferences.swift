@@ -271,26 +271,6 @@ enum AppPreferences {
     }
   }
 
-  enum Updater {
-    @Storage(key: "updater.skipped-versions", defaultValue: Set())
-    static var skippedVersions: Set<String>
-
-    @Storage(key: "updater.completely-disabled", defaultValue: false)
-    static var completelyDisabled: Bool
-
-    @Storage(key: "updater.staged-update-path", defaultValue: nil)
-    static var stagedUpdatePath: String?
-
-    @Storage(key: "updater.staged-update-version", defaultValue: nil)
-    static var stagedUpdateVersion: String?
-
-    @Storage(key: "updater.staged-update-notes", defaultValue: nil)
-    static var stagedUpdateNotes: String?
-
-    @Storage(key: "updater.unapplied-update-version", defaultValue: nil)
-    static var unappliedUpdateVersion: String?
-  }
-
   enum Extensions {
     @Storage(key: "extensions.window-has-been-opened", defaultValue: false)
     static var windowHasBeenOpened: Bool
