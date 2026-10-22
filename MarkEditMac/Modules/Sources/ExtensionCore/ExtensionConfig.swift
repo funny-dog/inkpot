@@ -71,8 +71,9 @@ public enum ExtensionConfig {
   }
 
   public static var updateBehavior: UpdateBehavior {
-    // Default to quiet: keep the catalog fresh and surface updates in the window without interrupting
-    currentDefinition?.updateBehavior ?? .quiet
+    // Kernmark: 内置实时模式已覆盖注册表里绝大多数扩展的能力，后台每小时拉索引
+    // 只有成本没有收益，因此默认不联网；管理器里仍可随时切回 quiet/notify/automatic。
+    currentDefinition?.updateBehavior ?? .never
   }
 
   /// Persists how the app handles extension updates.
@@ -209,7 +210,7 @@ private extension ExtensionConfig {
   static let defaultDefinition = Definition(
     __schema: Constants.schemaURL,
     registryURL: Constants.defaultRegistryURL,
-    updateBehavior: .quiet,
+    updateBehavior: .never,
     installed: []
   )
 
