@@ -5,7 +5,6 @@ import { parser as markdownParser, parseCode } from '@lezer/markdown';
 import { TreeFragment } from '@lezer/common';
 import { markdownMathExtension } from '../src/modules/math';
 import { getNodesNamed } from '../src/modules/lezer';
-import { previewMath } from '../src/styling/nodes/math';
 import * as editor from './utils/editor';
 
 describe('Math parser', () => {
@@ -269,24 +268,6 @@ describe('Math parser', () => {
     expect(tree.toString()).toBe(markdownParser.parse(source).toString());
     expect(passes).toBe(2);
     expect(reads).toBeLessThan(count * 15);
-  });
-});
-
-describe('Math previews', () => {
-  test.each([
-    '$$\nx = 1\n$$',
-    '> $$\n> x = 1\n> $$',
-    '> - $$\n>   x = 1\n>   $$',
-  ])('math previews use clean TeX content: %s', source => {
-    editor.setUp('', previewMath);
-    editor.setText(source);
-    const button = window.editor.dom.querySelector<HTMLElement>('.cm-md-previewButton');
-    expect(button?.dataset.code).toBe('\nx = 1\n');
-  });
-
-  test.each(['$$\n\n## Heading', '$$$$', '> $$\n>\n> $$'])('empty or unclosed math has no preview: %s', source => {
-    editor.setUp(source, previewMath);
-    expect(window.editor.dom.querySelector('.cm-md-previewButton')).toBeNull();
   });
 });
 
