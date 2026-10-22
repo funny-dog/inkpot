@@ -1,6 +1,98 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Live Mode (WYSIWYG)" : {
+      "comment" : "Explanation for live mode",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Live Mode (WYSIWYG)"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实时模式（所见即所得）"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "即時模式（所見即所得）"
+          }
+        }
+      }
+    },
+    "Vim Mode" : {
+      "comment" : "Option for vim mode",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Vim Mode"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vim 模式"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Vim 模式"
+          }
+        }
+      }
+    },
+    "MarkEdit-preview Extension Detected" : {
+      "comment" : "Alert title when MarkEdit-preview is installed",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "MarkEdit-preview Extension Detected"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到 MarkEdit-preview 扩展"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "偵測到 MarkEdit-preview 擴充功能"
+          }
+        }
+      }
+    },
+    "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings." : {
+      "comment" : "Alert message explaining preview extension conflict",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kernmark 已内置实时模式（所见即所得）。为避免重复渲染与格式冲突，建议在 MarkEdit-preview 扩展设置中关闭 Mixed 模式。"
+          }
+        },
+        "zh-Hant" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Kernmark 已內建即時模式（所見即所得）。為避免重複渲染與格式衝突，建議在 MarkEdit-preview 擴充功能設定中關閉 Mixed 模式。"
+          }
+        }
+      }
+    },
     "**URL:** %@" : {
       "comment" : "Extension URL line (format) in the install confirmation",
       "localizations" : {
@@ -1126,57 +1218,6 @@
         }
       }
     },
-    "Diff Chars" : {
-      "comment" : "Diff by characters",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按字符对比"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按字元對比"
-          }
-        }
-      }
-    },
-    "Diff Lines" : {
-      "comment" : "Diff by lines",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按行对比"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按行對比"
-          }
-        }
-      }
-    },
-    "Diff Words" : {
-      "comment" : "Diff by words",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按单词对比"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "按單詞對比"
-          }
-        }
-      }
-    },
     "Dim inactive lines" : {
       "comment" : "Explanation for focus mode",
       "localizations" : {
@@ -1360,23 +1401,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "已啟用"
-          }
-        }
-      }
-    },
-    "Enabled Extensions" : {
-      "comment" : "Enabled theme extensions section title",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已启用的扩展"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "已啟用的擴充功能"
           }
         }
       }
@@ -2668,23 +2692,6 @@
         }
       }
     },
-    "Manage…" : {
-      "comment" : "Open installed theme extensions",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "管理…"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "管理…"
-          }
-        }
-      }
-    },
     "Kernmark (Safe Mode)" : {
       "comment" : "App menu title when running without customizations",
       "localizations" : {
@@ -3736,23 +3743,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "在 Finder 中找到"
-          }
-        }
-      }
-    },
-    "Revert to This Version" : {
-      "comment" : "Title for button to select a file version",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "复原到此版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "回復成此版本"
           }
         }
       }

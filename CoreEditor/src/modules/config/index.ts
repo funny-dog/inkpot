@@ -10,6 +10,8 @@ import { tryGetEditor, afterDomUpdate } from '../../common/utils';
 import { notifyBackgroundColor } from '../../styling/helper';
 import { loadTheme } from '../../styling/themes';
 import { notifyEditorConfigChange } from '../../api/methods';
+import { setLiveMode as reconfigureLiveMode } from '../../wysiwyg';
+import { setVimMode as reconfigureVimMode } from '../../wysiwyg/vim';
 
 import * as styling from '../../styling/config';
 import * as completion from '../completion';
@@ -182,3 +184,13 @@ export function recalculateTextMetrics() {
   document.body.removeChild(span);
 }
 
+
+export function setLiveMode(enabled: boolean) {
+  reconfigureLiveMode(enabled);
+  notifyEditorConfigChange('liveMode', enabled);
+}
+
+export function setVimMode(enabled: boolean) {
+  void reconfigureVimMode(enabled);
+  notifyEditorConfigChange('vimMode', enabled);
+}

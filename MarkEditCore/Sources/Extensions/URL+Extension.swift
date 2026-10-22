@@ -14,14 +14,9 @@ public extension URL {
       "library": Self.libraryDirectory,
       "caches": Self.cachesDirectory,
       "temporary": Self.temporaryDirectory,
-      "sharedContainer": Self.sharedContainerURL,
     ].compactMapValues {
       $0?.path(percentEncoded: false)
     }
-  }
-
-  static var sharedContainerURL: URL? {
-    FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: "group.com.erhu.kernmark")
   }
 
   /// Files in this directory whose extension is in `types`, sorted by localized filename order.

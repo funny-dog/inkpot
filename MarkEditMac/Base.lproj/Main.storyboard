@@ -21,12 +21,6 @@
                                                 <action selector="orderFrontStandardAboutPanel:" target="Ady-hI-5gd" id="Exp-CZ-Vem"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Check for Updates…" secondaryImage="arrow.trianglehead.2.clockwise.rotate.90.circle" catalog="system" hidden="YES" id="s40-D9-CoM">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="checkForUpdates:" target="Voe-Tx-rLC" id="KoB-Gc-HGX"/>
-                                            </connections>
-                                        </menuItem>
                                         <menuItem isSeparatorItem="YES" id="VOq-y0-SEH"/>
                                         <menuItem title="Preferences…" secondaryImage="gear" catalog="system" keyEquivalent="," id="BOF-NM-1cW">
                                             <connections>
@@ -71,13 +65,6 @@
                                                         <modifierMask key="keyEquivalentModifierMask"/>
                                                         <connections>
                                                             <action selector="launchSafeMode:" target="Voe-Tx-rLC" id="sSM-qM-GZb"/>
-                                                        </connections>
-                                                    </menuItem>
-                                                    <menuItem isSeparatorItem="YES" id="USk-ey-oWO"/>
-                                                    <menuItem title="Development Guide" id="aSl-kC-hp8">
-                                                        <modifierMask key="keyEquivalentModifierMask"/>
-                                                        <connections>
-                                                            <action selector="openDevelopmentGuide:" target="Voe-Tx-rLC" id="uTv-ru-P3h"/>
                                                         </connections>
                                                     </menuItem>
                                                 </items>
@@ -133,6 +120,12 @@
                                         <menuItem title="Open…" keyEquivalent="o" id="IAo-SY-fd9">
                                             <connections>
                                                 <action selector="openDocument:" target="Ady-hI-5gd" id="bVn-NM-KNZ"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Open Folder…" keyEquivalent="o" id="km-file-openFolder">
+                                            <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="openKernmarkFolder:" target="Ady-hI-5gd" id="km-file-openFolder-act"/>
                                             </connections>
                                         </menuItem>
                                         <menuItem title="Quick Search…" keyEquivalent="O" id="OQ1-op-enQ">
@@ -933,12 +926,6 @@ Gw
                                                 <action selector="openDocumentsFolder:" target="Voe-Tx-rLC" id="cGC-yM-BaF"/>
                                             </connections>
                                         </menuItem>
-                                        <menuItem title="Customization Guide" id="jNi-CL-4bf">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="openCustomizationGuide:" target="Voe-Tx-rLC" id="dXE-Va-wF2"/>
-                                            </connections>
-                                        </menuItem>
                                     </items>
                                     <connections>
                                         <outlet property="delegate" destination="Voe-Tx-rLC" id="bdE-rU-LpO"/>
@@ -956,6 +943,19 @@ Gw
                                             </connections>
                                         </menuItem>
                                         <menuItem isSeparatorItem="YES" id="PIb-KM-OZU"/>
+                                        <menuItem title="Live Mode" keyEquivalent="l" id="km-vm-liveMode">
+                                            <modifierMask key="keyEquivalentModifierMask" option="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleLiveMode:" target="Ady-hI-5gd" id="km-vm-liveMode-act"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem title="Sidebar" keyEquivalent="b" id="km-vm-sidebar">
+                                            <modifierMask key="keyEquivalentModifierMask" control="YES" command="YES"/>
+                                            <connections>
+                                                <action selector="toggleKernmarkSidebar:" target="Ady-hI-5gd" id="km-vm-sidebar-act"/>
+                                            </connections>
+                                        </menuItem>
+                                        <menuItem isSeparatorItem="YES" id="km-vm-liveMode-sep"/>
                                         <menuItem title="Actual Size" keyEquivalent="0" id="Sqh-CT-2fi">
                                             <modifierMask key="keyEquivalentModifierMask" shift="YES" command="YES"/>
                                             <connections>
@@ -1042,33 +1042,6 @@ Gw
                                     </items>
                                 </menu>
                             </menuItem>
-                            <menuItem hidden="YES" id="ETL-k6-svK">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                                <menu key="submenu" id="bfk-LV-yGQ">
-                                    <items>
-                                        <menuItem secondaryImage="info.circle" catalog="system" id="Jc8-2v-hRb">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="lCr-84-fJd"/>
-                                        <menuItem secondaryImage="restart" catalog="system" hidden="YES" id="CtF-Ha-tmF">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem secondaryImage="bell" catalog="system" id="r3b-uF-Yy9">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem secondaryImage="bell.slash" catalog="system" id="he5-WD-tCA">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                        </menuItem>
-                                        <menuItem isSeparatorItem="YES" id="baQ-7g-DLL"/>
-                                        <menuItem title="Update Behavior…" secondaryImage="arrow.up.right.square" catalog="system" id="Jxm-Gq-txn">
-                                            <modifierMask key="keyEquivalentModifierMask"/>
-                                            <connections>
-                                                <action selector="openUpdateBehavior:" target="Voe-Tx-rLC" id="QjM-Oj-9Xp"/>
-                                            </connections>
-                                        </menuItem>
-                                    </items>
-                                </menu>
-                            </menuItem>
                         </items>
                     </menu>
                     <connections>
@@ -1101,7 +1074,6 @@ Gw
                         <outlet property="formatMathItem" destination="wIF-eb-cez" id="iQQ-q9-gor"/>
                         <outlet property="formatNumberingItem" destination="vhv-qY-5Gc" id="rOt-cw-00U"/>
                         <outlet property="formatTodoItem" destination="DZc-Ee-Asp" id="O5Q-gx-Kg0"/>
-                        <outlet property="ignoreUpdateItem" destination="he5-WD-tCA" id="Zjr-Ee-iYb"/>
                         <outlet property="lineEndingsCRItem" destination="ANU-wC-fmd" id="mWb-3A-dYc"/>
                         <outlet property="lineEndingsCRLFItem" destination="mc2-DH-5Iy" id="w6F-ls-MGF"/>
                         <outlet property="lineEndingsLFItem" destination="qOk-v8-kKx" id="4t7-oc-c7R"/>
@@ -1110,16 +1082,13 @@ Gw
                         <outlet property="mainEditMenu" destination="W48-6f-4Dl" id="xUc-Fy-SjE"/>
                         <outlet property="mainExtensionsMenu" destination="nkD-z6-yjV" id="40H-WY-xHu"/>
                         <outlet property="mainFileMenu" destination="bib-Uj-vzu" id="cNR-Lu-ST1"/>
-                        <outlet property="mainUpdateItem" destination="ETL-k6-svK" id="rQZ-1x-GRC"/>
                         <outlet property="mainWindowMenu" destination="Td7-aD-5lo" id="9j1-c6-lEO"/>
                         <outlet property="openFileInMenu" destination="Tuy-2U-frg" id="Udj-25-y2I"/>
                         <outlet property="openRecentMenu" destination="oas-Oc-fiZ" id="oqr-Ot-001"/>
-                        <outlet property="postponeUpdateItem" destination="r3b-uF-Yy9" id="8kS-ni-Kae"/>
-                        <outlet property="presentUpdateItem" destination="Jc8-2v-hRb" id="Ywd-5S-qLn"/>
                         <outlet property="reopenFileMenu" destination="sPG-vJ-QST" id="6e4-Zg-kFp"/>
-                        <outlet property="restartUpdateItem" destination="CtF-Ha-tmF" id="2Nf-Yp-0T9"/>
                         <outlet property="textFormatMenu" destination="yy7-cF-JbT" id="FfG-yi-NE6"/>
                         <outlet property="windowFloatingItem" destination="0C5-FE-fvI" id="hM7-gl-t1f"/>
+                        <outlet property="viewLiveModeItem" destination="km-vm-liveMode" id="km-app-liveMode-outlet"/>
                     </connections>
                 </customObject>
                 <customObject id="YLy-65-1bz" customClass="NSFontManager"/>

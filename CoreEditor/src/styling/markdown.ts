@@ -5,9 +5,8 @@ import { markdownMathExtension as markdownMathConfig } from '../modules/math';
 import { tags } from './builder';
 import { linkDefinitionConfig } from './nodes/def';
 import { listIndentStyle } from './nodes/indent';
-import { inlineCodeStyle, codeBlockStyle, previewMermaid } from './nodes/code';
-import { previewMath } from './nodes/math';
-import { previewTable, tableStyle } from './nodes/table';
+import { inlineCodeStyle, codeBlockStyle } from './nodes/code';
+import { tableStyle } from './nodes/table';
 import { frontMatterStyle } from './nodes/frontMatter';
 import { taskMarkerStyle } from './nodes/task';
 
@@ -90,8 +89,5 @@ export const renderExtensions = [
  * Extensions used only in the full editor, i.e., the preview extension doesn't use these.
  */
 export const actionExtensions = [
-  previewMermaid,
-  previewMath,
-  previewTable,
   taskMarkerStyle,
 ];

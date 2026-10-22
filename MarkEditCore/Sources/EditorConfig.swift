@@ -23,6 +23,8 @@ public struct EditorConfig: Encodable, Sendable {
   let visibleWhitespaceCharacter: String?
   let visibleLineBreakCharacter: String?
   let searchNormalizers: [String: String]?
+  let liveMode: Bool?
+  let vimMode: Bool?
   let theme: String
   let fontSize: Double
   let showLineNumbers: Bool
@@ -53,6 +55,8 @@ public struct EditorConfig: Encodable, Sendable {
     visibleWhitespaceCharacter: String?,
     visibleLineBreakCharacter: String?,
     searchNormalizers: [String: String]?,
+    liveMode: Bool?,
+    vimMode: Bool?,
     theme: String,
     fontSize: Double,
     showLineNumbers: Bool,
@@ -82,6 +86,8 @@ public struct EditorConfig: Encodable, Sendable {
     self.visibleWhitespaceCharacter = visibleWhitespaceCharacter
     self.visibleLineBreakCharacter = visibleLineBreakCharacter
     self.searchNormalizers = searchNormalizers
+    self.liveMode = liveMode
+    self.vimMode = vimMode
     self.theme = theme
     self.fontSize = fontSize
     self.showLineNumbers = showLineNumbers
@@ -114,6 +120,8 @@ public struct EditorConfig: Encodable, Sendable {
     try container.encode(visibleWhitespaceCharacter, forKey: "visibleWhitespaceCharacter")
     try container.encode(visibleLineBreakCharacter, forKey: "visibleLineBreakCharacter")
     try container.encode(searchNormalizers, forKey: "searchNormalizers")
+    try container.encode(liveMode, forKey: "liveMode")
+    try container.encode(vimMode, forKey: "vimMode")
     try container.encode(theme, forKey: "theme")
     try container.encode(fontSize, forKey: "fontSize")
     try container.encode(showLineNumbers, forKey: "showLineNumbers")

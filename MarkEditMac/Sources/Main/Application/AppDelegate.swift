@@ -55,12 +55,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   @IBOutlet weak var formatMathItem: NSMenuItem?
   @IBOutlet weak var formatMathBlockItem: NSMenuItem?
   @IBOutlet weak var windowFloatingItem: NSMenuItem?
-
-  @IBOutlet weak var mainUpdateItem: NSMenuItem?
-  @IBOutlet weak var presentUpdateItem: NSMenuItem?
-  @IBOutlet weak var restartUpdateItem: NSMenuItem?
-  @IBOutlet weak var postponeUpdateItem: NSMenuItem?
-  @IBOutlet weak var ignoreUpdateItem: NSMenuItem?
+  @IBOutlet weak var viewLiveModeItem: NSMenuItem?
 
   lazy var bookmarkStore = BookmarkStore.shared
   private var appearanceObservation: NSKeyValueObservation?
@@ -119,23 +114,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
     }
 
-    DispatchQueue.global(qos: .utility).async {
-      EditorIndexHtml.copyToSharedContainer()
-    }
-
     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-      self.presentUpdateItem?.title = Localized.Updater.viewReleaseDetails
-      self.postponeUpdateItem?.title = Localized.Updater.remindMeLater
-      self.ignoreUpdateItem?.title = Localized.Updater.skipThisVersion
-      AppUpdater.presentStagedUpdateNotes()
-
-      Task {
-        await AppUpdater.discardStagedUpdate()
-        await AppUpdater.checkForUpdates(explicitly: false)
-      }
-
       Task {
         await ExtensionUpdater.checkForUpdates()
+      }
+
+      Task { @MainActor in
+        LiveModeManager.checkExtensionConflictIfNeeded()
       }
 
       DispatchQueue.global(qos: .utility).async {
@@ -152,10 +137,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // Periodic maintenance: runs weekly for users who keep the app running
     Timer.scheduledTimer(withTimeInterval: 7 * 24 * 60 * 60, repeats: true) { _ in
-      Task {
-        await AppUpdater.checkForUpdates(explicitly: false)
-      }
-
       Task {
         await EditorSelectionHistory.purgeStaleEntries()
       }
@@ -200,7 +181,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     AppRelauncher.commit()
-    AppUpdater.commitStagedUpdate()
     EditorSelectionHistory.purgeStaleEntries()
   }
 

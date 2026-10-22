@@ -39,10 +39,10 @@ final class EditorUserAssetTests: XCTestCase {
     }
   }
 
-  func testQuickLookScriptCanInstallGlobalRequire() throws {
+  func testExtensionScriptCanInstallGlobalRequire() throws {
     let context = try XCTUnwrap(JSContext())
     context.evaluateScript("var window = this; window.MarkEdit = { shared: true };")
-    let url = URL(fileURLWithPath: "/scripts/quicklook.js")
+    let url = URL(fileURLWithPath: "/scripts/extension.js")
     let source = EditorUserAsset.script(for: url, contents: """
     window.requireBeforeShim = typeof require;
     (() => {

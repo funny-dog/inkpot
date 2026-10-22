@@ -51,20 +51,12 @@ final class EditorDocumentTests: XCTestCase {
     XCTAssertEqual(AppPreferences.General.defaultTextEncoding, .utf8)
     XCTAssertEqual(AppPreferences.General.newFilenameExtension, .md)
 
-    let stagedPath = ApplicationEnvironment.documentsDirectory.appending(path: "staged-update").path
-    AppPreferences.Updater.stagedUpdatePath = stagedPath
-    AppPreferences.Updater.stagedUpdateVersion = "test-version"
-    defer {
-      AppPreferences.Updater.stagedUpdatePath = nil
-      AppPreferences.Updater.stagedUpdateVersion = nil
-    }
-
-    // Normal startup schedules updater maintenance after two seconds.
+    // Kernmark 不再提供自更新，启动后的延迟维护只剩扩展检查与 settings 快照；
+    // 这里验证应用仍能正常终止，且终止过程不再触碰更新暂存状态。
     try await Task.sleep(for: .seconds(2.2))
     XCTAssertEqual(delegate.applicationShouldTerminate(NSApp), .terminateNow)
     delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification, object: NSApp))
-    XCTAssertEqual(AppPreferences.Updater.stagedUpdatePath, stagedPath)
-    XCTAssertEqual(AppPreferences.Updater.stagedUpdateVersion, "test-version")
+    XCTAssertFalse(NSApp.windows.contains { $0 is EditorWindow && $0.isVisible })
   }
 
   func testHostDoesNotRecordRecentDocuments() throws {

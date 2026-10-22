@@ -128,10 +128,24 @@ enum AppPreferences {
       }
     }
 
+    @Storage(key: "editor.live-mode", defaultValue: true)
+    static var liveMode: Bool {
+      didSet {
+        performUpdates { $0.setLiveMode(enabled: liveMode) }
+      }
+    }
+
     @Storage(key: "editor.focus-mode", defaultValue: false)
     static var focusMode: Bool {
       didSet {
         performUpdates { $0.setFocusMode(enabled: focusMode) }
+      }
+    }
+
+    @Storage(key: "editor.vim-mode", defaultValue: false)
+    static var vimMode: Bool {
+      didSet {
+        performUpdates { $0.setVimMode(enabled: vimMode) }
       }
     }
 
@@ -257,26 +271,6 @@ enum AppPreferences {
     }
   }
 
-  enum Updater {
-    @Storage(key: "updater.skipped-versions", defaultValue: Set())
-    static var skippedVersions: Set<String>
-
-    @Storage(key: "updater.completely-disabled", defaultValue: false)
-    static var completelyDisabled: Bool
-
-    @Storage(key: "updater.staged-update-path", defaultValue: nil)
-    static var stagedUpdatePath: String?
-
-    @Storage(key: "updater.staged-update-version", defaultValue: nil)
-    static var stagedUpdateVersion: String?
-
-    @Storage(key: "updater.staged-update-notes", defaultValue: nil)
-    static var stagedUpdateNotes: String?
-
-    @Storage(key: "updater.unapplied-update-version", defaultValue: nil)
-    static var unappliedUpdateVersion: String?
-  }
-
   enum Extensions {
     @Storage(key: "extensions.window-has-been-opened", defaultValue: false)
     static var windowHasBeenOpened: Bool
@@ -315,6 +309,8 @@ extension AppPreferences {
       visibleWhitespaceCharacter: AppRuntimeConfig.visibleWhitespaceCharacter,
       visibleLineBreakCharacter: AppRuntimeConfig.visibleLineBreakCharacter,
       searchNormalizers: AppRuntimeConfig.searchNormalizers,
+      liveMode: Editor.liveMode,
+      vimMode: Editor.vimMode,
       theme: theme,
       fontSize: Editor.fontSize,
       showLineNumbers: Editor.showLineNumbers,

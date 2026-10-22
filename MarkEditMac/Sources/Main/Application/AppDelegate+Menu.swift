@@ -57,6 +57,9 @@ extension AppDelegate: NSMenuItemValidation {
       return NSPasteboard.general.hasText
     case #selector(reopenClosedTab(_:)):
       return EditorClosedTabHistory.shared.hasEntries
+    case #selector(toggleLiveMode(_:)):
+      menuItem.state = AppPreferences.Editor.liveMode ? .on : .off
+      return true
     default:
       return true
     }
@@ -241,12 +244,6 @@ private extension AppDelegate {
     NSApp.relaunchSafely(sender, safeMode: true)
   }
 
-  @IBAction func checkForUpdates(_ sender: Any?) {
-    Task {
-      await AppUpdater.checkForUpdates(explicitly: true)
-    }
-  }
-
   @IBAction func openDocumentsFolder(_ sender: Any?) {
     NSWorkspace.shared.open(.documentsDirectory)
   }
@@ -266,31 +263,23 @@ private extension AppDelegate {
     NSDocumentController.shared.saveAllDocuments(nil)
   }
 
-  @IBAction func openDevelopmentGuide(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Development")
-  }
-
   @IBAction func manageExtensions(_ sender: Any?) {
     ExtensionsWindowController.shared.present()
   }
 
-  @IBAction func openCustomizationGuide(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Customization")
-  }
-
   @IBAction func showHelp(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki")
+    NSWorkspace.shared.safelyOpenURL(string: AppLinks.repository)
   }
 
   @IBAction func openIssueTracker(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/issues")
+    NSWorkspace.shared.safelyOpenURL(string: "\(AppLinks.repository)/issues")
   }
 
   @IBAction func openVersionHistory(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/releases")
+    NSWorkspace.shared.safelyOpenURL(string: "\(AppLinks.repository)/commits/main")
   }
 
-  @IBAction func openUpdateBehavior(_ sender: Any?) {
-    NSWorkspace.shared.safelyOpenURL(string: "https://github.com/MarkEdit-app/MarkEdit/wiki/Customization#generalupdatebehavior")
+  @IBAction func toggleLiveMode(_ sender: Any?) {
+    AppPreferences.Editor.liveMode.toggle()
   }
 }

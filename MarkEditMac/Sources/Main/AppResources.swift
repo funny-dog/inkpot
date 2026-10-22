@@ -48,8 +48,6 @@ enum Localized {
     static let foldLine = String(localized: "Fold Line", comment: "Phrase used in CodeMirror fold a line")
     static let unfoldLine = String(localized: "Unfold Line", comment: "Phrase used in CodeMirror to unfold a line")
     static let defaultLinkTitle = String(localized: "title", comment: "Default title used for link insertion")
-    static let previewButtonTitle = String(localized: "Preview", comment: "Button title for code preview")
-    static let closeButtonTitle = String(localized: "Close", comment: "Button title to close a preview")
     static let cmdClickToFollow = String(localized: "⌘-click to follow", comment: "Tooltip for links")
     static let cmdClickToToggleTodo = String(localized: "⌘-click to toggle todo", comment: "Tooltip for tasks")
     static let tableColumnName = String(localized: "Column", comment: "Column name for table creation")
@@ -148,8 +146,6 @@ enum Localized {
     static let darkTheme = String(localized: "Dark Theme:", comment: "Dark theme for the editor")
     static let lightThemes = String(localized: "Light Themes", comment: "Light theme section title")
     static let darkThemes = String(localized: "Dark Themes", comment: "Dark theme section title")
-    static let themeExtensions = String(localized: "Enabled Extensions", comment: "Enabled theme extensions section title")
-    static let manageThemes = String(localized: "Manage…", comment: "Open installed theme extensions")
     static let displayOptions = String(localized: "Show:", comment: "Label for display options")
     static let lineNumbers = String(localized: "Line numbers", comment: "Option to show line numbers")
     static let activeLineIndicator = String(localized: "Active line indicator", comment: "Option to show active line indicator")
@@ -160,8 +156,10 @@ enum Localized {
     static let trailing = String(localized: "Trailing", comment: "Show trailing invisibles")
     static let always = String(localized: "Always", comment: "Always show invisibles")
     static let editBehavior = String(localized: "Edit Behavior:", comment: "Editor behavior like focus mode and typewriter mode")
+    static let liveModeTitle = String(localized: "Live Mode (WYSIWYG)", comment: "Explanation for live mode")
     static let typewriterModeTitle = String(localized: "Keep caret in the middle", comment: "Explanation for typewriter mode")
     static let focusModeTitle = String(localized: "Dim inactive lines", comment: "Explanation for focus mode")
+    static let vimModeTitle = String(localized: "Vim Mode", comment: "Option for vim mode")
     static let lineWrappingLabel = String(localized: "Line Wrapping:", comment: "Label for line wrapping option")
     static let lineWrappingDescription = String(localized: "Wrap lines to editor width", comment: "Explanation for line wrapping option")
     static let lineHeight = String(localized: "Line Height:", comment: "Label for line height option")
@@ -225,12 +223,6 @@ enum Localized {
   }
 
   enum FileVersion {
-    static let revertTitle = String(localized: "Revert to This Version", comment: "Title for button to select a file version")
-    static let modeTitles = [
-      String(localized: "Diff Lines", comment: "Diff by lines"),
-      String(localized: "Diff Words", comment: "Diff by words"),
-      String(localized: "Diff Chars", comment: "Diff by characters"),
-    ]
     static let noVersionsTitle = String(localized: "No versions match the specified condition.", comment: "Alert title for no versions found")
     static let foundVersionsFormat = String(localized: "Found %lld versions, would you like to delete them?", comment: "Alert title (format) for number of versions found")
     static let cannotBeUndone = String(localized: "This action cannot be undone.", comment: "Alert message for cannot undo")
@@ -246,31 +238,9 @@ enum Localized {
     static let extensionMismatchErrorMessage = String(localized: "Wrong file extension for type “%@”, use “.%@” instead.", comment: "Script save error when the path extension does not match the output type")
   }
 
-  enum Updater {
-    static let upToDateTitle = String(localized: "You’re up-to-date!", comment: "Title for the up-to-date info")
-    static let upToDateMessage = String(localized: "Kernmark %@ is currently the latest version.", comment: "Message for the up-to-date info")
-    static let updateAvailableTitle = String(localized: "Kernmark %@ is available!", comment: "Title for new version available")
-    static let updateFailedTitle = String(localized: "Failed to get the update.", comment: "Title for failed to get the update")
-    static let updateFailedMessage = String(localized: "Please check your network connection or get the latest release from the version history.", comment: "Message for failed to get the update")
-    static let needsOSUpdateMessage = String(localized: "This release requires macOS %@ or later and cannot be installed without upgrading your operating system.", comment: "Message for minimum required OS version")
-    static let updateToMenuTitle = String(localized: "✨ Update to %@", comment: "Menu title format for a new version available")
-    static let downloadingMenuTitle = String(localized: "Downloading%@", comment: "Menu title format for the update download, the placeholder is an animated ellipsis")
-    static let updateReadyTitle = String(localized: "Kernmark %@ is ready to install!", comment: "Title for a downloaded update waiting to be installed")
-    static let updateReadyMessage = String(localized: "The update will be applied the next time Kernmark launches.", comment: "Message for a downloaded update waiting to be installed")
-    static let updateReadyMenuTitle = String(localized: "✨ %@ is ready", comment: "Menu title format for a downloaded update waiting to be installed")
-    static let releaseNotesTitle = String(localized: "What’s new in %@", comment: "Title for the release notes of an installed or staged update")
-    static let installFailedTitle = String(localized: "Failed to install the update.", comment: "Title for failed to install the update")
-    static let installFailedMessage = String(localized: "Please try again later or get the latest release from the version history.", comment: "Message for failed to install the update")
-    static let updateNow = String(localized: "Update Now", comment: "Title for the \"Update Now\" button")
-    static let restartNow = String(localized: "Restart Now", comment: "Title for the \"Restart Now\" button")
-    static let installOnQuit = String(localized: "Install on Quit", comment: "Title for declining an immediate restart, the staged update is applied on quit")
-    static let viewReleaseDetails = String(localized: "View Release Details…", comment: "Menu title that brings up the update dialog, where the release notes and actions live")
-    static let viewReleasePage = String(localized: "View Release Page", comment: "Title for the \"View Release Page\" button")
-    static let notNow = String(localized: "Not Now", comment: "Title for the \"Not Now\" button")
-    static let remindMeLater = String(localized: "Remind Me Later", comment: "Title for the \"Remind Me Later\" button")
-    static let skipThisVersion = String(localized: "Skip This Version", comment: "Title for the \"Skip This Version\" button")
-    static let disableUpdateChecks = String(localized: "Disable Update Checks", comment: "Title for the \"Disable Update Checks\" button")
-    static let checkVersionHistory = String(localized: "Check Version History", comment: "Title for the \"Check Version History\" button")
+  enum Kernmark {
+    static let previewConflictTitle = String(localized: "MarkEdit-preview Extension Detected", comment: "Alert title when MarkEdit-preview is installed")
+    static let previewConflictMessage = String(localized: "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings.", comment: "Alert message explaining preview extension conflict")
   }
 }
 
@@ -344,10 +314,19 @@ extension EditorLocalizable {
       unfold: Localized.Editor.unfold,
       foldLine: Localized.Editor.foldLine,
       unfoldLine: Localized.Editor.unfoldLine,
-      previewButtonTitle: Localized.Editor.previewButtonTitle,
-      closeButtonTitle: Localized.Editor.closeButtonTitle,
       cmdClickToFollow: Localized.Editor.cmdClickToFollow,
       cmdClickToToggleTodo: Localized.Editor.cmdClickToToggleTodo
     )
   }
+}
+
+/**
+ 对外链接集中管理。
+
+ 分叉自 MarkEdit 后，上游 wiki / issues / releases 与本应用无关，
+ 统一指向 Kernmark 自己的仓库，避免把用户带到另一个项目。
+ */
+enum AppLinks {
+  /// Kernmark 源码仓库。
+  static let repository = "https://github.com/funny-dog/kernmark"
 }

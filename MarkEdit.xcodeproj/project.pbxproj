@@ -7,12 +7,20 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		KM0000042026102300000001 /* LiveModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000032026102300000001 /* LiveModeManager.swift */; };
+		KM0000062026102300000001 /* EditorAssets in Resources */ = {isa = PBXBuildFile; fileRef = KM0000052026102300000001 /* EditorAssets */; };
+		KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000072026102300000001 /* KernmarkAssetLoader.swift */; };
+		KM0000232026102300000001 /* KernmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000222026102300000001 /* KernmarkTests.swift */; };
+		KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000102026102300000001 /* EditorViewController+Sidebar.swift */; };
+		KM0000202610230000000002 /* SidebarCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000112026102300000001 /* SidebarCellView.swift */; };
+		KM0000202610230000000003 /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000122026102300000001 /* SidebarItem.swift */; };
+		KM0000202610230000000005 /* SidebarSecurityScope.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000142026102300000001 /* SidebarSecurityScope.swift */; };
+		KM0000202610230000000006 /* SidebarStrings.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000152026102300000001 /* SidebarStrings.swift */; };
+		KM0000202610230000000007 /* SidebarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000162026102300000001 /* SidebarViewController.swift */; };
 		0A1100013010000000000001 /* QuickSearchUI in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1100013010000000000002 /* QuickSearchUI */; };
 		0A1100013010000000000003 /* AppDelegate+QuickSearch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */; };
 		0A1100023010000000000001 /* QuickSearchCore in Frameworks */ = {isa = PBXBuildFile; productRef = 0A1100023010000000000002 /* QuickSearchCore */; };
 		84FB00F02C6C4AED00850E94 /* AppWritingTools.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84FB00EF2C6C4AED00850E94 /* AppWritingTools.swift */; };
-		8701D0A42CC12321006AF8C2 /* FileVersion in Frameworks */ = {isa = PBXBuildFile; productRef = 8701D0A32CC12321006AF8C2 /* FileVersion */; };
-		8703C175303E7DD300A896D0 /* QuickLookWindowSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8703C171303E7DCF00A896D0 /* QuickLookWindowSize.swift */; };
 		87067E2729755D5C0052E795 /* EditorStatusView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87067E2629755D5C0052E795 /* EditorStatusView.swift */; };
 		87091B9A2A963C6B00F5EF0D /* EditorTextInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87091B992A963C6B00F5EF0D /* EditorTextInput.swift */; };
 		8709C69E29B4412F009EABB5 /* AssistantSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8709C69D29B4412F009EABB5 /* AssistantSettingsView.swift */; };
@@ -35,9 +43,6 @@
 		8723B46929C0A6EA0013D5D5 /* EvaluateJavaScriptIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8723B46829C0A6EA0013D5D5 /* EvaluateJavaScriptIntent.swift */; };
 		8725E0802977EEB3006A4961 /* EditorToolbarItems.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725E07F2977EEB3006A4961 /* EditorToolbarItems.swift */; };
 		8725E0822977EF46006A4961 /* EditorViewController+Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725E0812977EF46006A4961 /* EditorViewController+Toolbar.swift */; };
-		872924062951525C007156B1 /* QuickLookViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872924052951525C007156B1 /* QuickLookViewController.swift */; };
-		8729240B2951525C007156B1 /* Main.xib in Resources */ = {isa = PBXBuildFile; fileRef = 872924092951525C007156B1 /* Main.xib */; };
-		872924102951525C007156B1 /* QuickLookExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 872924002951525C007156B1 /* QuickLookExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8729C5A6294B5E6B006F262B /* EditorViewController+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8729C5A5294B5E6B006F262B /* EditorViewController+Menu.swift */; };
 		872E5FC0300918FA00D34792 /* ExtensionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872E5FBF300918FA00D34792 /* ExtensionsViewController.swift */; };
 		873126E4297BAC9C001521A0 /* EditorViewController+Pandoc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873126E3297BAC9C001521A0 /* EditorViewController+Pandoc.swift */; };
@@ -58,8 +63,6 @@
 		87585FE32DA3EC7A0053069E /* NSColor+Scripting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87585FDF2DA3EC7A0053069E /* NSColor+Scripting.swift */; };
 		87585FE42DA3EC7A0053069E /* Error+Scripting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87585FE02DA3EC7A0053069E /* Error+Scripting.swift */; };
 		8763C3202F92574D00A3841D /* EditorHistoryStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8763C31E2F92574900A3841D /* EditorHistoryStorage.swift */; };
-		8765FD252AF28F1000C645A8 /* AppUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8765FD242AF28F1000C645A8 /* AppUpdater.swift */; };
-		8765FD292AF291D300C645A8 /* AppVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8765FD282AF291D300C645A8 /* AppVersion.swift */; };
 		8767BBAF295A8BA500BFACAE /* EditorViewController+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8767BBAE295A8BA500BFACAE /* EditorViewController+UI.swift */; };
 		8767BBB1295A8C1D00BFACAE /* EditorViewController+Delegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8767BBB0295A8C1D00BFACAE /* EditorViewController+Delegate.swift */; };
 		8767BBB5295AD62700BFACAE /* EditorReplaceButtons.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8767BBB4295AD62700BFACAE /* EditorReplaceButtons.swift */; };
@@ -79,10 +82,6 @@
 		8790ABD42A98F5F40083825C /* EditorViewController+Statistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8790ABD32A98F5F40083825C /* EditorViewController+Statistics.swift */; };
 		8790ABDB2A98FF610083825C /* Statistics in Frameworks */ = {isa = PBXBuildFile; productRef = 8790ABDA2A98FF610083825C /* Statistics */; };
 		8790B6EC297036B2000DFC1A /* EditorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8790B6EB297036B2000DFC1A /* EditorWindow.swift */; };
-		8794A0632FC52551005CCC73 /* QuickLookWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8794A0612FC5254E005CCC73 /* QuickLookWebView.swift */; };
-		8794A06C2FC525E2005CCC73 /* QuickLookConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8794A06A2FC525DF005CCC73 /* QuickLookConfig.swift */; };
-		8794A0832FC53BCC005CCC73 /* QuickLookViewController+UI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8794A0822FC53BCB005CCC73 /* QuickLookViewController+UI.swift */; };
-		8794A08C2FC53C28005CCC73 /* QuickLookViewController+Dragging.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8794A08A2FC53C26005CCC73 /* QuickLookViewController+Dragging.swift */; };
 		879715C92D11548C0069964D /* EditorSaveOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 879715C82D11547F0069964D /* EditorSaveOptionsView.swift */; };
 		87A73AB3294C4B27006A710E /* EditorWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A73AB2294C4B27006A710E /* EditorWebView.swift */; };
 		87A73AB5294C4B48006A710E /* EditorFindPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87A73AB4294C4B48006A710E /* EditorFindPanel.swift */; };
@@ -98,7 +97,6 @@
 		87B0D1022F1A4C0100B0D101 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 87B0D1012F1A4C0100B0D101 /* Localizable.xcstrings */; };
 		87B3ED5A2CBCA97D001FA6CE /* AppDocumentController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B3ED592CBCA97D001FA6CE /* AppDocumentController.swift */; };
 		87B3ED5D2CBCADD6001FA6CE /* NSDocumentController+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87B3ED5C2CBCADD6001FA6CE /* NSDocumentController+Extras.swift */; };
-		87B3ED8F2CBE1E12001FA6CE /* DiffKit in Frameworks */ = {isa = PBXBuildFile; productRef = 87B3ED8E2CBE1E12001FA6CE /* DiffKit */; };
 		87BB5A2C2E929BAA00A17C14 /* AppExceptionCatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BB5A292E929BA700A17C14 /* AppExceptionCatcher.swift */; };
 		87BDF6E42976C97100548079 /* EditorViewController+GotoLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BDF6E32976C97100548079 /* EditorViewController+GotoLine.swift */; };
 		87BEF30129A88F6800596E17 /* AppCustomization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87BEF30029A88F6800596E17 /* AppCustomization.swift */; };
@@ -108,15 +106,6 @@
 		87D700000000000000000001 /* QuickSearchMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D700000000000000000002 /* QuickSearchMenuTests.swift */; };
 		87D800000000000000000001 /* ContextMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D800000000000000000002 /* ContextMenuTests.swift */; };
 		87D9322E2A925C6700B20D84 /* EditorReplaceTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87D9322D2A925C6700B20D84 /* EditorReplaceTextField.swift */; };
-		87DA0000000000000000E00B /* UpdateInstaller.xpc in Embed XPC Services */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E000 /* UpdateInstaller.xpc */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		87DA0000000000000000E020 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E010 /* main.swift */; };
-		87DA0000000000000000E021 /* UpdateInstalling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E011 /* UpdateInstalling.swift */; };
-		87DA0000000000000000E022 /* UpdateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E012 /* UpdateService.swift */; };
-		87DA0000000000000000E023 /* UpdateRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E013 /* UpdateRunner.swift */; };
-		87DA0000000000000000E030 /* UpdateInstalling.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E011 /* UpdateInstalling.swift */; };
-		87DA0000000000000000E032 /* AppUpdater+Install.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E031 /* AppUpdater+Install.swift */; };
-		87DA0000000000000000E034 /* AppUpdater+Download.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DA0000000000000000E033 /* AppUpdater+Download.swift */; };
-		87DA0000000000000000E041 /* UpdaterCore in Frameworks */ = {isa = PBXBuildFile; productRef = 87DA0000000000000000E040 /* UpdaterCore */; };
 		87DCB6202B284AAD00A3056F /* AppHacks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DCB61F2B284AAD00A3056F /* AppHacks.swift */; };
 		87DE081B294DDA49004AD33A /* AppTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DE081A294DDA49004AD33A /* AppTheme.swift */; };
 		87DE084B294E22C5004AD33A /* EditorViewController+TextFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87DE084A294E22C5004AD33A /* EditorViewController+TextFinder.swift */; };
@@ -142,13 +131,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		8729240E2951525C007156B1 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 870A519A294700DE0095C7EB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 872923FF2951525C007156B1;
-			remoteInfo = QuickLookMac;
-		};
 		87C600000000000000000003 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 870A519A294700DE0095C7EB /* Project object */;
@@ -156,44 +138,24 @@
 			remoteGlobalIDString = 870A51A1294700DE0095C7EB;
 			remoteInfo = MarkEditMac;
 		};
-		87DA0000000000000000E00A /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 870A519A294700DE0095C7EB /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 87DA0000000000000000E002;
-			remoteInfo = UpdateInstaller;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		872924112951525C007156B1 /* Embed Foundation Extensions */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 13;
-			files = (
-				872924102951525C007156B1 /* QuickLookExtension.appex in Embed Foundation Extensions */,
-			);
-			name = "Embed Foundation Extensions";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		87DA0000000000000000E008 /* Embed XPC Services */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "$(CONTENTS_FOLDER_PATH)/XPCServices";
-			dstSubfolderSpec = 16;
-			files = (
-				87DA0000000000000000E00B /* UpdateInstaller.xpc in Embed XPC Services */,
-			);
-			name = "Embed XPC Services";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		KM0000032026102300000001 /* LiveModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveModeManager.swift; sourceTree = "<group>"; };
+		KM0000052026102300000001 /* EditorAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = EditorAssets; path = CoreEditor/dist/EditorAssets; sourceTree = SOURCE_ROOT; };
+		KM0000072026102300000001 /* KernmarkAssetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkAssetLoader.swift; sourceTree = "<group>"; };
+		KM0000222026102300000001 /* KernmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkTests.swift; sourceTree = "<group>"; };
+		KM0000102026102300000001 /* EditorViewController+Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Sidebar.swift"; sourceTree = "<group>"; };
+		KM0000112026102300000001 /* SidebarCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarCellView.swift; sourceTree = "<group>"; };
+		KM0000122026102300000001 /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarItem.swift; sourceTree = "<group>"; };
+		KM0000142026102300000001 /* SidebarSecurityScope.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarSecurityScope.swift; sourceTree = "<group>"; };
+		KM0000152026102300000001 /* SidebarStrings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarStrings.swift; sourceTree = "<group>"; };
+		KM0000162026102300000001 /* SidebarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarViewController.swift; sourceTree = "<group>"; };
 		0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppDelegate+QuickSearch.swift"; sourceTree = "<group>"; };
 		84FB00EF2C6C4AED00850E94 /* AppWritingTools.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppWritingTools.swift; sourceTree = "<group>"; };
-		8703C171303E7DCF00A896D0 /* QuickLookWindowSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookWindowSize.swift; sourceTree = "<group>"; };
 		87067E2629755D5C0052E795 /* EditorStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStatusView.swift; sourceTree = "<group>"; };
 		87091B992A963C6B00F5EF0D /* EditorTextInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextInput.swift; sourceTree = "<group>"; };
 		8709C69D29B4412F009EABB5 /* AssistantSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSettingsView.swift; sourceTree = "<group>"; };
@@ -217,11 +179,6 @@
 		8723B46829C0A6EA0013D5D5 /* EvaluateJavaScriptIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EvaluateJavaScriptIntent.swift; sourceTree = "<group>"; };
 		8725E07F2977EEB3006A4961 /* EditorToolbarItems.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorToolbarItems.swift; sourceTree = "<group>"; };
 		8725E0812977EF46006A4961 /* EditorViewController+Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Toolbar.swift"; sourceTree = "<group>"; };
-		872924002951525C007156B1 /* QuickLookExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = QuickLookExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		872924052951525C007156B1 /* QuickLookViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookViewController.swift; sourceTree = "<group>"; };
-		8729240A2951525C007156B1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/Main.xib; sourceTree = "<group>"; };
-		8729240C2951525C007156B1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		8729240D2951525C007156B1 /* Info.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Info.entitlements; sourceTree = "<group>"; };
 		8729C5A5294B5E6B006F262B /* EditorViewController+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Menu.swift"; sourceTree = "<group>"; };
 		872E5FBF300918FA00D34792 /* ExtensionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionsViewController.swift; sourceTree = "<group>"; };
 		873126E3297BAC9C001521A0 /* EditorViewController+Pandoc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Pandoc.swift"; sourceTree = "<group>"; };
@@ -244,8 +201,6 @@
 		87585FDF2DA3EC7A0053069E /* NSColor+Scripting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Scripting.swift"; sourceTree = "<group>"; };
 		87585FE02DA3EC7A0053069E /* Error+Scripting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Error+Scripting.swift"; sourceTree = "<group>"; };
 		8763C31E2F92574900A3841D /* EditorHistoryStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorHistoryStorage.swift; sourceTree = "<group>"; };
-		8765FD242AF28F1000C645A8 /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
-		8765FD282AF291D300C645A8 /* AppVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppVersion.swift; sourceTree = "<group>"; };
 		8767BBAE295A8BA500BFACAE /* EditorViewController+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+UI.swift"; sourceTree = "<group>"; };
 		8767BBB0295A8C1D00BFACAE /* EditorViewController+Delegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Delegate.swift"; sourceTree = "<group>"; };
 		8767BBB4295AD62700BFACAE /* EditorReplaceButtons.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorReplaceButtons.swift; sourceTree = "<group>"; };
@@ -263,10 +218,6 @@
 		878B7B992CE0DA7D00220F39 /* EditorViewController+FileVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+FileVersion.swift"; sourceTree = "<group>"; };
 		8790ABD32A98F5F40083825C /* EditorViewController+Statistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Statistics.swift"; sourceTree = "<group>"; };
 		8790B6EB297036B2000DFC1A /* EditorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorWindow.swift; sourceTree = "<group>"; };
-		8794A0612FC5254E005CCC73 /* QuickLookWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookWebView.swift; sourceTree = "<group>"; };
-		8794A06A2FC525DF005CCC73 /* QuickLookConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookConfig.swift; sourceTree = "<group>"; };
-		8794A0822FC53BCB005CCC73 /* QuickLookViewController+UI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QuickLookViewController+UI.swift"; sourceTree = "<group>"; };
-		8794A08A2FC53C26005CCC73 /* QuickLookViewController+Dragging.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "QuickLookViewController+Dragging.swift"; sourceTree = "<group>"; };
 		879715C82D11547F0069964D /* EditorSaveOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSaveOptionsView.swift; sourceTree = "<group>"; };
 		87A73AB2294C4B27006A710E /* EditorWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorWebView.swift; sourceTree = "<group>"; };
 		87A73AB4294C4B48006A710E /* EditorFindPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorFindPanel.swift; sourceTree = "<group>"; };
@@ -285,7 +236,6 @@
 		87BB5A292E929BA700A17C14 /* AppExceptionCatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppExceptionCatcher.swift; sourceTree = "<group>"; };
 		87BDF6E32976C97100548079 /* EditorViewController+GotoLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+GotoLine.swift"; sourceTree = "<group>"; };
 		87BEF30029A88F6800596E17 /* AppCustomization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCustomization.swift; sourceTree = "<group>"; };
-		87BFF238298AAC75006C31E4 /* MarkEditTools */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MarkEditTools; sourceTree = "<group>"; };
 		87C3CBFA29545944002A3436 /* MarkEditKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = MarkEditKit; sourceTree = "<group>"; };
 		87C600000000000000000002 /* EditorDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorDocumentTests.swift; sourceTree = "<group>"; };
 		87C600000000000000000004 /* MarkEditMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MarkEditMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -293,15 +243,6 @@
 		87D700000000000000000002 /* QuickSearchMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickSearchMenuTests.swift; sourceTree = "<group>"; };
 		87D800000000000000000002 /* ContextMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextMenuTests.swift; sourceTree = "<group>"; };
 		87D9322D2A925C6700B20D84 /* EditorReplaceTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorReplaceTextField.swift; sourceTree = "<group>"; };
-		87DA0000000000000000E000 /* UpdateInstaller.xpc */ = {isa = PBXFileReference; explicitFileType = "wrapper.xpc-service"; includeInIndex = 0; path = UpdateInstaller.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
-		87DA0000000000000000E010 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		87DA0000000000000000E011 /* UpdateInstalling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateInstalling.swift; sourceTree = "<group>"; };
-		87DA0000000000000000E012 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
-		87DA0000000000000000E013 /* UpdateRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateRunner.swift; sourceTree = "<group>"; };
-		87DA0000000000000000E015 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		87DA0000000000000000E031 /* AppUpdater+Install.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppUpdater+Install.swift"; sourceTree = "<group>"; };
-		87DA0000000000000000E033 /* AppUpdater+Download.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "AppUpdater+Download.swift"; sourceTree = "<group>"; };
-		87DA0000000000000000E042 /* UpdaterCore */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = UpdaterCore; sourceTree = "<group>"; };
 		87DCB61F2B284AAD00A3056F /* AppHacks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppHacks.swift; sourceTree = "<group>"; };
 		87DE081A294DDA49004AD33A /* AppTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppTheme.swift; sourceTree = "<group>"; };
 		87DE084A294E22C5004AD33A /* EditorViewController+TextFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+TextFinder.swift"; sourceTree = "<group>"; };
@@ -332,8 +273,6 @@
 				870F17902985775B00003DA7 /* AppKitExtensions in Frameworks */,
 				8790ABDB2A98FF610083825C /* Statistics in Frameworks */,
 				87CC48FD29CC01E100BE1441 /* TextBundle in Frameworks */,
-				87B3ED8F2CBE1E12001FA6CE /* DiffKit in Frameworks */,
-				8701D0A42CC12321006AF8C2 /* FileVersion in Frameworks */,
 				CC000020300000000000FD01 /* FileDrop in Frameworks */,
 				EE200001EEEE000000000001 /* ExtensionCore in Frameworks */,
 				8775A77B29867012005867BF /* FontPicker in Frameworks */,
@@ -360,14 +299,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		87DA0000000000000000E007 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				87DA0000000000000000E041 /* UpdaterCore in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -376,10 +307,7 @@
 			children = (
 				870F17752985546500003DA7 /* MarkEditCore */,
 				87C3CBFA29545944002A3436 /* MarkEditKit */,
-				87BFF238298AAC75006C31E4 /* MarkEditTools */,
 				870A51A4294700DE0095C7EB /* MarkEditMac */,
-				872924042951525C007156B1 /* QuickLookMac */,
-				87DA0000000000000000E001 /* UpdateInstaller */,
 				870A51A3294700DE0095C7EB /* Products */,
 				874823CC29B0BD980067EC49 /* Frameworks */,
 				8743B26229593B2000F83DAE /* Build.xcconfig */,
@@ -395,8 +323,6 @@
 			children = (
 				870A51A2294700DE0095C7EB /* Kernmark.app */,
 				87C600000000000000000004 /* MarkEditMacTests.xctest */,
-				872924002951525C007156B1 /* QuickLookExtension.appex */,
-				87DA0000000000000000E000 /* UpdateInstaller.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -427,6 +353,7 @@
 		870A51C229470D5C0095C7EB /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				KM0000052026102300000001 /* EditorAssets */,
 				870A51C8294752530095C7EB /* index.html */,
 				870A51A9294700E00095C7EB /* Assets.xcassets */,
 				876D70862E7A8E9D00E308A4 /* AppIcon.icon */,
@@ -454,6 +381,7 @@
 		870A51C52947103A0095C7EB /* Sources */ = {
 			isa = PBXGroup;
 			children = (
+				KM0000012026102300000001 /* Kernmark */,
 				873D6403295FD2FF0095DEF7 /* Main */,
 				870A51C429470D830095C7EB /* Editor */,
 				87A35DF830026B720079CF08 /* Extension */,
@@ -465,6 +393,45 @@
 				87850C8429482A6A00D1A952 /* Extras */,
 			);
 			path = Sources;
+			sourceTree = "<group>";
+		};
+		KM0000012026102300000001 /* Kernmark */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000022026102300000001 /* LiveMode */,
+				KM0000092026102300000001 /* EditorAssets */,
+				KM0000172026102300000001 /* Sidebar */,
+			);
+			path = Kernmark;
+			sourceTree = "<group>";
+		};
+		KM0000022026102300000001 /* LiveMode */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000032026102300000001 /* LiveModeManager.swift */,
+			);
+			path = LiveMode;
+			sourceTree = "<group>";
+		};
+		KM0000092026102300000001 /* EditorAssets */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000072026102300000001 /* KernmarkAssetLoader.swift */,
+			);
+			path = EditorAssets;
+			sourceTree = "<group>";
+		};
+		KM0000172026102300000001 /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				KM0000102026102300000001 /* EditorViewController+Sidebar.swift */,
+				KM0000112026102300000001 /* SidebarCellView.swift */,
+				KM0000122026102300000001 /* SidebarItem.swift */,
+				KM0000142026102300000001 /* SidebarSecurityScope.swift */,
+				KM0000152026102300000001 /* SidebarStrings.swift */,
+				KM0000162026102300000001 /* SidebarViewController.swift */,
+			);
+			path = Sidebar;
 			sourceTree = "<group>";
 		};
 		870F1797298577A000003DA7 /* Panels */ = {
@@ -488,30 +455,6 @@
 				0A1100013010000000000004 /* AppDelegate+QuickSearch.swift */,
 			);
 			path = Application;
-			sourceTree = "<group>";
-		};
-		872924042951525C007156B1 /* QuickLookMac */ = {
-			isa = PBXGroup;
-			children = (
-				879FCC6E30184C1A00B46145 /* Extensions */,
-				8794A0612FC5254E005CCC73 /* QuickLookWebView.swift */,
-				8703C171303E7DCF00A896D0 /* QuickLookWindowSize.swift */,
-				872924052951525C007156B1 /* QuickLookViewController.swift */,
-				8794A06A2FC525DF005CCC73 /* QuickLookConfig.swift */,
-				872924262951A134007156B1 /* Supporting Files */,
-			);
-			path = QuickLookMac;
-			sourceTree = "<group>";
-		};
-		872924262951A134007156B1 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				8729240C2951525C007156B1 /* Info.plist */,
-				8729240D2951525C007156B1 /* Info.entitlements */,
-				872924092951525C007156B1 /* Main.xib */,
-				87B0D1012F1A4C0100B0D101 /* Localizable.xcstrings */,
-			);
-			name = "Supporting Files";
 			sourceTree = "<group>";
 		};
 		872E5F8C3008DA7300D34792 /* Core */ = {
@@ -594,10 +537,6 @@
 		8765FD262AF291A300C645A8 /* Updater */ = {
 			isa = PBXGroup;
 			children = (
-				8765FD282AF291D300C645A8 /* AppVersion.swift */,
-				8765FD242AF28F1000C645A8 /* AppUpdater.swift */,
-				87DA0000000000000000E033 /* AppUpdater+Download.swift */,
-				87DA0000000000000000E031 /* AppUpdater+Install.swift */,
 			);
 			path = Updater;
 			sourceTree = "<group>";
@@ -662,8 +601,6 @@
 		879FCC6E30184C1A00B46145 /* Extensions */ = {
 			isa = PBXGroup;
 			children = (
-				8794A0822FC53BCB005CCC73 /* QuickLookViewController+UI.swift */,
-				8794A08A2FC53C26005CCC73 /* QuickLookViewController+Dragging.swift */,
 			);
 			path = Extensions;
 			sourceTree = "<group>";
@@ -716,15 +653,6 @@
 			path = Replace;
 			sourceTree = "<group>";
 		};
-		87BADAC3301F863F00DCF4C7 /* Supporting Files */ = {
-			isa = PBXGroup;
-			children = (
-				87DA0000000000000000E015 /* Info.plist */,
-				87DA0000000000000000E010 /* main.swift */,
-			);
-			name = "Supporting Files";
-			sourceTree = "<group>";
-		};
 		87C600000000000000000006 /* Tests */ = {
 			isa = PBXGroup;
 			children = (
@@ -733,20 +661,9 @@
 				87B000000000000000000103 /* BookmarkStoreTests.swift */,
 				87D700000000000000000002 /* QuickSearchMenuTests.swift */,
 				87D800000000000000000002 /* ContextMenuTests.swift */,
+				KM0000222026102300000001 /* KernmarkTests.swift */,
 			);
 			path = Tests;
-			sourceTree = "<group>";
-		};
-		87DA0000000000000000E001 /* UpdateInstaller */ = {
-			isa = PBXGroup;
-			children = (
-				87DA0000000000000000E042 /* UpdaterCore */,
-				87DA0000000000000000E011 /* UpdateInstalling.swift */,
-				87DA0000000000000000E013 /* UpdateRunner.swift */,
-				87DA0000000000000000E012 /* UpdateService.swift */,
-				87BADAC3301F863F00DCF4C7 /* Supporting Files */,
-			);
-			path = UpdateInstaller;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -760,15 +677,10 @@
 				870A519E294700DE0095C7EB /* Sources */,
 				870A519F294700DE0095C7EB /* Frameworks */,
 				870A51A0294700DE0095C7EB /* Resources */,
-				872924112951525C007156B1 /* Embed Foundation Extensions */,
-				87DA0000000000000000E008 /* Embed XPC Services */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				87BFF24E298AB754006C31E4 /* PBXTargetDependency */,
-				8729240F2951525C007156B1 /* PBXTargetDependency */,
-				87DA0000000000000000E009 /* PBXTargetDependency */,
 			);
 			name = MarkEditMac;
 			packageProductDependencies = (
@@ -782,36 +694,12 @@
 				874823CD29B0BD980067EC49 /* TextCompletion */,
 				87CC48FC29CC01E100BE1441 /* TextBundle */,
 				8790ABDA2A98FF610083825C /* Statistics */,
-				87B3ED8E2CBE1E12001FA6CE /* DiffKit */,
-				8701D0A32CC12321006AF8C2 /* FileVersion */,
 				CC000020300000000000FD02 /* FileDrop */,
 				EE200002EEEE000000000002 /* ExtensionCore */,
 			);
 			productName = MarkEdit;
 			productReference = 870A51A2294700DE0095C7EB /* Kernmark.app */;
 			productType = "com.apple.product-type.application";
-		};
-		872923FF2951525C007156B1 /* QuickLookMac */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 872924142951525C007156B1 /* Build configuration list for PBXNativeTarget "QuickLookMac" */;
-			buildPhases = (
-				87D71F7000000000000000A2 /* Check Entitlements Drift */,
-				872923FC2951525C007156B1 /* Sources */,
-				872923FD2951525C007156B1 /* Frameworks */,
-				872923FE2951525C007156B1 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				87A221FF30382785008F7D6F /* PBXTargetDependency */,
-			);
-			name = QuickLookMac;
-			packageProductDependencies = (
-				87EB9900295755DA00A56B97 /* MarkEditCore */,
-			);
-			productName = QuickLookMac;
-			productReference = 872924002951525C007156B1 /* QuickLookExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 		87C600000000000000000007 /* MarkEditMacTests */ = {
 			isa = PBXNativeTarget;
@@ -830,26 +718,6 @@
 			productReference = 87C600000000000000000004 /* MarkEditMacTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		87DA0000000000000000E002 /* UpdateInstaller */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 87DA0000000000000000E003 /* Build configuration list for PBXNativeTarget "UpdateInstaller" */;
-			buildPhases = (
-				87DA0000000000000000E006 /* Sources */,
-				87DA0000000000000000E007 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				87A2220530382789008F7D6F /* PBXTargetDependency */,
-			);
-			name = UpdateInstaller;
-			packageProductDependencies = (
-				87DA0000000000000000E040 /* UpdaterCore */,
-			);
-			productName = UpdateInstaller;
-			productReference = 87DA0000000000000000E000 /* UpdateInstaller.xpc */;
-			productType = "com.apple.product-type.xpc-service";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -864,15 +732,9 @@
 						CreatedOnToolsVersion = 14.1;
 						LastSwiftMigration = 1410;
 					};
-					872923FF2951525C007156B1 = {
-						CreatedOnToolsVersion = 14.1;
-					};
 					87C600000000000000000007 = {
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = 870A51A1294700DE0095C7EB;
-					};
-					87DA0000000000000000E002 = {
-						CreatedOnToolsVersion = 26.4;
 					};
 				};
 			};
@@ -893,8 +755,6 @@
 			targets = (
 				870A51A1294700DE0095C7EB /* MarkEditMac */,
 				87C600000000000000000007 /* MarkEditMacTests */,
-				872923FF2951525C007156B1 /* QuickLookMac */,
-				87DA0000000000000000E002 /* UpdateInstaller */,
 			);
 		};
 /* End PBXProject section */
@@ -904,6 +764,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				KM0000062026102300000001 /* EditorAssets in Resources */,
 				870A51C9294752530095C7EB /* index.html in Resources */,
 				87132AA32C188FE900FD262B /* AppShortcuts.xcstrings in Resources */,
 				870A51AA294700E00095C7EB /* Assets.xcassets in Resources */,
@@ -918,7 +779,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8729240B2951525C007156B1 /* Main.xib in Resources */,
 				87B0D1022F1A4C0100B0D101 /* Localizable.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -947,27 +807,6 @@
 			shellPath = /bin/bash;
 			shellScript = "set -euo pipefail\nbase=\"$SCRIPT_INPUT_FILE_0\"\nlocal_file=\"$SCRIPT_INPUT_FILE_1\"\n[ -f \"$local_file\" ] || exit 0\npython3 - \"$base\" \"$local_file\" <<'EOF'\nimport plistlib, sys\n\nbase_path, local_path = sys.argv[1], sys.argv[2]\nbase = plistlib.load(open(base_path, \"rb\"))\nlocal = plistlib.load(open(local_path, \"rb\"))\n\nallowed_extras = {\"com.apple.security.application-groups\"}\nerrors = []\n\nfor k, v in base.items():\n  if k not in local:\n    errors.append(f\"Missing key in local: {k}\")\n  elif local[k] != v:\n    errors.append(f\"Value differs for {k}: base={v!r} local={local[k]!r}\")\n\nfor k in local:\n  if k not in base and k not in allowed_extras:\n    errors.append(f\"Unexpected key in local (not in base, not allow-listed): {k}\")\n\nfor e in errors:\n  print(f\"{local_path}:1: error: {e}\")\n\nsys.exit(1 if errors else 0)\nEOF\n";
 		};
-		87D71F7000000000000000A2 /* Check Entitlements Drift */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/QuickLookMac/Info.entitlements",
-				"$(SRCROOT)/QuickLookMac/Info.local.entitlements",
-			);
-			name = "Check Entitlements Drift";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/bash;
-			shellScript = "set -euo pipefail\nbase=\"$SCRIPT_INPUT_FILE_0\"\nlocal_file=\"$SCRIPT_INPUT_FILE_1\"\n[ -f \"$local_file\" ] || exit 0\npython3 - \"$base\" \"$local_file\" <<'EOF'\nimport plistlib, sys\n\nbase_path, local_path = sys.argv[1], sys.argv[2]\nbase = plistlib.load(open(base_path, \"rb\"))\nlocal = plistlib.load(open(local_path, \"rb\"))\n\nallowed_extras = {\"com.apple.security.application-groups\"}\nerrors = []\n\nfor k, v in base.items():\n  if k not in local:\n    errors.append(f\"Missing key in local: {k}\")\n  elif local[k] != v:\n    errors.append(f\"Value differs for {k}: base={v!r} local={local[k]!r}\")\n\nfor k in local:\n  if k not in base and k not in allowed_extras:\n    errors.append(f\"Unexpected key in local (not in base, not allow-listed): {k}\")\n\nfor e in errors:\n  print(f\"{local_path}:1: error: {e}\")\n\nsys.exit(1 if errors else 0)\nEOF\n";
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -975,6 +814,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				KM0000042026102300000001 /* LiveModeManager.swift in Sources */,
+				KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */,
+				KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */,
+				KM0000202610230000000002 /* SidebarCellView.swift in Sources */,
+				KM0000202610230000000003 /* SidebarItem.swift in Sources */,
+				KM0000202610230000000005 /* SidebarSecurityScope.swift in Sources */,
+				KM0000202610230000000006 /* SidebarStrings.swift in Sources */,
+				KM0000202610230000000007 /* SidebarViewController.swift in Sources */,
 				8725E0822977EF46006A4961 /* EditorViewController+Toolbar.swift in Sources */,
 				874BE6F429BB37FA002F83BA /* IntentProvider.swift in Sources */,
 				87B3ED5D2CBCADD6001FA6CE /* NSDocumentController+Extras.swift in Sources */,
@@ -996,12 +843,8 @@
 				8769BABE2C65F9D400EDA0A6 /* AppRuntimeConfig.swift in Sources */,
 				870F17662984D2C000003DA7 /* EditorViewController+LineEndings.swift in Sources */,
 				8790B6EC297036B2000DFC1A /* EditorWindow.swift in Sources */,
-				8765FD252AF28F1000C645A8 /* AppUpdater.swift in Sources */,
-				87DA0000000000000000E032 /* AppUpdater+Install.swift in Sources */,
 				87AF5957302379C4006E8C6A /* AppRelauncher.swift in Sources */,
 				87B000000000000000000102 /* BookmarkStore.swift in Sources */,
-				87DA0000000000000000E034 /* AppUpdater+Download.swift in Sources */,
-				87DA0000000000000000E030 /* UpdateInstalling.swift in Sources */,
 				EE100014EEEE000000000014 /* ExtensionsOverlays.swift in Sources */,
 				87DCB6202B284AAD00A3056F /* AppHacks.swift in Sources */,
 				874BE6F729BB57AC002F83BA /* IntentError.swift in Sources */,
@@ -1052,7 +895,6 @@
 				878AABE92CB111410081C5E1 /* EditorMenuItem.swift in Sources */,
 				87AAEDF52958258C00C8E61C /* EditorFindPanel+UI.swift in Sources */,
 				87A73AB5294C4B48006A710E /* EditorFindPanel.swift in Sources */,
-				8765FD292AF291D300C645A8 /* AppVersion.swift in Sources */,
 				874BE70829BB62BA002F83BA /* CreateNewDocumentIntent.swift in Sources */,
 				870A51BD294702AF0095C7EB /* EditorDocument.swift in Sources */,
 				CC000002300000000000001A /* EditorDocument+ClosedTab.swift in Sources */,
@@ -1072,12 +914,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				872924062951525C007156B1 /* QuickLookViewController.swift in Sources */,
-				8794A0632FC52551005CCC73 /* QuickLookWebView.swift in Sources */,
-				8794A08C2FC53C28005CCC73 /* QuickLookViewController+Dragging.swift in Sources */,
-				8703C175303E7DD300A896D0 /* QuickLookWindowSize.swift in Sources */,
-				8794A0832FC53BCC005CCC73 /* QuickLookViewController+UI.swift in Sources */,
-				8794A06C2FC525E2005CCC73 /* QuickLookConfig.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1090,49 +926,17 @@
 				87B000000000000000000104 /* BookmarkStoreTests.swift in Sources */,
 				87D700000000000000000001 /* QuickSearchMenuTests.swift in Sources */,
 				87D800000000000000000001 /* ContextMenuTests.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		87DA0000000000000000E006 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				87DA0000000000000000E020 /* main.swift in Sources */,
-				87DA0000000000000000E021 /* UpdateInstalling.swift in Sources */,
-				87DA0000000000000000E022 /* UpdateService.swift in Sources */,
-				87DA0000000000000000E023 /* UpdateRunner.swift in Sources */,
+				KM0000232026102300000001 /* KernmarkTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		8729240F2951525C007156B1 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 872923FF2951525C007156B1 /* QuickLookMac */;
-			targetProxy = 8729240E2951525C007156B1 /* PBXContainerItemProxy */;
-		};
-		87A221FF30382785008F7D6F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87A221FE30382785008F7D6F /* SwiftLint */;
-		};
-		87A2220530382789008F7D6F /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87A2220430382789008F7D6F /* SwiftLint */;
-		};
-		87BFF24E298AB754006C31E4 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			productRef = 87BFF24D298AB754006C31E4 /* SwiftLint */;
-		};
 		87C60000000000000000000A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 870A51A1294700DE0095C7EB /* MarkEditMac */;
 			targetProxy = 87C600000000000000000003 /* PBXContainerItemProxy */;
-		};
-		87DA0000000000000000E009 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 87DA0000000000000000E002 /* UpdateInstaller */;
-			targetProxy = 87DA0000000000000000E00A /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1144,15 +948,6 @@
 				8757F7FA2AAC815F001957DD /* mul */,
 			);
 			name = Main.storyboard;
-			sourceTree = "<group>";
-		};
-		872924092951525C007156B1 /* Main.xib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				8729240A2951525C007156B1 /* Base */,
-				8757F7F92AAC815F001957DD /* mul */,
-			);
-			name = Main.xib;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -1371,70 +1166,6 @@
 			};
 			name = Release;
 		};
-		872924122951525C007156B1 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8743B26229593B2000F83DAE /* Build.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "$(QUICKLOOKMAC_ENTITLEMENTS)";
-				CODE_SIGN_IDENTITY = "$(inherited)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(inherited)";
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "$(inherited)";
-				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = QuickLookMac/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).quicklook-extension";
-				PRODUCT_NAME = QuickLookExtension;
-				REGISTER_APP_GROUPS = "$(inherited)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_STRICT_CONCURRENCY = complete;
-				SWIFT_VERSION = 6.0;
-			};
-			name = Debug;
-		};
-		872924132951525C007156B1 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8743B26229593B2000F83DAE /* Build.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = "$(QUICKLOOKMAC_ENTITLEMENTS)";
-				CODE_SIGN_IDENTITY = "$(inherited)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(inherited)";
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "$(inherited)";
-				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = QuickLookMac/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/../Frameworks",
-					"@executable_path/../../../../Frameworks",
-				);
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).quicklook-extension";
-				PRODUCT_NAME = QuickLookExtension;
-				REGISTER_APP_GROUPS = "$(inherited)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_STRICT_CONCURRENCY = complete;
-				SWIFT_VERSION = 6.0;
-			};
-			name = Release;
-		};
 		87C60000000000000000000B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -1471,52 +1202,6 @@
 			};
 			name = Release;
 		};
-		87DA0000000000000000E004 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8743B26229593B2000F83DAE /* Build.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "$(inherited)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(inherited)";
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "$(inherited)";
-				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = UpdateInstaller/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).installer";
-				PRODUCT_NAME = UpdateInstaller;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Debug;
-		};
-		87DA0000000000000000E005 /* Release */ = {
-			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8743B26229593B2000F83DAE /* Build.xcconfig */;
-			buildSettings = {
-				CODE_SIGN_IDENTITY = "$(inherited)";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = "$(inherited)";
-				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = "$(inherited)";
-				ENABLE_HARDENED_RUNTIME = YES;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = UpdateInstaller/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				MACOSX_DEPLOYMENT_TARGET = 26.0;
-				MARKETING_VERSION = "$(inherited)";
-				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited).installer";
-				PRODUCT_NAME = UpdateInstaller;
-				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 5.0;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -1538,29 +1223,11 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		872924142951525C007156B1 /* Build configuration list for PBXNativeTarget "QuickLookMac" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				872924122951525C007156B1 /* Debug */,
-				872924132951525C007156B1 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		87C600000000000000000008 /* Build configuration list for PBXNativeTarget "MarkEditMacTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				87C60000000000000000000B /* Debug */,
 				87C60000000000000000000C /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		87DA0000000000000000E003 /* Build configuration list for PBXNativeTarget "UpdateInstaller" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				87DA0000000000000000E004 /* Debug */,
-				87DA0000000000000000E005 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -1575,10 +1242,6 @@
 		0A1100023010000000000002 /* QuickSearchCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = QuickSearchCore;
-		};
-		8701D0A32CC12321006AF8C2 /* FileVersion */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = FileVersion;
 		};
 		870F177C29855CA500003DA7 /* MarkEditKit */ = {
 			isa = XCSwiftPackageProductDependency;
@@ -1608,29 +1271,9 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = Statistics;
 		};
-		87A221FE30382785008F7D6F /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
-		};
-		87A2220430382789008F7D6F /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
-		};
-		87B3ED8E2CBE1E12001FA6CE /* DiffKit */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = DiffKit;
-		};
-		87BFF24D298AB754006C31E4 /* SwiftLint */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = "plugin:SwiftLint";
-		};
 		87CC48FC29CC01E100BE1441 /* TextBundle */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = TextBundle;
-		};
-		87DA0000000000000000E040 /* UpdaterCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = UpdaterCore;
 		};
 		87EB9900295755DA00A56B97 /* MarkEditCore */ = {
 			isa = XCSwiftPackageProductDependency;

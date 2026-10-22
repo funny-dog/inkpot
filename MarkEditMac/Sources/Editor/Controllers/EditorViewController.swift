@@ -168,6 +168,11 @@ final class EditorViewController: NSViewController {
       forURLScheme: EditorImageLoader.scheme
     )
 
+    config.setURLSchemeHandler(
+      KernmarkAssetLoader(),
+      forURLScheme: KernmarkAssetLoader.scheme
+    )
+
     // Respect user settings for Writing Tools behavior
     if let writingToolsBehavior = AppRuntimeConfig.writingToolsBehavior {
       config.writingToolsBehavior = writingToolsBehavior

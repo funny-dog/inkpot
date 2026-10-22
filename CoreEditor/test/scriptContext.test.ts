@@ -69,21 +69,21 @@ describe('script context', () => {
     expect(window.require('markedit-api').MarkEdit).toBe(MarkEdit);
   });
 
-  test('runs Quick Look scripts without require or credential access', async () => {
+  test('runs scripts without require or credential access when native bridge is absent', async () => {
     const require = window.require;
     const webkit = window.webkit;
     Reflect.deleteProperty(window, 'require');
     window.webkit = undefined;
     try {
       MarkEdit.getFileContent = withScriptContext(path => async () => path);
-      const run = createScriptRunner([{ path: '/scripts/quicklook.js' }]);
+      const run = createScriptRunner([{ path: '/scripts/standalone.js' }]);
       let api: typeof MarkEdit | undefined;
-      run('/scripts/quicklook.js', (boundAPI, require) => {
+      run('/scripts/standalone.js', (boundAPI, require) => {
         expect(require).toBeUndefined();
         api = boundAPI;
       });
       expect(api).toBeDefined();
-      await expect(api?.getFileContent()).resolves.toBe('/scripts/quicklook.js');
+      await expect(api?.getFileContent()).resolves.toBe('/scripts/standalone.js');
       await expect(api?.secretStorage.get('token')).rejects.toThrow('native MarkEdit app');
     } finally {
       window.require = require;

@@ -1,8 +1,6 @@
 import { Decoration } from '@codemirror/view';
-import { createBlockWrappers, createDecos, createWidgetDeco, createLineDeco } from '../matchers/lezer';
+import { createBlockWrappers, createDecos, createLineDeco } from '../matchers/lezer';
 import { createBlockPlugin, createDecoPlugin } from '../helper';
-import { PreviewWidget } from '../views';
-import { cancelDefaultEvent, PreviewType, showPreview } from '../../modules/preview';
 
 /**
  * Decorations for InlineCode.
@@ -46,36 +44,3 @@ export const codeBlockStyle = (() => {
     createDecoPlugin(() => createLineDeco(nodeNames, 'cm-md-monospace cm-md-codeBlock')),
   ];
 })();
-
-/**
- * Enable [preview] button for https://mermaid.js.org/.
- */
-export const previewMermaid = createDecoPlugin(() => {
-  return createWidgetDeco('CodeInfo', node => {
-    const state = window.editor.state;
-    if (state.sliceDoc(node.from, node.to) !== 'mermaid') {
-      return null;
-    }
-
-    const container = node.node.parent;
-    if (container?.name !== 'FencedCode') {
-      return null;
-    }
-
-    const boundary = container.lastChild;
-    if (boundary?.name !== 'CodeMark') {
-      return null;
-    }
-
-    const code = state.sliceDoc(node.to + 1, boundary.from);
-    if (code.trim().length === 0) {
-      return null;
-    }
-
-    // Here we finally confirmed that the code block is for mermaid
-    return new PreviewWidget(code, PreviewType.mermaid, node.to);
-  });
-}, {
-  click: showPreview,
-  mousedown: cancelDefaultEvent,
-});

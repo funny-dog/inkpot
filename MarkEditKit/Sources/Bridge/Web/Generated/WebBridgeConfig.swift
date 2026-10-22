@@ -90,6 +90,22 @@ public final class WebBridgeConfig {
     webView?.invoke(path: "webModules.config.setFocusMode", message: message, completion: completion)
   }
 
+  public func setLiveMode(enabled: Bool, completion: ((Result<Void, WKWebView.InvokeError>) -> Void)? = nil) {
+    let message = BridgeMessage(
+      ("enabled", enabled)
+    )
+
+    webView?.invoke(path: "webModules.config.setLiveMode", message: message, completion: completion)
+  }
+
+  public func setVimMode(enabled: Bool, completion: ((Result<Void, WKWebView.InvokeError>) -> Void)? = nil) {
+    let message = BridgeMessage(
+      ("enabled", enabled)
+    )
+
+    webView?.invoke(path: "webModules.config.setVimMode", message: message, completion: completion)
+  }
+
   public func setLineWrapping(enabled: Bool, completion: ((Result<Void, WKWebView.InvokeError>) -> Void)? = nil) {
     let message = BridgeMessage(
       ("enabled", enabled)

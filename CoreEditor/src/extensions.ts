@@ -41,6 +41,8 @@ import { customizedCommandsKeymap, emojiDeletionKeymap } from './modules/command
 import { autocompleteExtensions, standardLinkCompletion, referenceLinkCompletion } from './modules/completion';
 import { tocKeymap } from './modules/toc';
 import { userExtensions, userMarkdownConfigs, userCodeLanguages, userHTMLLanguage } from './api/methods';
+import { liveModeExtension } from './wysiwyg';
+import { vimModeExtension } from './wysiwyg/vim';
 
 const theme = new Compartment;
 const readOnly = new Compartment;
@@ -163,6 +165,8 @@ export function extensions(options: { lineBreak?: string }) {
     invisibles.of(invisiblesExtension(window.config.invisiblesBehavior, editingState.hasSelection)), // Must after actionExtensions to have line breaks at the end
     linkStyles, // Must after invisibles because whitespaces can break this
     selectedLines.of(window.config.focusMode ? selectedLinesDecoration : []),
+    liveModeExtension(),
+    vimModeExtension(),
 
     // Input handling
     wordTokenizer(),

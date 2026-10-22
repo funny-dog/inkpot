@@ -143,6 +143,9 @@ extension EditorViewController: NSMenuItemValidation {
       return webView.magnification > Constants.minimumZoomLevel
     case #selector(toggleWindowFloating(_:)):
       return view.window?.isKeyWindow == true
+    case #selector(toggleLiveMode(_:)):
+      menuItem.state = AppPreferences.Editor.liveMode ? .on : .off
+      return true
     default:
       return true
     }
@@ -486,7 +489,11 @@ private extension EditorViewController {
 
 // MARK: - View
 
-private extension EditorViewController {
+extension EditorViewController {
+  @IBAction func toggleLiveMode(_ sender: Any?) {
+    AppPreferences.Editor.liveMode.toggle()
+  }
+
   @IBAction func actualSize(_ sender: Any?) {
     webView.magnification = 1.0
   }
