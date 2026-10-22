@@ -114,10 +114,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
     }
 
-    DispatchQueue.global(qos: .utility).async {
-      EditorIndexHtml.copyToSharedContainer()
-    }
-
     DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
       Task {
         await ExtensionUpdater.checkForUpdates()

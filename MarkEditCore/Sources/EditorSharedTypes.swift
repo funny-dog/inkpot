@@ -11,7 +11,6 @@ import Foundation
 
 public enum EditorHost: String, Codable, Sendable {
   case mainApp = "mainApp"
-  case quicklook = "quicklook"
 }
 
 /// Font face attributes to control the font styles.

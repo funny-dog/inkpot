@@ -8,7 +8,6 @@ import { WebFontFace } from './@types/WebFontFace';
  */
 export enum Host {
   mainApp = 'mainApp',
-  quicklook = 'quicklook',
 }
 
 /**

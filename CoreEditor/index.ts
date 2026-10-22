@@ -30,7 +30,6 @@ import { setUp, applyReducedMotion } from './src/styling/config';
 import { loadTheme } from './src/styling/themes';
 import { startObserving } from './src/modules/events';
 import { createScriptRunner } from './src/scriptContext';
-import { setUpQuickLook } from './src/@quicklook';
 
 // In release mode, window.config = "{{EDITOR_CONFIG}}" will be replaced with a JSON literal
 const config = import.meta.env.PROD ? window.config : {
@@ -83,11 +82,8 @@ Object.defineProperty(window, '__prepareScriptContexts__', {
   },
 });
 
-switch (config.host) {
-  case Host.mainApp: setUpMainApp(config); break;
-  case Host.quicklook: setUpQuickLook(config); break;
-  default: throw new Error(`Unknown host: ${config.host}`);
-}
+// Kernmark 只保留主应用宿主，Quick Look 扩展已移除
+setUpMainApp(config);
 
 function setUpMainApp(config: Config) {
   // Initialize and inject modules to the global MarkEdit object
