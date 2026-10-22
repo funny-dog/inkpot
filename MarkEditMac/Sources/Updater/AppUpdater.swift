@@ -12,6 +12,8 @@ import MarkEditKit
 @MainActor
 enum AppUpdater {
   private enum Constants {
+    // Kernmark：更新源仍指向 MarkEdit 的发布页，自建发布渠道前先关闭应用自动更新
+    static let isEnabled = false
     static let defaultOSVer = "1.0.0"
     static let endpoint = "https://api.github.com/repos/MarkEdit-app/MarkEdit/releases/latest"
     static let minimumDownloadDuration: TimeInterval = 2.5
@@ -23,6 +25,10 @@ enum AppUpdater {
   }
 
   static func checkForUpdates(explicitly: Bool) async {
+    guard Constants.isEnabled else {
+      return Logger.log(.info, "App updates are disabled in Kernmark")
+    }
+
     guard explicitly || automatically else {
       return Logger.log(.info, "App update checks have been skipped")
     }

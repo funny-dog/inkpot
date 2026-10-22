@@ -57,7 +57,7 @@ private extension QuickLookViewController {
   enum Constants {
     static let guidanceIcon = "exclamationmark.bubble"
     static let guidanceMessage = String(
-      localized: "Open MarkEdit to complete the setup.",
+      localized: "Open Kernmark to complete the setup.",
       comment: "Message of the QuickLook setup guidance"
     )
   }

@@ -170,25 +170,25 @@
       }
     },
     "1Xt-HY-uBw.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"MarkEdit\"; ObjectID = \"1Xt-HY-uBw\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Kernmark\"; ObjectID = \"1Xt-HY-uBw\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         }
       }
@@ -338,25 +338,25 @@
       }
     },
     "4sb-4s-VLi.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Quit MarkEdit\"; ObjectID = \"4sb-4s-VLi\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Quit Kernmark\"; ObjectID = \"4sb-4s-VLi\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Quit MarkEdit"
+            "value" : "Quit Kernmark"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "退出 MarkEdit"
+            "value" : "退出 Kernmark"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "結束 MarkEdit"
+            "value" : "結束 Kernmark"
           }
         }
       }
@@ -386,25 +386,25 @@
       }
     },
     "5kV-Vb-QxS.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"About MarkEdit\"; ObjectID = \"5kV-Vb-QxS\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"About Kernmark\"; ObjectID = \"5kV-Vb-QxS\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "About MarkEdit"
+            "value" : "About Kernmark"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关于 MarkEdit"
+            "value" : "关于 Kernmark"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "關於 MarkEdit"
+            "value" : "關於 Kernmark"
           }
         }
       }
@@ -1612,25 +1612,25 @@
       }
     },
     "FKE-Sm-Kum.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"MarkEdit Help\"; ObjectID = \"FKE-Sm-Kum\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Kernmark Help\"; ObjectID = \"FKE-Sm-Kum\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "MarkEdit Help"
+            "value" : "Kernmark Help"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit 帮助"
+            "value" : "Kernmark 帮助"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit 輔助說明"
+            "value" : "Kernmark 輔助說明"
           }
         }
       }
@@ -2766,25 +2766,25 @@
       }
     },
     "Olw-nP-bQN.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Hide MarkEdit\"; ObjectID = \"Olw-nP-bQN\";",
+      "comment" : "Class = \"NSMenuItem\"; title = \"Hide Kernmark\"; ObjectID = \"Olw-nP-bQN\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Hide MarkEdit"
+            "value" : "Hide Kernmark"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隐藏 MarkEdit"
+            "value" : "隐藏 Kernmark"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "隱藏 MarkEdit"
+            "value" : "隱藏 Kernmark"
           }
         }
       }
@@ -3846,25 +3846,25 @@
       }
     },
     "uQy-DD-JDr.title" : {
-      "comment" : "Class = \"NSMenu\"; title = \"MarkEdit\"; ObjectID = \"uQy-DD-JDr\";",
+      "comment" : "Class = \"NSMenu\"; title = \"Kernmark\"; ObjectID = \"uQy-DD-JDr\";",
       "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "MarkEdit"
+            "value" : "Kernmark"
           }
         }
       }

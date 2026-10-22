@@ -19,7 +19,7 @@ import MarkEditCore
  */
 enum Localized {
   enum General {
-    static let safeModeAppName = String(localized: "MarkEdit (Safe Mode)", comment: "App menu title when running without customizations")
+    static let safeModeAppName = String(localized: "Kernmark (Safe Mode)", comment: "App menu title when running without customizations")
     static let done = String(localized: "Done", comment: "Button title, confirm an action")
     static let cancel = String(localized: "Cancel", comment: "Button title, cancel an action")
     static let learnMore = String(localized: "Learn More…", comment: "Button title, open related documentation")
@@ -59,7 +59,7 @@ enum Localized {
   enum Bookmarks {
     static let addBookmarksPrompt = String(localized: "Add Bookmarks", comment: "Menu and button title to bookmark files and folders")
     static let addBookmarks = addBookmarksPrompt + "…" // Used as the menu item title
-    static let accessMessage = String(localized: "Allow MarkEdit to access the selected files and folders.", comment: "Open panel message explaining bookmark access")
+    static let accessMessage = String(localized: "Allow Kernmark to access the selected files and folders.", comment: "Open panel message explaining bookmark access")
     static let revealInFinder = String(localized: "Reveal in Finder", comment: "Menu item to reveal a bookmarked file or folder")
     static let revokeBookmark = String(localized: "Revoke Bookmark", comment: "Menu item to remove a bookmark and release its access")
     static let revokeAll = String(localized: "Revoke All", comment: "Menu item to remove all bookmarks and release their access")
@@ -248,15 +248,15 @@ enum Localized {
 
   enum Updater {
     static let upToDateTitle = String(localized: "You’re up-to-date!", comment: "Title for the up-to-date info")
-    static let upToDateMessage = String(localized: "MarkEdit %@ is currently the latest version.", comment: "Message for the up-to-date info")
-    static let updateAvailableTitle = String(localized: "MarkEdit %@ is available!", comment: "Title for new version available")
+    static let upToDateMessage = String(localized: "Kernmark %@ is currently the latest version.", comment: "Message for the up-to-date info")
+    static let updateAvailableTitle = String(localized: "Kernmark %@ is available!", comment: "Title for new version available")
     static let updateFailedTitle = String(localized: "Failed to get the update.", comment: "Title for failed to get the update")
     static let updateFailedMessage = String(localized: "Please check your network connection or get the latest release from the version history.", comment: "Message for failed to get the update")
     static let needsOSUpdateMessage = String(localized: "This release requires macOS %@ or later and cannot be installed without upgrading your operating system.", comment: "Message for minimum required OS version")
     static let updateToMenuTitle = String(localized: "✨ Update to %@", comment: "Menu title format for a new version available")
     static let downloadingMenuTitle = String(localized: "Downloading%@", comment: "Menu title format for the update download, the placeholder is an animated ellipsis")
-    static let updateReadyTitle = String(localized: "MarkEdit %@ is ready to install!", comment: "Title for a downloaded update waiting to be installed")
-    static let updateReadyMessage = String(localized: "The update will be applied the next time MarkEdit launches.", comment: "Message for a downloaded update waiting to be installed")
+    static let updateReadyTitle = String(localized: "Kernmark %@ is ready to install!", comment: "Title for a downloaded update waiting to be installed")
+    static let updateReadyMessage = String(localized: "The update will be applied the next time Kernmark launches.", comment: "Message for a downloaded update waiting to be installed")
     static let updateReadyMenuTitle = String(localized: "✨ %@ is ready", comment: "Menu title format for a downloaded update waiting to be installed")
     static let releaseNotesTitle = String(localized: "What’s new in %@", comment: "Title for the release notes of an installed or staged update")
     static let installFailedTitle = String(localized: "Failed to install the update.", comment: "Title for failed to install the update")

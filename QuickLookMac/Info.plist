@@ -13,9 +13,9 @@
 				<string>net.daringfireball.markdown</string>
 				<string>org.textbundle.package</string>
 				<string>net.ia.markdown</string>
-				<string>app.markedit.md</string>
-				<string>app.markedit.markdown</string>
-				<string>app.markedit.txt</string>
+				<string>com.erhu.kernmark.md</string>
+				<string>com.erhu.kernmark.markdown</string>
+				<string>com.erhu.kernmark.txt</string>
 				<string>public.markdown</string>
 				<string>org.quarto.qmarkdown</string>
 				<string>com.unknown.md</string>

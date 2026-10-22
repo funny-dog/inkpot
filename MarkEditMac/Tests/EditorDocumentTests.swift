@@ -706,7 +706,7 @@ extension EditorDocumentTests {
       kSecClass as String: kSecClassGenericPassword,
       kSecUseDataProtectionKeychain as String: true,
       kSecAttrSynchronizable as String: false,
-      kSecAttrService as String: "app.cyan.markedit.extension-secrets.\(context.id)",
+      kSecAttrService as String: "com.erhu.kernmark.extension-secrets.\(context.id)",
       kSecAttrAccount as String: "token",
     ]
 
@@ -893,7 +893,7 @@ extension EditorDocumentTests {
 
     let url = directory.appending(path: "saved.md")
     let controller = NSDocumentController.shared
-    let document = try EditorDocument(type: "app.markedit.md")
+    let document = try EditorDocument(type: "com.erhu.kernmark.md")
     controller.addDocument(document)
     document.stringValue = "Asynchronous save\n"
     defer {
@@ -902,10 +902,10 @@ extension EditorDocumentTests {
       controller.removeDocument(document)
     }
 
-    XCTAssertTrue(document.canAsynchronouslyWrite(to: url, ofType: "app.markedit.md", for: .saveAsOperation))
-    try await document.save(to: url, ofType: "app.markedit.md", for: .saveAsOperation)
+    XCTAssertTrue(document.canAsynchronouslyWrite(to: url, ofType: "com.erhu.kernmark.md", for: .saveAsOperation))
+    try await document.save(to: url, ofType: "com.erhu.kernmark.md", for: .saveAsOperation)
 
-    XCTAssertEqual(try Data(contentsOf: url), try document.data(ofType: "app.markedit.md"))
+    XCTAssertEqual(try Data(contentsOf: url), try document.data(ofType: "com.erhu.kernmark.md"))
     XCTAssertEqual(document.fileURL, url)
   }
 
