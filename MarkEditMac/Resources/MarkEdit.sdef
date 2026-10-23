@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
-<dictionary title="Kernmark Terminology" xmlns:xi="http://www.w3.org/2001/XInclude">
+<dictionary title="Inkpot Terminology" xmlns:xi="http://www.w3.org/2001/XInclude">
   <xi:include href="file:///System/Library/ScriptingDefinitions/CocoaStandard.sdef" xpointer="xpointer(/dictionary/suite)"/>
 
-  <suite name="Kernmark Suite" code="mked" description="Kernmark specific classes.">
+  <suite name="Inkpot Suite" code="mked" description="Inkpot specific classes.">
     <enumeration name="saveable file format" code="savf" description="File formats for the save command.">
       <documentation>
         <html>
@@ -35,7 +35,7 @@
         </result>
     </command>
 
-    <class name="document" code="docu" description="A Kernmark document." plural="documents" inherits="document">
+    <class name="document" code="docu" description="A Inkpot document." plural="documents" inherits="document">
       <cocoa class="MarkEdit.EditorDocument"/>
       <property name="source" code="mdsc" type="text" access="rw" description="The raw markdown source of the document.">
         <cocoa key="scriptingSource"/>

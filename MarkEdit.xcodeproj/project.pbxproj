@@ -9,8 +9,8 @@
 /* Begin PBXBuildFile section */
 		KM0000042026102300000001 /* LiveModeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000032026102300000001 /* LiveModeManager.swift */; };
 		KM0000062026102300000001 /* EditorAssets in Resources */ = {isa = PBXBuildFile; fileRef = KM0000052026102300000001 /* EditorAssets */; };
-		KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000072026102300000001 /* KernmarkAssetLoader.swift */; };
-		KM0000232026102300000001 /* KernmarkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000222026102300000001 /* KernmarkTests.swift */; };
+		KM0000082026102300000001 /* InkpotAssetLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000072026102300000001 /* InkpotAssetLoader.swift */; };
+		KM0000232026102300000001 /* InkpotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000222026102300000001 /* InkpotTests.swift */; };
 		KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000102026102300000001 /* EditorViewController+Sidebar.swift */; };
 		KM0000202610230000000002 /* SidebarCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000112026102300000001 /* SidebarCellView.swift */; };
 		KM0000202610230000000003 /* SidebarItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = KM0000122026102300000001 /* SidebarItem.swift */; };
@@ -135,8 +135,8 @@
 /* Begin PBXFileReference section */
 		KM0000032026102300000001 /* LiveModeManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveModeManager.swift; sourceTree = "<group>"; };
 		KM0000052026102300000001 /* EditorAssets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = EditorAssets; path = CoreEditor/dist/EditorAssets; sourceTree = SOURCE_ROOT; };
-		KM0000072026102300000001 /* KernmarkAssetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkAssetLoader.swift; sourceTree = "<group>"; };
-		KM0000222026102300000001 /* KernmarkTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KernmarkTests.swift; sourceTree = "<group>"; };
+		KM0000072026102300000001 /* InkpotAssetLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InkpotAssetLoader.swift; sourceTree = "<group>"; };
+		KM0000222026102300000001 /* InkpotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InkpotTests.swift; sourceTree = "<group>"; };
 		KM0000102026102300000001 /* EditorViewController+Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Sidebar.swift"; sourceTree = "<group>"; };
 		KM0000112026102300000001 /* SidebarCellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarCellView.swift; sourceTree = "<group>"; };
 		KM0000122026102300000001 /* SidebarItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarItem.swift; sourceTree = "<group>"; };
@@ -148,7 +148,7 @@
 		87067E2629755D5C0052E795 /* EditorStatusView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorStatusView.swift; sourceTree = "<group>"; };
 		87091B992A963C6B00F5EF0D /* EditorTextInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorTextInput.swift; sourceTree = "<group>"; };
 		8709C69D29B4412F009EABB5 /* AssistantSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AssistantSettingsView.swift; sourceTree = "<group>"; };
-		870A51A2294700DE0095C7EB /* Kernmark.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kernmark.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		870A51A2294700DE0095C7EB /* Inkpot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Inkpot.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		870A51A9294700E00095C7EB /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		870A51AC294700E00095C7EB /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
 		870A51AE294700E00095C7EB /* Info.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Info.entitlements; sourceTree = "<group>"; };
@@ -299,7 +299,7 @@
 		870A51A3294700DE0095C7EB /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				870A51A2294700DE0095C7EB /* Kernmark.app */,
+				870A51A2294700DE0095C7EB /* Inkpot.app */,
 				87C600000000000000000004 /* MarkEditMacTests.xctest */,
 			);
 			name = Products;
@@ -358,7 +358,7 @@
 		870A51C52947103A0095C7EB /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				KM0000012026102300000001 /* Kernmark */,
+				KM0000012026102300000001 /* Inkpot */,
 				873D6403295FD2FF0095DEF7 /* Main */,
 				870A51C429470D830095C7EB /* Editor */,
 				87A35DF830026B720079CF08 /* Extension */,
@@ -371,14 +371,14 @@
 			path = Sources;
 			sourceTree = "<group>";
 		};
-		KM0000012026102300000001 /* Kernmark */ = {
+		KM0000012026102300000001 /* Inkpot */ = {
 			isa = PBXGroup;
 			children = (
 				KM0000022026102300000001 /* LiveMode */,
 				KM0000092026102300000001 /* EditorAssets */,
 				KM0000172026102300000001 /* Sidebar */,
 			);
-			path = Kernmark;
+			path = Inkpot;
 			sourceTree = "<group>";
 		};
 		KM0000022026102300000001 /* LiveMode */ = {
@@ -392,7 +392,7 @@
 		KM0000092026102300000001 /* EditorAssets */ = {
 			isa = PBXGroup;
 			children = (
-				KM0000072026102300000001 /* KernmarkAssetLoader.swift */,
+				KM0000072026102300000001 /* InkpotAssetLoader.swift */,
 			);
 			path = EditorAssets;
 			sourceTree = "<group>";
@@ -611,7 +611,7 @@
 				87B000000000000000000103 /* BookmarkStoreTests.swift */,
 				87D700000000000000000002 /* QuickSearchMenuTests.swift */,
 				87D800000000000000000002 /* ContextMenuTests.swift */,
-				KM0000222026102300000001 /* KernmarkTests.swift */,
+				KM0000222026102300000001 /* InkpotTests.swift */,
 			);
 			path = Tests;
 			sourceTree = "<group>";
@@ -648,7 +648,7 @@
 				EE200002EEEE000000000002 /* ExtensionCore */,
 			);
 			productName = MarkEdit;
-			productReference = 870A51A2294700DE0095C7EB /* Kernmark.app */;
+			productReference = 870A51A2294700DE0095C7EB /* Inkpot.app */;
 			productType = "com.apple.product-type.application";
 		};
 		87C600000000000000000007 /* MarkEditMacTests */ = {
@@ -764,7 +764,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				KM0000042026102300000001 /* LiveModeManager.swift in Sources */,
-				KM0000082026102300000001 /* KernmarkAssetLoader.swift in Sources */,
+				KM0000082026102300000001 /* InkpotAssetLoader.swift in Sources */,
 				KM0000202610230000000001 /* EditorViewController+Sidebar.swift in Sources */,
 				KM0000202610230000000002 /* SidebarCellView.swift in Sources */,
 				KM0000202610230000000003 /* SidebarItem.swift in Sources */,
@@ -865,7 +865,7 @@
 				87B000000000000000000104 /* BookmarkStoreTests.swift in Sources */,
 				87D700000000000000000001 /* QuickSearchMenuTests.swift in Sources */,
 				87D800000000000000000001 /* ContextMenuTests.swift in Sources */,
-				KM0000232026102300000001 /* KernmarkTests.swift in Sources */,
+				KM0000232026102300000001 /* InkpotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1047,7 +1047,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MarkEditMac/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
+				INFOPLIST_KEY_CFBundleDisplayName = Inkpot;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
@@ -1060,7 +1060,7 @@
 				MARKETING_VERSION = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
 				PRODUCT_MODULE_NAME = MarkEdit;
-				PRODUCT_NAME = Kernmark;
+				PRODUCT_NAME = Inkpot;
 				REGISTER_APP_GROUPS = "$(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -1085,7 +1085,7 @@
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = MarkEditMac/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Kernmark;
+				INFOPLIST_KEY_CFBundleDisplayName = Inkpot;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_NSMainStoryboardFile = Main;
@@ -1098,7 +1098,7 @@
 				MARKETING_VERSION = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = "$(inherited)";
 				PRODUCT_MODULE_NAME = MarkEdit;
-				PRODUCT_NAME = Kernmark;
+				PRODUCT_NAME = Inkpot;
 				REGISTER_APP_GROUPS = "$(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -1116,10 +1116,10 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.erhu.inkpot.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kernmark.app/Contents/MacOS/Kernmark";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Inkpot.app/Contents/MacOS/Inkpot";
 			};
 			name = Debug;
 		};
@@ -1134,10 +1134,10 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/../Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.tests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.erhu.inkpot.tests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Kernmark.app/Contents/MacOS/Kernmark";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Inkpot.app/Contents/MacOS/Inkpot";
 			};
 			name = Release;
 		};

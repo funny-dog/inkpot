@@ -87,7 +87,7 @@ Object.defineProperty(window, '__prepareScriptContexts__', {
   },
 });
 
-// Kernmark 只保留主应用宿主，Quick Look 扩展已移除
+// Inkpot 只保留主应用宿主，Quick Look 扩展已移除
 setUpMainApp(config);
 
 function setUpMainApp(config: Config) {

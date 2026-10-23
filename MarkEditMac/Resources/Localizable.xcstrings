@@ -70,25 +70,25 @@
         }
       }
     },
-    "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings." : {
+    "Inkpot has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings." : {
       "comment" : "Alert message explaining preview extension conflict",
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings."
+            "value" : "Inkpot has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark 已内置实时模式（所见即所得）。为避免重复渲染与格式冲突，建议在 MarkEdit-preview 扩展设置中关闭 Mixed 模式。"
+            "value" : "Inkpot 已内置实时模式（所见即所得）。为避免重复渲染与格式冲突，建议在 MarkEdit-preview 扩展设置中关闭 Mixed 模式。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark 已內建即時模式（所見即所得）。為避免重複渲染與格式衝突，建議在 MarkEdit-preview 擴充功能設定中關閉 Mixed 模式。"
+            "value" : "Inkpot 已內建即時模式（所見即所得）。為避免重複渲染與格式衝突，建議在 MarkEdit-preview 擴充功能設定中關閉 Mixed 模式。"
           }
         }
       }
@@ -418,19 +418,19 @@
         }
       }
     },
-    "Allow Kernmark to access the selected files and folders." : {
+    "Allow Inkpot to access the selected files and folders." : {
       "comment" : "Open panel message explaining bookmark access",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "允许 Kernmark 访问所选文件和文件夹。"
+            "value" : "允许 Inkpot 访问所选文件和文件夹。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "允許 Kernmark 存取所選的檔案與檔案夾。"
+            "value" : "允許 Inkpot 存取所選的檔案與檔案夾。"
           }
         }
       }
@@ -2526,70 +2526,70 @@
         }
       }
     },
-    "Kernmark (Safe Mode)" : {
+    "Inkpot (Safe Mode)" : {
       "comment" : "App menu title when running without customizations",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark（安全模式）"
+            "value" : "Inkpot（安全模式）"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark（安全模式）"
+            "value" : "Inkpot（安全模式）"
           }
         }
       }
     },
-    "Kernmark %@ is available!" : {
+    "Inkpot %@ is available!" : {
       "comment" : "Title for new version available",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 已发布！"
+            "value" : "Inkpot %@ 已发布！"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 已釋出！"
+            "value" : "Inkpot %@ 已釋出！"
           }
         }
       }
     },
-    "Kernmark %@ is currently the latest version." : {
+    "Inkpot %@ is currently the latest version." : {
       "comment" : "Message for the up-to-date info",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 是目前的最新版本。"
+            "value" : "Inkpot %@ 是目前的最新版本。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 是目前的最新版本。"
+            "value" : "Inkpot %@ 是目前的最新版本。"
           }
         }
       }
     },
-    "Kernmark %@ is ready to install!" : {
+    "Inkpot %@ is ready to install!" : {
       "comment" : "Title for a downloaded update waiting to be installed",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 已准备好安装！"
+            "value" : "Inkpot %@ 已准备好安装！"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Kernmark %@ 已準備好安裝！"
+            "value" : "Inkpot %@ 已準備好安裝！"
           }
         }
       }
@@ -3258,36 +3258,36 @@
         }
       }
     },
-    "Relaunch Kernmark to start using “%@”." : {
+    "Relaunch Inkpot to start using “%@”." : {
       "comment" : "Message (format) shown after an extension is installed",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新启动 Kernmark 以开始使用“%@”。"
+            "value" : "重新启动 Inkpot 以开始使用“%@”。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新啟動 Kernmark 以開始使用“%@”。"
+            "value" : "重新啟動 Inkpot 以開始使用“%@”。"
           }
         }
       }
     },
-    "Relaunch Kernmark to use the updated extensions." : {
+    "Relaunch Inkpot to use the updated extensions." : {
       "comment" : "Message shown after extensions are updated",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新启动 Kernmark 以使用更新后的扩展功能。"
+            "value" : "重新启动 Inkpot 以使用更新后的扩展功能。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "重新啟動 Kernmark 以使用更新後的擴充功能。"
+            "value" : "重新啟動 Inkpot 以使用更新後的擴充功能。"
           }
         }
       }
@@ -4073,19 +4073,19 @@
         }
       }
     },
-    "The update will be applied the next time Kernmark launches." : {
+    "The update will be applied the next time Inkpot launches." : {
       "comment" : "Message for a downloaded update waiting to be installed",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更新将在 Kernmark 下次启动时应用。"
+            "value" : "更新将在 Inkpot 下次启动时应用。"
           }
         },
         "zh-Hant" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "更新將在 Kernmark 下次啟動時套用。"
+            "value" : "更新將在 Inkpot 下次啟動時套用。"
           }
         }
       }

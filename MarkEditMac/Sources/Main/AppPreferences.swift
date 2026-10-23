@@ -419,9 +419,9 @@ enum NewFilenameExtension: String, Codable, CaseIterable, Sendable {
 
   /// Exported types, used as a key in `UTExportedTypeDeclarations` only.
   ///
-  /// Markdown types are customized, like `com.erhu.kernmark.*`, to avoid unpredictable association by the system.
+  /// Markdown types are customized, like `com.erhu.inkpot.*`, to avoid unpredictable association by the system.
   var exportedType: String {
-    "com.erhu.kernmark.\(rawValue)"
+    "com.erhu.inkpot.\(rawValue)"
   }
 
   var uniformType: UTType {

@@ -2,7 +2,7 @@
 //  SidebarViewController.swift
 //  MarkEditMac
 //
-//  Created by Kernmark on 2026-10-23.
+//  Created by Inkpot on 2026-10-23.
 //
 
 import AppKit
@@ -335,8 +335,8 @@ extension SidebarViewController {
           }
 
           _ = editor.view
-          editor.kernmarkSidebar?.setRootFolder(folder)
-          editor.kernmarkSidebar?.view.isHidden = false
+          editor.inkpotSidebar?.setRootFolder(folder)
+          editor.inkpotSidebar?.view.isHidden = false
           editor.view.needsLayout = true
         }
       }

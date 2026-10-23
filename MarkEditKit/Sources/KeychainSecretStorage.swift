@@ -88,7 +88,7 @@ actor KeychainSecretStorage {
       kSecClass as String: kSecClassGenericPassword,
       kSecUseDataProtectionKeychain as String: true,
       kSecAttrSynchronizable as String: false,
-      kSecAttrService as String: "com.erhu.kernmark.extension-secrets.\(namespace)",
+      kSecAttrService as String: "com.erhu.inkpot.extension-secrets.\(namespace)",
       kSecAttrAccount as String: key,
     ]
   }

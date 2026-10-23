@@ -51,7 +51,7 @@ final class EditorDocumentTests: XCTestCase {
     XCTAssertEqual(AppPreferences.General.defaultTextEncoding, .utf8)
     XCTAssertEqual(AppPreferences.General.newFilenameExtension, .md)
 
-    // Kernmark 不再提供自更新，启动后的延迟维护只剩扩展检查与 settings 快照；
+    // Inkpot 不再提供自更新，启动后的延迟维护只剩扩展检查与 settings 快照；
     // 这里验证应用仍能正常终止，且终止过程不再触碰更新暂存状态。
     try await Task.sleep(for: .seconds(2.2))
     XCTAssertEqual(delegate.applicationShouldTerminate(NSApp), .terminateNow)
@@ -698,7 +698,7 @@ extension EditorDocumentTests {
       kSecClass as String: kSecClassGenericPassword,
       kSecUseDataProtectionKeychain as String: true,
       kSecAttrSynchronizable as String: false,
-      kSecAttrService as String: "com.erhu.kernmark.extension-secrets.\(context.id)",
+      kSecAttrService as String: "com.erhu.inkpot.extension-secrets.\(context.id)",
       kSecAttrAccount as String: "token",
     ]
 
@@ -885,7 +885,7 @@ extension EditorDocumentTests {
 
     let url = directory.appending(path: "saved.md")
     let controller = NSDocumentController.shared
-    let document = try EditorDocument(type: "com.erhu.kernmark.md")
+    let document = try EditorDocument(type: "com.erhu.inkpot.md")
     controller.addDocument(document)
     document.stringValue = "Asynchronous save\n"
     defer {
@@ -894,10 +894,10 @@ extension EditorDocumentTests {
       controller.removeDocument(document)
     }
 
-    XCTAssertTrue(document.canAsynchronouslyWrite(to: url, ofType: "com.erhu.kernmark.md", for: .saveAsOperation))
-    try await document.save(to: url, ofType: "com.erhu.kernmark.md", for: .saveAsOperation)
+    XCTAssertTrue(document.canAsynchronouslyWrite(to: url, ofType: "com.erhu.inkpot.md", for: .saveAsOperation))
+    try await document.save(to: url, ofType: "com.erhu.inkpot.md", for: .saveAsOperation)
 
-    XCTAssertEqual(try Data(contentsOf: url), try document.data(ofType: "com.erhu.kernmark.md"))
+    XCTAssertEqual(try Data(contentsOf: url), try document.data(ofType: "com.erhu.inkpot.md"))
     XCTAssertEqual(document.fileURL, url)
   }
 

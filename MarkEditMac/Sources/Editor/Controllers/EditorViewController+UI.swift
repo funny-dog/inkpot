@@ -28,7 +28,7 @@ extension EditorViewController {
     wrapper.addSubview(replacePanel)
     wrapper.addSubview(webView)
     wrapper.addSubview(statusView)
-    installKernmarkSidebar()
+    installInkpotSidebar()
 
     // View order matters
     wrapper.addSubview(modernEffectView)
@@ -229,7 +229,7 @@ extension EditorViewController {
   }
 
   func layoutWebView(animated: Bool = false) {
-    layoutKernmarkSidebar()
+    layoutInkpotSidebar()
     // Move the view instead of changing its height,
     // because resizing would introduce unnecessary updates,
     // which results in sluggish animation.
@@ -237,9 +237,9 @@ extension EditorViewController {
     let offset = panelDividerRect.minY - height
 
     webView.update(animated).frame = CGRect(
-      x: kernmarkSidebarWidth,
+      x: inkpotSidebarWidth,
       y: offset + findPanelHeight,
-      width: view.bounds.width - kernmarkSidebarWidth,
+      width: view.bounds.width - inkpotSidebarWidth,
       height: height - findPanelHeight
     )
   }
@@ -553,9 +553,9 @@ private extension EditorViewController {
 
   var findPanelRect: CGRect {
     CGRect(
-      x: kernmarkSidebarWidth,
+      x: inkpotSidebarWidth,
       y: contentHeight - (findPanel.mode == .hidden ? 0 : findPanel.frame.height),
-      width: view.bounds.width - kernmarkSidebarWidth,
+      width: view.bounds.width - inkpotSidebarWidth,
       height: findPanel.frame.height
     )
   }
@@ -579,9 +579,9 @@ private extension EditorViewController {
     }()
 
     return CGRect(
-      x: kernmarkSidebarWidth,
+      x: inkpotSidebarWidth,
       y: offset,
-      width: view.frame.width - kernmarkSidebarWidth,
+      width: view.frame.width - inkpotSidebarWidth,
       height: panelDivider.length
     )
   }

@@ -129,7 +129,7 @@ extension Localized {
     static let urlFormat = String(localized: "**URL:** %@", comment: "Extension URL line (format) in the install confirmation")
     static let unreviewedWarning = String(localized: "⚠️ This source is not reviewed by MarkEdit. Only continue if you trust it.", comment: "Caution shown before installing an extension from a raw URL")
     static let installedTitle = String(localized: "Extension Installed", comment: "Title for the extension installed confirmation")
-    static let installedMessageFormat = String(localized: "Relaunch Kernmark to start using “%@”.", comment: "Message (format) shown after an extension is installed")
+    static let installedMessageFormat = String(localized: "Relaunch Inkpot to start using “%@”.", comment: "Message (format) shown after an extension is installed")
     static let notFoundFormat = String(localized: "Couldn’t find the extension “%@” in the registry.", comment: "Error when a deep-link id does not resolve in the registry")
     static let failedTitle = String(localized: "Failed to install the extension.", comment: "Title for a failed extension installation")
     static let failedMessage = String(localized: "The extension couldn’t be downloaded or verified.", comment: "Message for a failed extension installation")
@@ -137,7 +137,7 @@ extension Localized {
     static let updatesAvailableTitle = String(localized: "Extension Updates Available", comment: "Title for the extension updates prompt")
     static let updateButton = String(localized: "Update", comment: "Button title to install extension updates")
     static let updatedTitle = String(localized: "Extensions Updated", comment: "Title shown after extensions are updated")
-    static let updatedMessage = String(localized: "Relaunch Kernmark to use the updated extensions.", comment: "Message shown after extensions are updated")
+    static let updatedMessage = String(localized: "Relaunch Inkpot to use the updated extensions.", comment: "Message shown after extensions are updated")
 
     // MARK: - Extensions UI
 

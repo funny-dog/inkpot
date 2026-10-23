@@ -1,5 +1,5 @@
 const assetBase = typeof window.webkit?.messageHandlers === 'object'
-  ? 'kernmark-asset://editor/' : '/EditorAssets/';
+  ? 'inkpot-asset://editor/' : '/EditorAssets/';
 
 let katex: Promise<typeof import('katex')> | undefined;
 let mermaid: Promise<typeof import('mermaid').default> | undefined;

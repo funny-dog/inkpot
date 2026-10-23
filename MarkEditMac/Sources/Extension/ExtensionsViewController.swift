@@ -250,7 +250,7 @@ extension ExtensionsViewController: NSMenuDelegate {
       NSPasteboard.general.overwrite(string: registryLink)
     }.toolTip = registryLink
 
-    let installLink = "kernmark://install-extension?id=\(clickedItem.id)"
+    let installLink = "inkpot://install-extension?id=\(clickedItem.id)"
     menu.addItem(withTitle: Localized.Extension.copyInstallLink) {
       NSPasteboard.general.overwrite(string: installLink)
     }.toolTip = installLink

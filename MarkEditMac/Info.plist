@@ -30,9 +30,9 @@
 			<array>
 				<string>net.daringfireball.markdown</string>
 				<string>net.ia.markdown</string>
-				<string>com.erhu.kernmark.md</string>
-				<string>com.erhu.kernmark.markdown</string>
-				<string>com.erhu.kernmark.txt</string>
+				<string>com.erhu.inkpot.md</string>
+				<string>com.erhu.inkpot.markdown</string>
+				<string>com.erhu.inkpot.txt</string>
 				<string>public.markdown</string>
 				<string>org.quarto.qmarkdown</string>
 				<string>com.unknown.md</string>
@@ -144,10 +144,10 @@
 			<key>CFBundleURLIconFile</key>
 			<string></string>
 			<key>CFBundleURLName</key>
-			<string>kernmark</string>
+			<string>inkpot</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>kernmark</string>
+				<string>inkpot</string>
 			</array>
 		</dict>
 	</array>
@@ -239,7 +239,7 @@
 			<key>UTTypeDescription</key>
 			<string>Markdown</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.erhu.kernmark.md</string>
+			<string>com.erhu.inkpot.md</string>
 			<key>UTTypeReferenceURL</key>
 			<string>https://daringfireball.net/projects/markdown/</string>
 			<key>UTTypeTagSpecification</key>
@@ -259,7 +259,7 @@
 			<key>UTTypeDescription</key>
 			<string>Markdown</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.erhu.kernmark.markdown</string>
+			<string>com.erhu.inkpot.markdown</string>
 			<key>UTTypeReferenceURL</key>
 			<string>https://daringfireball.net/projects/markdown/</string>
 			<key>UTTypeTagSpecification</key>
@@ -278,7 +278,7 @@
 			<key>UTTypeDescription</key>
 			<string>Markdown</string>
 			<key>UTTypeIdentifier</key>
-			<string>com.erhu.kernmark.txt</string>
+			<string>com.erhu.inkpot.txt</string>
 			<key>UTTypeReferenceURL</key>
 			<string>https://daringfireball.net/projects/markdown/</string>
 			<key>UTTypeTagSpecification</key>

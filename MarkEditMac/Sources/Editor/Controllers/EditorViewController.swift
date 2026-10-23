@@ -169,8 +169,8 @@ final class EditorViewController: NSViewController {
     )
 
     config.setURLSchemeHandler(
-      KernmarkAssetLoader(),
-      forURLScheme: KernmarkAssetLoader.scheme
+      InkpotAssetLoader(),
+      forURLScheme: InkpotAssetLoader.scheme
     )
 
     // Respect user settings for Writing Tools behavior

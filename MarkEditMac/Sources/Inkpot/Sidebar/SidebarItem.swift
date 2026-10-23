@@ -2,7 +2,7 @@
 //  SidebarItem.swift
 //  MarkEditMac
 //
-//  Created by Kernmark on 2026-10-23.
+//  Created by Inkpot on 2026-10-23.
 //
 
 import AppKit

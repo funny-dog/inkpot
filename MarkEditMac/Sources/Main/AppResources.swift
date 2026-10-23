@@ -19,7 +19,7 @@ import MarkEditCore
  */
 enum Localized {
   enum General {
-    static let safeModeAppName = String(localized: "Kernmark (Safe Mode)", comment: "App menu title when running without customizations")
+    static let safeModeAppName = String(localized: "Inkpot (Safe Mode)", comment: "App menu title when running without customizations")
     static let done = String(localized: "Done", comment: "Button title, confirm an action")
     static let cancel = String(localized: "Cancel", comment: "Button title, cancel an action")
     static let learnMore = String(localized: "Learn More…", comment: "Button title, open related documentation")
@@ -57,7 +57,7 @@ enum Localized {
   enum Bookmarks {
     static let addBookmarksPrompt = String(localized: "Add Bookmarks", comment: "Menu and button title to bookmark files and folders")
     static let addBookmarks = addBookmarksPrompt + "…" // Used as the menu item title
-    static let accessMessage = String(localized: "Allow Kernmark to access the selected files and folders.", comment: "Open panel message explaining bookmark access")
+    static let accessMessage = String(localized: "Allow Inkpot to access the selected files and folders.", comment: "Open panel message explaining bookmark access")
     static let revealInFinder = String(localized: "Reveal in Finder", comment: "Menu item to reveal a bookmarked file or folder")
     static let revokeBookmark = String(localized: "Revoke Bookmark", comment: "Menu item to remove a bookmark and release its access")
     static let revokeAll = String(localized: "Revoke All", comment: "Menu item to remove all bookmarks and release their access")
@@ -218,9 +218,9 @@ enum Localized {
     static let extensionMismatchErrorMessage = String(localized: "Wrong file extension for type “%@”, use “.%@” instead.", comment: "Script save error when the path extension does not match the output type")
   }
 
-  enum Kernmark {
+  enum Inkpot {
     static let previewConflictTitle = String(localized: "MarkEdit-preview Extension Detected", comment: "Alert title when MarkEdit-preview is installed")
-    static let previewConflictMessage = String(localized: "Kernmark has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings.", comment: "Alert message explaining preview extension conflict")
+    static let previewConflictMessage = String(localized: "Inkpot has built-in Live Mode (WYSIWYG). To prevent duplicated formatting and rendering issues, please disable Mixed mode in MarkEdit-preview settings.", comment: "Alert message explaining preview extension conflict")
   }
 }
 
@@ -304,9 +304,9 @@ extension EditorLocalizable {
  对外链接集中管理。
 
  分叉自 MarkEdit 后，上游 wiki / issues / releases 与本应用无关，
- 统一指向 Kernmark 自己的仓库，避免把用户带到另一个项目。
+ 统一指向 Inkpot 自己的仓库，避免把用户带到另一个项目。
  */
 enum AppLinks {
-  /// Kernmark 源码仓库。
-  static let repository = "https://github.com/funny-dog/kernmark"
+  /// Inkpot 源码仓库。
+  static let repository = "https://github.com/funny-dog/inkpot"
 }

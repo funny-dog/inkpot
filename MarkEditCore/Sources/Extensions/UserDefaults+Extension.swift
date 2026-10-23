@@ -36,7 +36,7 @@ public extension UserDefaults {
 
 private extension UserDefaults {
   static var appGroup: UserDefaults? {
-    UserDefaults(suiteName: "group.com.erhu.kernmark")
+    UserDefaults(suiteName: "group.com.erhu.inkpot")
   }
 
   static let forcedColorSchemeKey = "forcedColorScheme"

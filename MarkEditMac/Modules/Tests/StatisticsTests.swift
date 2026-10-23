@@ -1,7 +1,7 @@
 //
 //  StatisticsTests.swift
 //
-//  Created by Kernmark on 10/23/26.
+//  Created by Inkpot on 10/23/26.
 //
 
 import MarkEditKit

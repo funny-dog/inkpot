@@ -1,21 +1,21 @@
 //
-//  KernmarkAssetLoader.swift
+//  InkpotAssetLoader.swift
 //  MarkEditMac
 //
-//  Created by Kernmark on 2026-10-23.
+//  Created by Inkpot on 2026-10-23.
 //
 
 import WebKit
 import UniformTypeIdentifiers
 import os.log
 
-/// 离线资源加载器：处理 kernmark-asset:// 协议
+/// 离线资源加载器：处理 inkpot-asset:// 协议
 ///
 /// 用于在 Web 端按需动态加载打包在应用资源中的 KaTeX、Mermaid 等离线渲染库。
-/// 示例：kernmark-asset://editor/katex/katex.min.js
+/// 示例：inkpot-asset://editor/katex/katex.min.js
 @MainActor
-public final class KernmarkAssetLoader: NSObject, WKURLSchemeHandler {
-  public static let scheme = "kernmark-asset"
+public final class InkpotAssetLoader: NSObject, WKURLSchemeHandler {
+  public static let scheme = "inkpot-asset"
 
   /// 正在进行的任务集合，用于在任务被停止后防止重复调用
   private var activeTasks = Set<ObjectIdentifier>()

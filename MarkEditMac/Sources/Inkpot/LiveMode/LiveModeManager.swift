@@ -2,7 +2,7 @@
 //  LiveModeManager.swift
 //  MarkEditMac
 //
-//  Created by Kernmark on 2026-10-23.
+//  Created by Inkpot on 2026-10-23.
 //
 
 import AppKit
@@ -12,7 +12,7 @@ import ExtensionCore
 @MainActor
 public enum LiveModeManager {
   /// 标记是否已提示过 MarkEdit-preview 冲突（依据设计规范 D14，仅首次启动提示一次）
-  @Storage(key: "kernmark.live-mode.warned-preview-conflict", defaultValue: false)
+  @Storage(key: "inkpot.live-mode.warned-preview-conflict", defaultValue: false)
   private static var hasWarnedPreviewConflict: Bool
 
   /// 检测用户是否安装并启用了 markedit-preview 扩展
@@ -34,8 +34,8 @@ public enum LiveModeManager {
 
       let alert = NSAlert()
       alert.alertStyle = .informational
-      alert.messageText = Localized.Kernmark.previewConflictTitle
-      alert.informativeText = Localized.Kernmark.previewConflictMessage
+      alert.messageText = Localized.Inkpot.previewConflictTitle
+      alert.informativeText = Localized.Inkpot.previewConflictMessage
       alert.addButton(withTitle: Localized.General.done)
       alert.runModal()
     }

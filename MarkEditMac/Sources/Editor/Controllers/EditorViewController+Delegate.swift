@@ -166,7 +166,7 @@ extension EditorViewController: EditorModuleCoreDelegate {
   }
 
   func editorCoreEditorDidBecomeIdle(_ sender: EditorModuleCore) {
-    kernmarkSidebar?.refreshOutlineIfVisible()
+    inkpotSidebar?.refreshOutlineIfVisible()
     guard view.window != nil else {
       // Fail fast since the editor is not available
       return

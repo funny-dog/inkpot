@@ -6,7 +6,7 @@ import XCTest
 @testable import MarkEdit
 
 @MainActor
-final class KernmarkTests: XCTestCase {
+final class InkpotTests: XCTestCase {
   func testNewDocumentLineEndingsNormalizeLegacyCR() throws {
     let preferences = ApplicationEnvironment.preferences
     let key = "general.default-line-endings"
@@ -46,7 +46,7 @@ final class KernmarkTests: XCTestCase {
     }
   }
 
-  func testKernmarkPreferencesReachEditorConfig() throws {
+  func testInkpotPreferencesReachEditorConfig() throws {
     let liveMode = AppPreferences.Editor.liveMode
     let vimMode = AppPreferences.Editor.vimMode
     defer {
@@ -62,7 +62,7 @@ final class KernmarkTests: XCTestCase {
     XCTAssertEqual(json?["vimMode"] as? Bool, true)
   }
 
-  func testKernmarkFolderTreeIsLazyAndSkipsHiddenFilesAndSymlinkCycles() throws {
+  func testInkpotFolderTreeIsLazyAndSkipsHiddenFilesAndSymlinkCycles() throws {
     let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     defer { try? FileManager.default.removeItem(at: root) }
@@ -78,21 +78,21 @@ final class KernmarkTests: XCTestCase {
     XCTAssertEqual(item.loadChildrenIfNeeded().map(\.displayName), ["folder", "note.md"])
   }
 
-  func testKernmarkOfflineRenderersLoadThroughAssetScheme() async throws {
+  func testInkpotOfflineRenderersLoadThroughAssetScheme() async throws {
     let loaded = expectation(description: "离线渲染资源页面加载")
     let configuration = WKWebViewConfiguration.newConfig()
-    configuration.setURLSchemeHandler(KernmarkAssetLoader(), forURLScheme: KernmarkAssetLoader.scheme)
-    let probe = KernmarkNavigationProbe(loaded: loaded)
+    configuration.setURLSchemeHandler(InkpotAssetLoader(), forURLScheme: InkpotAssetLoader.scheme)
+    let probe = InkpotNavigationProbe(loaded: loaded)
     let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: 640, height: 480), configuration: configuration)
     webView.navigationDelegate = probe
     webView.loadHTMLString("<html><body></body></html>", baseURL: EditorWebView.baseURL)
     await fulfillment(of: [loaded], timeout: 10)
     let script = """
-    const katex = (await import('kernmark-asset://editor/katex.mjs')).default;
-    const mermaid = (await import('kernmark-asset://editor/mermaid.mjs')).default;
+    const katex = (await import('inkpot-asset://editor/katex.mjs')).default;
+    const mermaid = (await import('inkpot-asset://editor/mermaid.mjs')).default;
     mermaid.initialize({startOnLoad: false, securityLevel: 'strict'});
     const diagram = await mermaid.render('offline-test', 'graph TD; A-->B');
-    const css = await fetch('kernmark-asset://editor/katex.min.css');
+    const css = await fetch('inkpot-asset://editor/katex.min.css');
     return {math: katex.renderToString('x^2').includes('katex'), diagram: diagram.svg.includes('<svg'), css: css.ok};
     """
     let result = try await webView.callAsyncJavaScript(
@@ -104,7 +104,7 @@ final class KernmarkTests: XCTestCase {
 }
 
 @MainActor
-private final class KernmarkNavigationProbe: NSObject, WKNavigationDelegate {
+private final class InkpotNavigationProbe: NSObject, WKNavigationDelegate {
   private let loaded: XCTestExpectation
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
