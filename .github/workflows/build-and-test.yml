@@ -1,4 +1,4 @@
-name: Kernmark build and test
+name: Inkpot build and test
 
 on:
   push:
@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  kernmark:
+  inkpot:
     runs-on: xcode-27
     if: github.event_name != 'pull_request' || !github.event.pull_request.draft
     env:
@@ -45,16 +45,10 @@ jobs:
       - name: Lint Swift
         run: '"$RUNNER_TEMP/swiftlint/SwiftLintBinary.artifactbundle/macos/swiftlint" lint --strict --config .swiftlint.yml'
 
-      - name: Build Kernmark
+      - name: Build Inkpot
         run: |
-          xcodebuild build -project MarkEdit.xcodeproj -scheme MarkEditMac -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcodebuild build -project MVP/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/MVP CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
-      - name: Test Swift packages
+      - name: Test Inkpot
         run: |
-          for scheme in MarkEditCoreTests MarkEditKitTests ModulesTests; do
-            xcodebuild test -project MarkEdit.xcodeproj -scheme "$scheme" -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
-          done
-
-      - name: Test Kernmark application
-        run: |
-          xcodebuild test -project MarkEdit.xcodeproj -scheme MarkEditMac -only-testing:MarkEditMacTests -destination 'platform=macOS' -derivedDataPath build/DerivedData CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcodebuild test -project MVP/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/MVP CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO

@@ -1,75 +1,45 @@
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/MarkEdit-app/MarkEdit/main/Icon.png" width="96">
-  <img src="./Icon.png" width="96">
-</picture>
+# Inkpot
 
-# MarkEdit
+Inkpot 是面向 macOS 的轻量 Markdown 编辑器。基于 MarkEdit 的成熟实现独立构建，使用 AppKit、WKWebView 与 CodeMirror 6，面向日常中文和 Markdown 写作。
 
-[![](https://img.shields.io/badge/Platform-macOS_26.0+-blue?color=007bff)](https://github.com/MarkEdit-app/MarkEdit?tab=readme-ov-file#installation) [![](https://img.shields.io/github/downloads/MarkEdit-app/MarkEdit/total.svg?label=Downloads&color=f7821b)](https://github.com/MarkEdit-app/MarkEdit/releases) [![](https://github.com/MarkEdit-app/MarkEdit/actions/workflows/build-and-test.yml/badge.svg?branch=main)](https://github.com/MarkEdit-app/MarkEdit/actions/workflows/build-and-test.yml)
+当前最低系统为 macOS 15。应用名为 Inkpot，Swift 模块名保留为 `MarkEdit`，bundle ID 为 `com.erhu.inkpot`。
 
-MarkEdit is a free and **open-source** Markdown editor, for macOS. It's just like _TextEdit_ on Mac but dedicated to `Markdown`.
+- 实时／源码编辑，查找替换、常用格式操作和列表续写。
+- 字体字号设置、明暗外观、标题大纲、文件树和字数统计。
+- 本地图片、表格、公式、Mermaid、富文本粘贴以及 HTML／PDF 导出。
+- UTF-8 与 BOM、混合行尾保护、关闭前保存确认、外部修改保护和本地恢复草稿。
 
-No bloat. Markdown editing done right in a 4 MB app that flies through million-line files.
+使用范围、已知限制与验收记录见 [功能说明](MVP/README.md)，后续计划见 [任务清单](MVP/NEXT-STEPS.md)。
 
-We do not claim to be the best in any single dimension. Instead, we aim to strike the right balance across **size**, **speed**, **native integration**, and **correctness**.
+## 构建与验证
 
-_For perspective: at just 4 MB, MarkEdit is much smaller than Electron apps. Handling a 10 MB file with ease puts it ahead of TextKit-based editors. Performance-first editors built with Rust lack native features, while correctness alone rules out editors that rely on regex-based Markdown parsing._
+使用仓库携带的 Yarn，不改变系统的 `xcode-select`：
 
-> [!TIP]
-> Discover our other free and open-source apps at [libremac.github.io](https://libremac.github.io/).
->
-> Follow our Mastodon account [@MarkEditApp](https://mastodon.social/@MarkEditApp) for the latest updates.
+```bash
+cd CoreEditor
+node .yarn/releases/yarn-4.18.0.cjs install --immutable
+node .yarn/releases/yarn-4.18.0.cjs build
+node .yarn/releases/yarn-4.18.0.cjs test --runInBand
+cd ..
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+swiftlint lint --strict --config .swiftlint.yml
+xcodebuild build -project MVP/Inkpot.xcodeproj -scheme Inkpot \
+  -destination 'platform=macOS' -derivedDataPath build/MVP \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+```
 
-## Preview
+原生测试使用同一工程和 scheme，将 `build` 换成 `test`。局部修改用 `-only-testing:InkpotMVPTests/测试类/方法` 定向运行。SwiftLint 使用 0.65.1；CI 的安装来源与校验和固定在工作流中。首次构建 Web 资源后才能构建应用，公式与图表资源全部随应用打包，运行时不需要 CDN。
 
-![Screenshots 01](/Screenshots/01.png)
+唯一安装位置为 `/Applications/Inkpot.app`。更新前正常退出旧实例并保留系统未保存提示，安装后移走构建目录中的临时应用副本。不自动改变文件关联。
 
-![Screenshots 02](/Screenshots/02.png)
+## 仓库结构
 
-![Screenshots 03](/Screenshots/03.png)
+- `MVP/`：唯一原生应用工程、原生测试与功能说明。
+- `CoreEditor/mvp/`：当前 Web 编辑器与公式解析器。
+- `CoreEditor/test/`：当前编辑器测试；与构建使用相同的官方 CodeMirror 依赖。
+- `CoreEditor/scripts/`：离线渲染资源构建。
+- `.github/workflows/`：当前应用的构建与验证。
 
-![Screenshots 04](/Screenshots/04.png)
+旧 MarkEdit 分叉工程、旧桥接／扩展和重复编辑器已移出当前分支，完整保存在本地标签 `archive/markedit-legacy-2026-10-24`（指向 `acde3b34`）。可用 `git show archive/markedit-legacy-2026-10-24:路径` 查看历史文件，无需恢复旧工程到工作目录。收敛范围和重新评估见 [工程收敛记录](docs/engineering-consolidation.md)。
 
-## What makes MarkEdit different
-
-- Privacy-focused: doesn't collect any user data
-- Native: macOS aesthetics, with Shortcuts and AppleScript support
-- Fast: launches in a flash, edits million-line files easily
-- Lightweight: installer is about 4 MB
-- Extensible: built-in extension manager for curated extensions
-
-MarkEdit strictly follows the [GFM specification](https://github.github.com/gfm/), with no proprietary syntax or invented features. Complex editing like multi-caret and code folding is built on [CodeMirror 6](https://codemirror.net/) for correctness and performance, consistently faster than most macOS editors. UI controls remain native to macOS in both aesthetics and behavior, including force-touch word lookup, inline predictions, and Writing Tools.
-
-Customization is built around CSS, JavaScript, and [CodeMirror extensions](https://github.com/MarkEdit-app/MarkEdit-api). Official extensions let you preview Markdown, hide syntax, customize themes, write with AI, edit tables visually, and much more.
-
-<img src="./Screenshots/extensions.png" width="800" alt="MarkEdit Extensions">
-
-> To learn more, refer to [Philosophy](https://github.com/MarkEdit-app/MarkEdit/wiki/Philosophy), [Why MarkEdit](https://github.com/MarkEdit-app/MarkEdit/wiki/Why-MarkEdit) and [MarkEdit Extensions](https://markedit-app.github.io/extensions/).
-
-## Installation
-
-Get `MarkEdit.dmg` from the <a href="https://github.com/MarkEdit-app/MarkEdit/releases/latest" target="_blank">latest release</a>, open it, and drag `MarkEdit.app` to `Applications`. Or install via [Homebrew](https://brew.sh/): `brew install --cask markedit`.
-
-<img src="./Screenshots/install.png" width="540" alt="Install MarkEdit">
-
-MarkEdit checks for updates automatically; you can also browse version history [here](https://github.com/MarkEdit-app/MarkEdit/releases).
-
-For older macOS: [macos-12](https://github.com/MarkEdit-app/MarkEdit/releases/tag/macos-12), [macos-13](https://github.com/MarkEdit-app/MarkEdit/releases/tag/macos-13), [macos-14](https://github.com/MarkEdit-app/MarkEdit/releases/tag/macos-14), [macos-15](https://github.com/MarkEdit-app/MarkEdit/releases/tag/macos-15).
-
-## Using MarkEdit
-
-Please refer to the [wiki page](https://github.com/MarkEdit-app/MarkEdit/wiki/Manual) for details. Check out [MarkEdit-skill](https://github.com/MarkEdit-app/MarkEdit-skill) if you're interested in managing MarkEdit with an AI agent.
-
-## Why MarkEdit is free
-
-MarkEdit is a tool we use every day and keep improving for ourselves. We ship it openly, hoping it's useful to others with the same needs.
-
-## Contributing to MarkEdit
-
-For bugs, [open an issue](https://github.com/MarkEdit-app/MarkEdit/issues/new) or [pull request](https://github.com/MarkEdit-app/MarkEdit/compare). For behavior changes, discuss first; MarkEdit is intentionally minimal ([why](https://github.com/MarkEdit-app/MarkEdit/wiki/Why-MarkEdit#feature-poor)).
-
-Please refer to the [wiki page](https://github.com/MarkEdit-app/MarkEdit/wiki/Development) for development instructions.
-
-## Acknowledgments
-
-Built on [CodeMirror 6](https://codemirror.net/), with [ts-gyb](https://github.com/microsoft/ts-gyb) for code generation.
+Inkpot 保留 [MarkEdit](https://github.com/MarkEdit-app/MarkEdit) 的版权与 MIT 许可；迁入的公式解析器保留 Joplin 来源说明。KaTeX、Mermaid 等第三方资源在构建时携带对应许可。

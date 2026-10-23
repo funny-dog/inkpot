@@ -10,10 +10,7 @@ export default [
   {
     ignores: [
       '.yarn',
-      'dist/*',
       'mvp/dist/*',
-      'public/EditorAssets/**',
-      'src/@vendor/*',
     ],
   },
   js.configs.recommended,

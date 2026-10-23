@@ -4,11 +4,11 @@ import { isolateHistory } from '@codemirror/commands';
 import { Command, Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { MarkdownConfig } from '@lezer/markdown';
 import { SyntaxNode } from '@lezer/common';
-import { blockMathTagName, mathTag } from '../src/modules/math';
+import { blockMathTagName, mathTag } from './math-parser';
 import { selectionTouches } from './basic';
 import { isComposing, previewExport, sourceMode } from './mode';
 
-export { blockMathTagName, blockMathContentTagName, markdownMathExtension, mathTag } from '../src/modules/math';
+export { blockMathTagName, blockMathContentTagName, markdownMathExtension, mathTag } from './math-parser';
 
 export const inlineMathTagName = 'InlineMath';
 const inlineMathMarkTagName = 'InlineMathMark';
