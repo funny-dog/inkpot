@@ -483,3 +483,41 @@ extension DocumentTests {
     }
   }
 }
+
+extension DocumentTests {
+  func testRichPasteConvertsInWebKitAndUndoRestoresExactBytes() async throws {
+    _ = NSApplication.shared
+    let original = "\u{FEFF}替换\r\n尾\n"
+    let document = MVPDocument()
+    defer { document.close() }
+    try document.read(from: Data(original.utf8), ofType: "net.daringfireball.markdown")
+    let editor = document.makeEditor()
+    XCTAssertTrue(editor.view is WKWebView)
+    try await waitUntil { editor.isReady }
+    // 无窗口 WebView 聚焦后需等待焦点迁移结束，再驱动剪贴板事件。
+    try await Task.sleep(for: .milliseconds(600))
+    let handled = try await editor.evaluateScript("""
+      (() => {
+        window.inkpotMVP.command('selectAll');
+        const data = new DataTransfer();
+        data.setData('text/html', '<h2>粘贴</h2><p><strong>粗体</strong>与<a href="https://example.com">链接</a></p>');
+        data.setData('text/plain', '粘贴\\n粗体与链接');
+        const event = new ClipboardEvent('paste', {bubbles: true, cancelable: true, clipboardData: data});
+        document.querySelector('.cm-content').dispatchEvent(event);
+        return event.defaultPrevented;
+      })()
+      """) as? Bool
+    XCTAssertTrue(try XCTUnwrap(handled))
+    try await waitUntil { editor.latestRevision > 0 }
+    let pasted = try await editor.snapshot()
+    let expected = "## 粘贴\r\n\r\n**粗体**与[链接](https://example.com)"
+    XCTAssertEqual(pasted.text, expected)
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(("\u{FEFF}" + expected).utf8))
+    editor.undo(nil)
+    try await waitUntil { editor.latestRevision > pasted.revision }
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
+    XCTAssertFalse(document.isDocumentEdited)
+  }
+}

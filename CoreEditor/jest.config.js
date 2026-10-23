@@ -8,6 +8,8 @@ module.exports = {
   moduleNameMapper: {
     '^@codemirror/lang-html$': '<rootDir>/src/@vendor/lang-html',
     '^@codemirror/lang-markdown$': '<rootDir>/src/@vendor/lang-markdown',
+    // 与生产构建一致用浏览器版 Turndown（jsdom 提供 DOM），避免 domino 的解析差异。
+    '^turndown$': '<rootDir>/node_modules/turndown/lib/turndown.browser.cjs.js',
     '^(\\./(?:script\\.js|style\\.css))\\?raw$': '$1',
   },
   transform: {

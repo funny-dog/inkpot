@@ -15,6 +15,7 @@ import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
+import { richPaste } from './paste';
 
 declare const window: {
   inkpotMVP: {
@@ -88,6 +89,7 @@ window.inkpotMVP = {
             window.webkit.messageHandlers.document.postMessage({ pasteImage: true, generation });
             return true;
           } }),
+          richPaste,
           linkNavigation(destination => window.webkit.messageHandlers.document.postMessage({ openLink: destination, generation })),
           keymap.of([{ key: 'Mod-Enter', run: view => {
             if (isComposing(view)) return true;
