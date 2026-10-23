@@ -1,13 +1,15 @@
 import { commonmarkLanguage } from '@codemirror/lang-markdown';
-import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
+import { HighlightStyle, Language, syntaxHighlighting } from '@codemirror/language';
+import { MarkdownParser, Table } from '@lezer/markdown';
 import { tags } from '@lezer/highlight';
 import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { formatCommands } from './format';
 import { documentSearch, searchBindings } from './search';
+import { typingBindings } from './typing';
 
 export const writingExtensions = [
-  commonmarkLanguage,
+  new Language(commonmarkLanguage.data, (commonmarkLanguage.parser as MarkdownParser).configure(Table), [], 'markdown'),
   syntaxHighlighting(HighlightStyle.define([
     { tag: tags.heading, color: '#174ea6', fontWeight: 'bold' },
     { tag: tags.strong, fontWeight: 'bold' },
@@ -25,6 +27,7 @@ export const writingExtensions = [
   }),
   keymap.of([
     ...searchBindings,
+    ...typingBindings,
     { key: 'Mod-b', run: formatCommands.bold },
     { key: 'Mod-i', run: formatCommands.italic },
     ...[1, 2, 3, 4, 5, 6].map(level => ({ key: `Mod-${level}`, run: formatCommands[`heading${level}`] })),

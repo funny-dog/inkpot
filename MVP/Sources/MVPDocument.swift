@@ -1,11 +1,25 @@
 import AppKit
 
 final class MVPDocument: NSDocument {
+  lazy var images = DocumentImages(document: self)
+  lazy var safety = DocumentSafety(document: self)
   private var content = DocumentContent()
   private var savedData = Data()
   private var snapshotRevision = 0
   private var snapshotIsValid = true
   private(set) var editor: EditorViewController?
+
+  override var fileURL: URL? {
+    didSet {
+      (editor?.parent as? DocumentViewController)?.files.selectCurrentFile(fileURL)
+      editor?.setImageDocumentURL(fileURL)
+    }
+  }
+
+  override var displayName: String? {
+    get { safety.recoveredName ?? super.displayName }
+    set { super.displayName = newValue }
+  }
 
   override static var autosavesDrafts: Bool { false }
   override static var autosavesInPlace: Bool { false }
@@ -13,12 +27,28 @@ final class MVPDocument: NSDocument {
   func makeEditor() -> EditorViewController {
     if let editor { return editor }
     let controller = EditorViewController(text: content.text)
+    controller.setImageDocumentURL(fileURL)
+    bindChanges(controller)
+    editor = controller
+    return controller
+  }
+
+  private func bindChanges(_ controller: EditorViewController) {
     controller.onChange = { [weak self] in
       self?.snapshotIsValid = false
       self?.updateChangeCount(.changeDone)
+      self?.safety.schedule()
     }
-    editor = controller
-    return controller
+  }
+
+  func transferEditor(to document: MVPDocument) {
+    guard let editor else { return }
+    self.editor = nil
+    document.editor = editor
+    document.snapshotIsValid = false
+    document.bindChanges(editor)
+    editor.setImageDocumentURL(document.fileURL)
+    editor.replaceText(document.content.text)
   }
 
   override func makeWindowControllers() {
@@ -29,7 +59,10 @@ final class MVPDocument: NSDocument {
       defer: false
     )
     window.minSize = NSSize(width: 360, height: 240)
-    window.contentViewController = makeEditor()
+    let controller = DocumentViewController(editor: makeEditor())
+    controller.view.setFrameSize(window.contentLayoutRect.size)
+    window.contentViewController = controller
+    window.toolbar = controller.makeToolbar()
     window.center()
     addWindowController(NSWindowController(window: window))
   }
@@ -37,6 +70,7 @@ final class MVPDocument: NSDocument {
   override func read(from data: Data, ofType typeName: String) throws {
     content = try DocumentContent(data: data)
     savedData = data
+    safety.loaded(data)
     editor?.replaceText(content.text)
   }
 
@@ -58,7 +92,7 @@ final class MVPDocument: NSDocument {
       }
       snapshotIsValid = true
       // String 的相等判断会合并 Unicode 等价字符，文件脏状态必须比较实际字节。
-      if content.data == savedData {
+      if content.data == savedData && !safety.restored {
         updateChangeCount(.changeCleared)
       } else if !isDocumentEdited {
         updateChangeCount(.changeDone)
@@ -94,10 +128,29 @@ final class MVPDocument: NSDocument {
 
   override func writeSafely(to url: URL, ofType typeName: String, for saveOperation: NSDocument.SaveOperationType) throws {
     let writtenData = content.data
-    try super.writeSafely(to: url, ofType: typeName, for: saveOperation)
+    try safety.write(to: url) { target in
+      try super.writeSafely(to: target, ofType: typeName, for: saveOperation)
+    }
     // 自动备份或另存副本并不代表原文件已保存，不能因此清除未保存状态。
     if [.saveOperation, .saveAsOperation, .autosaveInPlaceOperation, .autosaveAsOperation].contains(saveOperation) {
       savedData = writtenData
+      safety.saved(writtenData)
+    }
+  }
+
+  override func revert(toContentsOf url: URL, ofType typeName: String) throws {
+    try super.revert(toContentsOf: url, ofType: typeName)
+    safety.saved(content.data)
+  }
+
+  override func close() {
+    safety.close()
+    super.close()
+  }
+
+  override func presentedItemDidChange() {
+    Task { @MainActor [weak self] in
+      do { try await self?.safety.refreshFromDisk() } catch { NSLog("外部文件重新载入失败：%@", error.localizedDescription) }
     }
   }
 

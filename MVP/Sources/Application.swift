@@ -19,8 +19,11 @@ enum Application {
       ("Kernmark", [("退出 Kernmark", "terminate:", "q")]),
       ("文件", [
         ("新建", "newDocument:", "n"), ("打开…", "openDocument:", "o"),
+        ("打开文件夹…", "openFolder:", "o"),
         ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
         ("另存为…", "saveDocumentAs:", "S"),
+        ("重新载入磁盘版本…", "revertDocumentToSaved:", ""),
+        ("恢复未保存草稿…", "restoreDrafts:", ""),
       ]),
       ("编辑", [
         ("撤销", "undo:", "z"), ("重做", "redo:", "Z"),
@@ -35,7 +38,9 @@ enum Application {
         ("三级标题", "heading3", "3"), ("四级标题", "heading4", "4"),
         ("五级标题", "heading5", "5"), ("六级标题", "heading6", "6"), ("", "", ""),
         ("有序列表", "orderedList", "7"), ("无序列表", "bulletList", "8"),
+        ("插入本地图片…", "insertImage:", ""), ("表格", "tableMenu", ""),
       ]),
+      ("显示", [("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M")]),
       ("窗口", [("最小化", "performMiniaturize:", "m")]),
     ]
     for (title, entries) in groups {
@@ -49,11 +54,30 @@ enum Application {
         }
         let entry = NSMenuItem(title: label, action: NSSelectorFromString(action), keyEquivalent: key.lowercased())
         entry.keyEquivalentModifierMask = key != key.lowercased() || ["orderedList", "bulletList"].contains(action) ? [.command, .shift] : [.command]
+        if action == "insertImage:" { entry.target = delegate }
+        if action == "restoreDrafts:" { entry.target = delegate }
+        if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
         if ["undo:", "redo:", "selectAll:"].contains(action) { entry.target = delegate }
         if !action.hasSuffix(":") {
           entry.action = #selector(AppDelegate.editorCommand(_:))
           entry.representedObject = action
           entry.target = delegate
+        }
+        if action == "tableMenu" {
+          entry.action = nil
+          let tables = NSMenu(title: "表格")
+          for (title, command) in [
+            ("插入表格", "insertTable"), ("在上方插入行", "tableRowAbove"), ("在下方插入行", "tableRowBelow"),
+            ("在左侧插入列", "tableColumnBefore"), ("在右侧插入列", "tableColumnAfter"),
+            ("删除当前行", "tableDeleteRow"), ("删除当前列", "tableDeleteColumn"),
+            ("当前列左对齐", "tableAlignLeft"), ("当前列居中", "tableAlignCenter"), ("当前列右对齐", "tableAlignRight"),
+          ] {
+            let item = NSMenuItem(title: title, action: #selector(AppDelegate.editorCommand(_:)), keyEquivalent: "")
+            item.representedObject = command
+            item.target = delegate
+            tables.addItem(item)
+          }
+          entry.submenu = tables
         }
         submenu.addItem(entry)
       }
@@ -75,6 +99,9 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemVali
   }
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
+    if menuItem.action == #selector(restoreDrafts(_:)) { return true }
+    if menuItem.action == #selector(openFolder(_:)) { return true }
     if menuItem.representedObject is String {
       return textInput == nil && editor?.validateMenuItem(menuItem) == true
     }
@@ -103,11 +130,56 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemVali
     editor?.performCommand(command)
   }
 
+  @objc func openFolder(_ sender: Any?) {
+    if NSApp.keyWindow?.contentViewController as? DocumentViewController == nil {
+      NSDocumentController.shared.newDocument(nil)
+    }
+    (NSApp.keyWindow?.contentViewController as? DocumentViewController)?.openFolder(sender)
+  }
+
+  @MainActor
+  @objc func insertImage(_ sender: Any?) {
+    (NSDocumentController.shared.currentDocument as? MVPDocument)?.images.choose()
+  }
+
+  @objc func restoreDrafts(_ sender: Any?) { recoverDrafts(automatic: false) }
+
+  private func recoverDrafts(automatic: Bool) {
+    do {
+      let documents = NSDocumentController.shared.documents.compactMap { $0 as? MVPDocument }
+      let active = Set(documents.map { $0.safety.id })
+      let healthy = Set(documents.filter { $0.editor?.isReady == true }.map { $0.safety.id })
+      let drafts = try RecoveryStore.standard.drafts().filter { !healthy.contains($0.id) }
+      guard !drafts.isEmpty else {
+        if !automatic { let alert = NSAlert(); alert.messageText = "没有需要恢复的草稿"; alert.runModal() }
+        return
+      }
+      let alert = NSAlert()
+      alert.messageText = "发现 \(drafts.count) 份未保存草稿"
+      alert.informativeText = "恢复后将打开独立副本，不覆盖原文件。选择稍后会保留草稿。"
+      alert.addButton(withTitle: "恢复草稿")
+      alert.addButton(withTitle: "稍后")
+      guard alert.runModal() == .alertFirstButtonReturn else { return }
+      for draft in drafts {
+        let document = MVPDocument()
+        try document.read(from: draft.data, ofType: "net.daringfireball.markdown")
+        let restored = active.contains(draft.id)
+          ? RecoveryDraft(id: UUID(), originalURL: draft.originalURL, data: draft.data, updated: draft.updated) : draft
+        document.safety.restore(restored)
+        document.updateChangeCount(.changeDone)
+        NSDocumentController.shared.addDocument(document)
+        document.makeWindowControllers()
+        document.showWindows()
+      }
+    } catch { NSApp.presentError(error) }
+  }
+
   func applicationDidFinishLaunching(_ notification: Notification) {
     if NSDocumentController.shared.documents.isEmpty {
       NSDocumentController.shared.newDocument(nil)
     }
     NSApp.activate(ignoringOtherApps: true)
+    recoverDrafts(automatic: true)
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
