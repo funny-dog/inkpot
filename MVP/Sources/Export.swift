@@ -8,14 +8,11 @@ enum DocumentExport {
     guard let editor = document.editor, editor.isReady else {
       throw NSError(domain: "Inkpot", code: 40, userInfo: [NSLocalizedDescriptionKey: "编辑器尚未就绪，已取消导出。"])
     }
-    // 等待公式完成渲染，避免导出内容回退为源码文本。
-    let ready = "document.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error) .katex').length === document.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error)').length"
-    let settled = { try await editor.evaluateScript(ready) as? Bool == true }
-    let deadline = Date.now.addingTimeInterval(3)
-    while !(try await settled()) && Date.now < deadline {
-      try await Task.sleep(for: .milliseconds(50))
+    // 页面完成全篇布局并等待公式、图表渲染，再返回独立 HTML。
+    guard let html = try await editor.evaluateScript("window.inkpotMVP.exportHTML(\(pdfMode ? "'pdf'" : "'html'"))", awaitPromise: true) as? String else {
+      throw NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: "读取导出内容失败，未写入文件。"])
     }
-    return try await editor.evaluateScript("window.inkpotMVP.exportHTML(\(pdfMode ? "'pdf'" : "'html'"))") as? String ?? ""
+    return html
   }
 
   static func pdfData(_ document: MVPDocument) async throws -> Data {

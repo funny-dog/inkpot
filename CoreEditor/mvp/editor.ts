@@ -15,6 +15,7 @@ import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
+import { applyFonts, EditorFonts } from './fonts';
 import { richPaste } from './paste';
 
 declare const window: {
@@ -27,7 +28,8 @@ declare const window: {
     snapshot: () => { text: string; revision: number };
     command: (name: string) => void;
     setAppearance: (dark: boolean) => void;
-    exportHTML: (mode?: string) => string;
+    setFonts: (fonts: EditorFonts) => void;
+    exportHTML: (mode?: string) => Promise<string>;
   };
   webkit: { messageHandlers: { document: { postMessage: (message: unknown) => void } } };
 };
@@ -112,7 +114,7 @@ window.inkpotMVP = {
           }),
           EditorView.theme({
             '&': { height: '100%' },
-            '.cm-scroller': { overflow: 'auto', fontFamily: 'Menlo, monospace', fontSize: '15px', lineHeight: '1.6' },
+            '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', lineHeight: '1.6' },
             '.cm-content': { padding: '24px', minHeight: '100%' },
             '&.cm-focused': { outline: 'none' },
             '.cm-panels': { backgroundColor: '#f7f7f7', color: '#202020' },
@@ -150,6 +152,7 @@ window.inkpotMVP = {
     view.focus();
   },
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
+  setFonts(fonts) { if (view !== undefined) applyFonts(view, fonts); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
   exportHTML(mode?: string) {
     if (view === undefined) throw new Error('编辑器尚未就绪。');

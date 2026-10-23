@@ -37,6 +37,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   init(text: String) {
     initialText = text
     super.init(nibName: nil, bundle: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateFonts), name: EditorFonts.didChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -57,12 +58,14 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   /// WebKit 会拒绝与进行中的求值并发的调用（InvalidTransition），编辑器的全部脚本按序排队。
   private var scriptTail: Task<Any?, Error> = Task { nil }
 
-  func evaluateScript(_ javaScript: String) async throws -> Any? {
+  func evaluateScript(_ javaScript: String, awaitPromise: Bool = false) async throws -> Any? {
     let previous = scriptTail
     let task = Task<Any?, Error> { [weak self] in
       _ = try? await previous.value
       guard let self else { return nil }
-      return try await (self.view as? WKWebView)?.evaluateJavaScript(javaScript)
+      guard let web = self.view as? WKWebView else { return nil }
+      if awaitPromise { return try await web.callAsyncJavaScript("return await (\(javaScript));", arguments: [:], in: nil, contentWorld: .page) }
+      return try await web.evaluateJavaScript(javaScript)
     }
     scriptTail = task
     return try await task.value
@@ -104,7 +107,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
       do {
         guard generation == documentGeneration else { return }
         let argument = try encodedArgument(text)
-        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); null")
+        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
@@ -246,11 +249,6 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     onOutline?(updated, activeHeading)
   }
 
-  func focusEditor() {
-    view.window?.makeFirstResponder(webView)
-    performCommand("focus")
-  }
-
   func navigateHeading(_ id: Int) {
     guard isReady, headings.contains(where: { $0.id == id }) else { return }
     view.window?.makeFirstResponder(webView)
@@ -277,6 +275,11 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
 }
 
 extension EditorViewController {
+  func focusEditor() {
+    view.window?.makeFirstResponder(webView)
+    performCommand("focus")
+  }
+
   func navigateFragment(_ fragment: String) {
     guard isReady else { pendingFragment = fragment; return }
     view.window?.makeFirstResponder(webView)

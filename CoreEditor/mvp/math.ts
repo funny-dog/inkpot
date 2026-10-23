@@ -6,7 +6,7 @@ import { MarkdownConfig } from '@lezer/markdown';
 import { SyntaxNode } from '@lezer/common';
 import { blockMathTagName, mathTag } from '../src/modules/math';
 import { selectionTouches } from './basic';
-import { isComposing, sourceMode } from './mode';
+import { isComposing, previewExport, sourceMode } from './mode';
 
 export { blockMathTagName, blockMathContentTagName, markdownMathExtension, mathTag } from '../src/modules/math';
 
@@ -123,7 +123,7 @@ export function mathDecorations(node: SyntaxNode, view: EditorView, searchSelect
   // 光标进入元素或搜索命中标记时局部展开源码，其余时间渲染公式。
   const editing = selectionTouches(state, node.from, node.to, true);
   const searching = searchSelection && selectionTouches(state, node.from, node.to, false);
-  if (!editing && !searching && source.length > 0) {
+  if (((!editing && !searching) || state.field(previewExport)) && source.length > 0) {
     const replacement = Decoration.replace({ widget: new MathPreview(source, false, node.from + 1) }).range(node.from, node.to);
     decorations.push(replacement);
     atoms.push(replacement);
@@ -138,13 +138,14 @@ const mathSearch = StateField.define({
 });
 
 function blockDecorations(state: EditorState) {
-  if (state.field(sourceMode)) return Decoration.none;
+  const exporting = state.field(previewExport);
+  if (state.field(sourceMode) && !exporting) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
   syntaxTree(state).iterate({ enter(node) {
     if (node.name !== blockMathTagName || node.node.parent?.name !== 'Document') return;
     const selection = state.selection.main;
-    if (selectionTouches(state, node.from, node.to, true)
-      || (state.field(mathSearch) && selection.from < node.to && selection.to > node.from)) return;
+    if (!exporting && (selectionTouches(state, node.from, node.to, true)
+      || (state.field(mathSearch) && selection.from < node.to && selection.to > node.from))) return;
     const source = state.sliceDoc(node.from + 2, node.to - 2).trim();
     if (source.length === 0) return;
     // 块级替换必须覆盖整行；闭标记总在行尾，开标记在行首。
@@ -158,6 +159,7 @@ function blockDecorations(state: EditorState) {
 const mathBlocks = StateField.define<DecorationSet>({
   create: blockDecorations,
   update: (value, transaction) => transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+    || transaction.startState.field(previewExport) !== transaction.state.field(previewExport)
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
     || syntaxTree(transaction.startState) !== syntaxTree(transaction.state) ? blockDecorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),

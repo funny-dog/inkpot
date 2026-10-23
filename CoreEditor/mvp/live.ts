@@ -1,7 +1,8 @@
 import { Range, StateEffect } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, EditorView, keymap, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { sourceMode, toggleSourceMode, isComposing } from './mode';
+import { sourceMode, toggleSourceMode, isComposing, previewExport } from './mode';
+import { hasMermaidPreview, mermaidEditing } from './mermaid';
 import { tableEditing } from './table';
 export { sourceMode, toggleSourceMode } from './mode';
 import { imageDecorations, imageRevision } from './image';
@@ -61,6 +62,7 @@ function previewDecorations(view: EditorView, searchSelection = false) {
         atoms.push(...image.atoms);
         return false;
       } else if (node.name === 'FencedCode') {
+        if (hasMermaidPreview(state, node.from)) return false;
         const code = codeDecorations(node.node, view, searchSelection);
         decorations.push(...code.decorations);
         atoms.push(...code.atoms);
@@ -150,7 +152,8 @@ const preview = ViewPlugin.fromClass(class {
 });
 
 export const liveEditing = [
-  sourceMode,
+  sourceMode, previewExport,
+  ...mermaidEditing,
   ...tableEditing,
   ...mathEditing,
   ...gfmEditing,
@@ -171,11 +174,11 @@ export const liveEditing = [
   ]),
   EditorView.editorAttributes.of(view => ({ class: view.state.field(sourceMode) ? 'cm-mvp-source' : 'cm-mvp-live' })),
   EditorView.theme({
-    '&.cm-mvp-live .cm-scroller': { fontFamily: 'system-ui, sans-serif' },
+    '&.cm-mvp-live .cm-scroller': { fontFamily: 'var(--inkpot-body-font, system-ui, sans-serif)', fontSize: 'var(--inkpot-body-size, 15px)' },
     '.cm-mvp-hidden-inline, .cm-mvp-hidden-inline *': { fontSize: '0 !important' },
     '.cm-mvp-image': { display: 'inline-block', maxWidth: '100%', verticalAlign: 'middle', margin: '6px 0' },
     '.cm-mvp-image img': { display: 'block', maxWidth: '100%', maxHeight: '420px', objectFit: 'contain' },
-    '.cm-mvp-inline-code': { fontFamily: 'Menlo, monospace', backgroundColor: '#f1f3f5', borderRadius: '3px' },
+    '.cm-mvp-inline-code': { fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', backgroundColor: '#f1f3f5', borderRadius: '3px' },
     '.cm-mvp-link': { color: '#1769aa', textDecoration: 'underline', cursor: 'text' },
     '.cm-mvp-rule': { display: 'inline-block', width: '100%', borderTop: '1px solid #c6cbd1', verticalAlign: 'middle' },
     '.cm-mvp-setext-mark': { height: '0', minHeight: '0', lineHeight: '0', paddingTop: '0', paddingBottom: '0' },

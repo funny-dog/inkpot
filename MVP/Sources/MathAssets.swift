@@ -1,7 +1,7 @@
 import WebKit
 
-/// 公式渲染资源经 inkpot-asset://math/ 从应用包按需提供。
-/// 只允许 KaTeX 白名单文件；跨域头让 file:// 页面能够加载 ES 模块和字体。
+/// 公式与图表渲染资源经 inkpot-asset://math/ 从应用包按需提供。
+/// 只允许打包的脚本、KaTeX 样式及字体；跨域头让 file:// 页面能够加载 ES 模块和字体。
 enum MathAssets {
   private static let fontMimes = ["woff2": "font/woff2", "woff": "font/woff", "ttf": "font/ttf"]
 
@@ -11,9 +11,9 @@ enum MathAssets {
     let url = URL(fileURLWithPath: path)
     let name = url.lastPathComponent
     let fileExtension = url.pathExtension.lowercased()
-    let directory = url.deletingLastPathComponent().path
+    let directory = path.split(separator: "/").dropLast().joined(separator: "/")
     let mime: String
-    if name == "katex.mjs" {
+    if directory.isEmpty, fileExtension == "mjs" {
       mime = "text/javascript"
     } else if name == "katex.min.css" {
       mime = "text/css"

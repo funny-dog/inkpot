@@ -1,5 +1,6 @@
+import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { sourceMode, toggleSourceMode } from './mode';
+import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
 import { applyAppearance } from './theme';
 
 const exportCSS = `
@@ -21,90 +22,126 @@ blockquote, .cm-mvp-quote { border-left: 3px solid #c6cbd1; color: #5f6368; padd
 .cm-mvp-toc-item { padding: 2px 0; }
 .cm-mvp-math-block { display: block; text-align: center; margin: 10px 0; padding: 6px 0; overflow-x: auto; }
 .katex { font-size: 1.1em; }
+.cm-mvp-mermaid { display: block; text-align: center; overflow-x: auto; padding: 12px 0; white-space: normal; }
+.cm-mvp-mermaid svg { max-width: 100%; height: auto; }
+.cm-mvp-mermaid-error { white-space: pre-wrap; text-align: left; }
 `;
 
 /** 导出用的独立 HTML 文档：基于实时视图序列化，配色固定浅色，不依赖编辑器运行时。 */
-export function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'html'): string {
+export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'html'): Promise<string> {
+  if (isComposing(view)) throw new Error('请先确认输入法候选文字，再导出。');
+  if (view.state.field(previewExport)) throw new Error('正在导出，请等待完成。');
+  const original = view.state.doc;
+  if (ensureSyntaxTree(view.state, original.length, 100) === null) throw new Error('文档尚未完成解析，请稍后重试导出。');
   // 序列化以实时视图为准；记录并恢复调用前的源码模式、光标与外观（导出固定浅色）。
   const wasSource = view.state.field(sourceMode);
   const selection = view.state.selection;
   const wasDark = view.dom.matches('.cm-mvp-dark');
-  if (wasSource) toggleSourceMode(view);
-  if (wasDark) applyAppearance(view, false);
-  view.dispatch({ selection: { anchor: 0 } });
-  const clone = view.contentDOM.cloneNode(true) as HTMLElement;
-  view.dispatch({ selection });
-  if (wasDark) applyAppearance(view, true);
-  if (wasSource) toggleSourceMode(view);
-
-  clone.removeAttribute('contenteditable');
-  clone.removeAttribute('spellcheck');
-  clone.removeAttribute('aria-label');
-  clone.removeAttribute('autocorrect');
-  clone.className = 'inkpot-export';
-  for (const element of [...clone.querySelectorAll('.cm-mvp-table-input, .cm-mvp-table-hint, .cm-mvp-hidden-inline, .cm-cursor, .cm-dropCursor, .cm-selectionBackground')]) {
-    element.remove();
-  }
-
-  // 语法加粗、删除线、高亮等来自语法高亮类，导出文档没有对应样式表，内联关键计算样式。
-  const originals = view.contentDOM.querySelectorAll<HTMLElement>('*');
-  const copies = clone.querySelectorAll<HTMLElement>('*');
-  originals.forEach((original, index) => {
-    if (index >= copies.length) return;
-    const copy = copies[index];
-    // MathML 等外来元素没有 style 属性，其样式由公式自身的渲染承担。
-    if (!(original instanceof HTMLElement) || !(copy instanceof HTMLElement)) return;
-    const source = getComputedStyle(original) as unknown as Record<string, string>;
-    const parent = original.parentElement === null ? source : getComputedStyle(original.parentElement) as unknown as Record<string, string>;
-    for (const property of ['fontWeight', 'fontStyle', 'textDecorationLine', 'backgroundColor', 'color', 'verticalAlign', 'fontSize'] as const) {
-      const value = source[property];
-      if (value !== '' && value !== 'inherit' && value !== parent[property]) copy.style[property] = value;
+  let clone: HTMLElement;
+  // shortcut: CodeMirror 尚无公开的全篇 DOM 导出接口，升级编辑器依赖时需复验内部打印布局。
+  const printLayout = () => (view as unknown as { observer: { onPrint(event: Event): void } }).observer.onPrint(new Event('beforeprint'));
+  const timer = setInterval(printLayout, 250);
+  try {
+    if (wasSource) toggleSourceMode(view);
+    if (wasDark) applyAppearance(view, false);
+    view.dispatch({ selection: { anchor: 0 }, effects: setPreviewExport.of(true) });
+    printLayout();
+    const deadline = Date.now() + 10000;
+    while (view.dom.querySelector('[data-render-pending]') !== null
+      || view.dom.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error) .katex').length
+        !== view.dom.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error)').length) {
+      if (!view.dom.isConnected || view.state.doc !== original) throw new Error('文档已关闭或导出期间发生编辑，请重新导出。');
+      if (Date.now() > deadline) throw new Error('图表或公式渲染超时，请检查内容后重试。');
+      await new Promise(resolve => setTimeout(resolve, 20));
     }
-  });
+    if (view.state.doc !== original) throw new Error('导出期间发生编辑，请重新导出。');
+    clone = view.contentDOM.cloneNode(true) as HTMLElement;
 
-  // 复选框的选中态是运行时属性，克隆与序列化都会丢失，按原件写回属性。
-  const sourceBoxes = view.contentDOM.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-  const boxes = clone.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-  for (let index = 0; index < boxes.length && index < sourceBoxes.length; index++) {
-    if (sourceBoxes[index].checked) boxes[index].setAttribute('checked', '');
-    boxes[index].disabled = true;
-  }
+    clone.removeAttribute('contenteditable');
+    clone.removeAttribute('spellcheck');
+    clone.removeAttribute('aria-label');
+    clone.removeAttribute('autocorrect');
+    clone.className = 'inkpot-export';
 
-  // 本地图片还原为相对路径：导出 HTML 与文档放在一起时可显示，PDF 通过 baseURL 解析。
-  for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
-    try {
-      const url = new URL(image.getAttribute('src') ?? '');
-      if (url.host === 'local') image.setAttribute('src', decodeURIComponent(url.pathname.slice(1)));
-    } catch { /* 非 URL 的 src 原样保留 */ }
-  }
+    // 语法加粗、删除线、高亮等来自语法高亮类，导出文档没有对应样式表，内联关键计算样式。
+    const originals = view.contentDOM.querySelectorAll<HTMLElement>('*');
+    const copies = clone.querySelectorAll<HTMLElement>('*');
+    originals.forEach((original, index) => {
+      if (index >= copies.length) return;
+      const copy = copies[index];
+      // MathML 等外来元素没有 style 属性，其样式由公式自身的渲染承担。
+      if (!(original instanceof HTMLElement) || !(copy instanceof HTMLElement)) return;
+      const source = getComputedStyle(original) as unknown as Record<string, string>;
+      const parent = original.parentElement === null ? source : getComputedStyle(original.parentElement) as unknown as Record<string, string>;
+      for (const property of ['fontWeight', 'fontStyle', 'textDecorationLine', 'backgroundColor', 'color', 'verticalAlign', 'fontSize'] as const) {
+        const value = source[property];
+        if (value !== '' && value !== 'inherit' && value !== parent[property]) copy.style[property] = value;
+      }
+    });
 
-  if (mode === 'html') {
-    // 独立 HTML 无 KaTeX 样式：保留浏览器原生渲染的 MathML，去掉依赖样式的排版副本。
-    for (const element of [...clone.querySelectorAll('.katex')]) {
-      const mathml = element.querySelector('.katex-mathml');
-      const math = mathml?.firstElementChild;
-      if (math !== undefined && math !== null) {
-        math.removeAttribute('aria-hidden');
-        element.replaceChildren(math);
+    for (const diagram of clone.querySelectorAll('.cm-mvp-mermaid')) {
+      diagram.removeAttribute('tabindex'); diagram.removeAttribute('title');
+      const svg = diagram.querySelector('svg');
+      svg?.style.removeProperty('max-width');
+      svg?.setAttribute('width', '100%');
+    }
+
+    for (const element of [...clone.querySelectorAll('.cm-mvp-table-input, .cm-mvp-table-hint, .cm-mvp-hidden-inline, .cm-cursor, .cm-dropCursor, .cm-selectionBackground')]) {
+      element.remove();
+    }
+
+    // 复选框的选中态是运行时属性，克隆与序列化都会丢失，按原件写回属性。
+    const sourceBoxes = view.contentDOM.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    const boxes = clone.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    for (let index = 0; index < boxes.length && index < sourceBoxes.length; index++) {
+      if (sourceBoxes[index].checked) boxes[index].setAttribute('checked', '');
+      boxes[index].disabled = true;
+    }
+
+    // 本地图片还原为相对路径：导出 HTML 与文档放在一起时可显示，PDF 通过 baseURL 解析。
+    for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
+      try {
+        const url = new URL(image.getAttribute('src') ?? '');
+        if (url.host === 'local') image.setAttribute('src', decodeURIComponent(url.pathname.slice(1)));
+      } catch { /* 非 URL 的 src 原样保留 */ }
+    }
+
+    if (mode === 'html') {
+      // 独立 HTML 无 KaTeX 样式：保留浏览器原生渲染的 MathML，去掉依赖样式的排版副本。
+      for (const element of [...clone.querySelectorAll('.katex')]) {
+        const mathml = element.querySelector('.katex-mathml');
+        const math = mathml?.firstElementChild;
+        if (math !== undefined && math !== null) {
+          math.removeAttribute('aria-hidden');
+          element.replaceChildren(math);
+        }
       }
     }
+
+    const firstLine = view.state.doc.line(1).text.trim();
+    const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : '文档';
+    const katex = mode === 'pdf' ? '<link rel="stylesheet" href="inkpot-asset://math/katex.min.css">\n' : '';
+    return `<!doctype html>
+  <html lang="zh-CN">
+  <head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>${escapeHTML(title)}</title>
+  ${katex}<style>${exportCSS}</style>
+  </head>
+  <body>
+  ${clone.innerHTML}
+  </body>
+  </html>`;
+  } finally {
+    clearInterval(timer);
+    if (view.dom.isConnected) {
+      view.dispatch({ effects: setPreviewExport.of(false), ...(view.state.doc === original ? { selection } : {}) });
+      if (wasDark) applyAppearance(view, true);
+      if (wasSource && !view.state.field(sourceMode)) toggleSourceMode(view);
+    }
   }
 
-  const firstLine = view.state.doc.line(1).text.trim();
-  const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : '文档';
-  const katex = mode === 'pdf' ? '<link rel="stylesheet" href="inkpot-asset://math/katex.min.css">\n' : '';
-  return `<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${escapeHTML(title)}</title>
-${katex}<style>${exportCSS}</style>
-</head>
-<body>
-${clone.innerHTML}
-</body>
-</html>`;
 }
 
 function escapeHTML(text: string) {

@@ -42,7 +42,7 @@ describe('MVP 导出', () => {
   test('PDF 模式输出完整结构：标题、行内样式、表格与公式排版副本', async () => {
     const { view } = editor(original);
     await flushed();
-    const html = documentHTML(view, 'pdf');
+    const html = await documentHTML(view, 'pdf');
     const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
     expect(html).toContain('<!doctype html>');
     expect(html).toContain('inkpot-asset://math/katex.min.css');
@@ -57,7 +57,7 @@ describe('MVP 导出', () => {
   test('HTML 模式去除编辑器痕迹，公式保留 MathML、去掉排版副本', async () => {
     const { view } = editor(original);
     await flushed();
-    const html = documentHTML(view, 'html');
+    const html = await documentHTML(view, 'html');
     const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
     expect(html).not.toContain('inkpot-asset://math/katex.min.css');
     expect(doc.querySelector('.cm-mvp-table-input')).toBeNull();
@@ -75,11 +75,11 @@ describe('MVP 导出', () => {
     expect(box?.disabled).toBe(true);
   });
 
-  test('源码模式与光标位置的临时状态被恢复，源文档不变', () => {
+  test('源码模式与光标位置的临时状态被恢复，源文档不变', async () => {
     const { view, read } = editor(original);
     toggleSourceMode(view);
     view.dispatch({ selection: { anchor: original.replace(/\r\n/g, '\n').indexOf('加粗') } });
-    const html = documentHTML(view, 'html');
+    const html = await documentHTML(view, 'html');
     expect(html).toContain('加粗');
     // 导出以实时视图为准，结束后源码模式与光标恢复原状。
     expect(view.dom.matches('.cm-mvp-source')).toBe(true);
@@ -89,10 +89,10 @@ describe('MVP 导出', () => {
     expect(undoDepth(view.state)).toBe(0);
   });
 
-  test('导出标题取首行，空文档有占位', () => {
+  test('导出标题取首行，空文档有占位', async () => {
     const { view } = editor('# 首行标题\n\n正文');
-    expect(documentHTML(view, 'html')).toContain('<title>首行标题</title>');
+    expect(await documentHTML(view, 'html')).toContain('<title>首行标题</title>');
     const empty = editor('正文没有标题');
-    expect(documentHTML(empty.view, 'html')).toContain('<title>正文没有标题</title>');
+    expect(await documentHTML(empty.view, 'html')).toContain('<title>正文没有标题</title>');
   });
 });

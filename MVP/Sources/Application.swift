@@ -43,7 +43,11 @@ enum Application {
         ("有序列表", "orderedList", "7"), ("无序列表", "bulletList", "8"),
         ("插入本地图片…", "insertImage:", ""), ("表格", "tableMenu", ""), ("公式块", "insertMathBlock", ""),
       ]),
-      ("显示", [("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M")]),
+      ("显示", [
+        ("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M"),
+        ("", "", ""), ("正文字体与字号…", "showBodyFont:", "t"), ("代码字体与字号…", "showCodeFont:", ""),
+        ("恢复默认字体", "resetFonts:", ""),
+      ]),
       ("窗口", [("最小化", "performMiniaturize:", "m")]),
     ]
     for (title, entries) in groups {
@@ -58,6 +62,7 @@ enum Application {
         let entry = NSMenuItem(title: label, action: NSSelectorFromString(action), keyEquivalent: key.lowercased())
         entry.keyEquivalentModifierMask = key != key.lowercased() || ["orderedList", "bulletList"].contains(action) ? [.command, .shift] : [.command]
         if action == "insertImage:" || action == "exportPDF:" || action == "exportHTML:" { entry.target = delegate }
+        if ["showBodyFont:", "showCodeFont:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
         if action == "restoreDrafts:" { entry.target = delegate }
         if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
         if ["undo:", "redo:", "selectAll:"].contains(action) { entry.target = delegate }

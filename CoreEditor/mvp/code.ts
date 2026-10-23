@@ -272,7 +272,7 @@ export const codeBindings: KeyBinding[] = [
 ];
 
 export const codeTheme = EditorView.theme({
-  '.cm-mvp-code': { backgroundColor: '#f4f5f7', fontFamily: 'Menlo, monospace', color: '#30343b', paddingLeft: '12px', paddingRight: '12px' },
+  '.cm-mvp-code': { backgroundColor: '#f4f5f7', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', color: '#30343b', paddingLeft: '12px', paddingRight: '12px' },
   '.cm-mvp-code-header': { borderTopLeftRadius: '6px', borderTopRightRadius: '6px', paddingTop: '6px', fontSize: '13px' },
   '.cm-mvp-code-footer': { height: '6px', minHeight: '0', lineHeight: '0', fontSize: '0', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' },
   '.cm-mvp-code-language': { appearance: 'none', border: '0', backgroundColor: 'transparent', color: '#5f6368', font: 'inherit', padding: '0 0 4px', cursor: 'pointer' },
