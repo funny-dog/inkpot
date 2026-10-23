@@ -22,8 +22,6 @@ struct AppCustomization {
     case editorScript
     case scriptsDirectory
     case debugDirectory
-    case pandoc
-    case statisticsRules
     case settings
     case extensions
 
@@ -34,8 +32,6 @@ struct AppCustomization {
       case .editorScript: return "editor.js"
       case .scriptsDirectory: return "scripts"
       case .debugDirectory: return "debug"
-      case .pandoc: return "pandoc.yaml"
-      case .statisticsRules: return "statistics-rules.json"
       case .settings: return "settings.json"
       case .extensions: return "extensions.json"
       }
@@ -54,8 +50,6 @@ struct AppCustomization {
   static let editorScript = Self(fileType: .editorScript)
   static let scriptsDirectory = Self(fileType: .scriptsDirectory)
   static let debugDirectory = Self(fileType: .debugDirectory)
-  static let pandoc = Self(fileType: .pandoc)
-  static let statisticsRules = Self(fileType: .statisticsRules)
   static let settings = Self(fileType: .settings)
   static let extensions = Self(fileType: .extensions)
 
@@ -64,8 +58,6 @@ struct AppCustomization {
     stylesDirectory.createFile()
     editorScript.createFile()
     scriptsDirectory.createFile()
-    pandoc.createFile("from: gfm\nstandalone: true\npdf-engine: context\n")
-    statisticsRules.createFile("[]")
     settings.createFile(AppRuntimeConfig.defaultContents)
     extensions.createFile(ExtensionConfig.defaultContents)
 

@@ -16,5 +16,5 @@
       "@codemirror/lang-markdown": ["./src/@vendor/lang-markdown"]
     }
   },
-  "include": ["index.ts", "src/**/*.ts", "test/**/*.ts", "vite.config.mts"]
+  "include": ["index.ts", "src/**/*.ts", "test/**/*.ts", "vite.config.mts", "mvp/**/*.ts", "mvp/**/*.mts"]
 }

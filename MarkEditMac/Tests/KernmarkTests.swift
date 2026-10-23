@@ -7,6 +7,45 @@ import XCTest
 
 @MainActor
 final class KernmarkTests: XCTestCase {
+  func testNewDocumentLineEndingsNormalizeLegacyCR() throws {
+    let preferences = ApplicationEnvironment.preferences
+    let key = "general.default-line-endings"
+    let saved = preferences.object(forKey: key)
+    defer {
+      if let saved {
+        preferences.set(saved, forKey: key)
+      } else {
+        preferences.removeObject(forKey: key)
+      }
+    }
+
+    preferences.set(try JSONEncoder().encode(LineEndings.cr), forKey: key)
+    XCTAssertEqual(AppPreferences.General.defaultLineEndings, .lf)
+    AppPreferences.General.defaultLineEndings = .crlf
+    XCTAssertEqual(AppPreferences.General.defaultLineEndings, .crlf)
+    AppPreferences.General.defaultLineEndings = .cr
+    XCTAssertEqual(AppPreferences.General.defaultLineEndings, .lf)
+    XCTAssertEqual(LineEndings.cr.characters, "\r")
+  }
+
+  func testTransparencyFollowsSystemInsteadOfRetiredOverride() throws {
+    let preferences = ApplicationEnvironment.preferences
+    let key = "window.reduce-transparency"
+    let saved = preferences.object(forKey: key)
+    defer {
+      if let saved {
+        preferences.set(saved, forKey: key)
+      } else {
+        preferences.removeObject(forKey: key)
+      }
+    }
+
+    for value in [false, true] {
+      preferences.set(try JSONEncoder().encode(value), forKey: key)
+      XCTAssertEqual(AppDesign.reduceTransparency, NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency)
+    }
+  }
+
   func testKernmarkPreferencesReachEditorConfig() throws {
     let liveMode = AppPreferences.Editor.liveMode
     let vimMode = AppPreferences.Editor.vimMode

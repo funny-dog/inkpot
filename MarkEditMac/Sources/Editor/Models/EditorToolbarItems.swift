@@ -90,7 +90,6 @@ extension NSToolbarItem.Identifier {
   static let textFormat = newItem("textFormat")
   static let statistics = newItem("statistics")
   static let shareDocument = newItem("shareDocument")
-  static let copyPandocCommand = newItem("copyPandocCommand")
   static let writingTools = newItem("writingTools")
 
   static var defaultItems: [NSToolbarItem.Identifier] {
@@ -120,7 +119,6 @@ extension NSToolbarItem.Identifier {
       .textFormat,
       .statistics,
       .shareDocument,
-      .copyPandocCommand,
       .writingTools,
       .space,
       .flexibleSpace,
@@ -152,7 +150,6 @@ private extension NSToolbarItem.Identifier {
     case .textFormat: return Localized.Toolbar.textFormat
     case .statistics: return Localized.Toolbar.statistics
     case .shareDocument: return Localized.Toolbar.shareDocument
-    case .copyPandocCommand: return Localized.Toolbar.copyPandocCommand
     case .writingTools: return Localized.WritingTools.featureName
     default: fatalError("Unexpected toolbar item identifier: \(self)")
     }
@@ -175,7 +172,6 @@ private extension NSToolbarItem.Identifier {
     case .textFormat: return Icons.textformat
     case .statistics: return Icons.chartPie
     case .shareDocument: return Icons.squareAndArrowUp
-    case .copyPandocCommand: return Icons.appleTerminal
     case .writingTools: return Icons.wandAndSparkles
     default: fatalError("Unexpected toolbar item identifier: \(self)")
     }

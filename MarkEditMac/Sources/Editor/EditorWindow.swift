@@ -9,20 +9,13 @@ import AppKit
 import MarkEditKit
 
 final class EditorWindow: NSWindow {
-  /// Forces `.preferred` tabbing for an on-demand window (e.g. "New Tab"),
-  /// without mutating the persisted `AppPreferences.Window.tabbingMode`.
+  /// 显式新建标签页时使用首选标签模式，其他窗口遵循系统策略。
   @MainActor static var forcedTabbing = false
 
   var toolbarMode: ToolbarMode? {
     didSet {
       toolbarStyle = toolbarMode == .compact ? .unifiedCompact : .unified
       super.toolbar = toolbarMode == .hidden ? nil : cachedToolbar
-      updateTitleBarAppearance()
-    }
-  }
-
-  var reduceTransparency: Bool? {
-    didSet {
       updateTitleBarAppearance()
     }
   }
@@ -51,8 +44,7 @@ final class EditorWindow: NSWindow {
     super.awakeFromNib()
     toolbar = NSToolbar() // Required for multi-tab layout
     toolbarMode = AppPreferences.Window.toolbarMode
-    tabbingMode = Self.forcedTabbing ? .preferred : AppPreferences.Window.tabbingMode
-    reduceTransparency = AppDesign.reduceTransparency
+    tabbingMode = Self.forcedTabbing ? .preferred : .automatic
   }
 
   override func layoutIfNeeded() {
@@ -61,7 +53,7 @@ final class EditorWindow: NSWindow {
   }
 
   /// Applies all custom title-bar tweaks derived from current state:
-  /// `(isFullscreen, toolbarMode, reduceTransparency, prefersTintedToolbar)`.
+  /// `(isFullscreen, toolbarMode, prefersTintedToolbar)`.
   /// Safe to call repeatedly; also runs implicitly after each layout pass.
   func updateTitleBarAppearance(clearCaches: Bool = true) {
     if clearCaches {

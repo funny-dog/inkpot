@@ -15,7 +15,6 @@ struct GeneralSettingsView: View {
   @State private var newWindowBehavior = AppPreferences.General.newWindowBehavior
   @State private var quitAlwaysKeepsWindows = AppPreferences.General.quitAlwaysKeepsWindows
   @State private var newFilenameExtension = AppPreferences.General.newFilenameExtension
-  @State private var defaultTextEncoding = AppPreferences.General.defaultTextEncoding
   @State private var defaultLineEndings = AppPreferences.General.defaultLineEndings
 
   var body: some View {
@@ -62,24 +61,9 @@ struct GeneralSettingsView: View {
         }
         .formMenuPicker()
 
-        Picker(Localized.Settings.defaultTextEncoding, selection: $defaultTextEncoding) {
-          ForEach(EditorTextEncoding.allCases, id: \.self) {
-            Text($0.description)
-
-            if EditorTextEncoding.groupingCases.contains($0) {
-              Divider()
-            }
-          }
-        }
-        .onChange(of: defaultTextEncoding) {
-          AppPreferences.General.defaultTextEncoding = defaultTextEncoding
-        }
-        .formMenuPicker()
-
         Picker(Localized.Settings.defaultLineEndings, selection: $defaultLineEndings) {
           Text(Localized.Settings.macOSLineEndings).tag(LineEndings.lf)
           Text(Localized.Settings.windowsLineEndings).tag(LineEndings.crlf)
-          Text(Localized.Settings.classicMacLineEndings).tag(LineEndings.cr)
         }
         .onChange(of: defaultLineEndings) {
           AppPreferences.General.defaultLineEndings = defaultLineEndings

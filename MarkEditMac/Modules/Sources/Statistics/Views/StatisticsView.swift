@@ -12,9 +12,6 @@ import SwiftUI
 struct StatisticsView: View {
   private let fullResult: StatisticsResult
   private let selectionResult: StatisticsResult?
-  private let fullRuleResults: [StatisticsRuleResult]
-  private let selectionRuleResults: [StatisticsRuleResult]?
-  private let fileURL: URL?
   private let localizable: StatisticsLocalizable
 
   @State private var viewingMode: ViewingMode = .selection
@@ -23,16 +20,10 @@ struct StatisticsView: View {
   init(
     fullResult: StatisticsResult,
     selectionResult: StatisticsResult?,
-    fullRuleResults: [StatisticsRuleResult] = [],
-    selectionRuleResults: [StatisticsRuleResult]? = nil,
-    fileURL: URL?,
     localizable: StatisticsLocalizable
   ) {
     self.fullResult = fullResult
     self.selectionResult = selectionResult
-    self.fullRuleResults = fullRuleResults
-    self.selectionRuleResults = selectionRuleResults
-    self.fileURL = fileURL
     self.localizable = localizable
   }
 
@@ -78,14 +69,6 @@ struct StatisticsView: View {
 
       ScrollView {
         VStack(spacing: 0) {
-          ForEach(Array(currentRuleResults.filter { !$0.isEmpty }.enumerated()), id: \.offset) { _, ruleResult in
-            StatisticsCell(
-              iconName: ruleResult.rule.icon,
-              titleText: ruleResult.rule.title,
-              valueText: "\(ruleResult.count)"
-            )
-          }
-
           StatisticsCell(
             iconName: Icons.characters,
             titleText: localizable.characters,
@@ -97,43 +80,6 @@ struct StatisticsView: View {
             titleText: localizable.words,
             valueText: "\(currentResult.words)"
           )
-
-          StatisticsCell(
-            iconName: Icons.sentences,
-            titleText: localizable.sentences,
-            valueText: "\(currentResult.sentences)"
-          )
-
-          StatisticsCell(
-            iconName: Icons.paragraphs,
-            titleText: localizable.paragraphs,
-            valueText: "\(currentResult.paragraphs)"
-          )
-
-          if currentResult.comments > 0 {
-            StatisticsCell(
-              iconName: Icons.comments,
-              titleText: localizable.comments,
-              valueText: "\(currentResult.comments)"
-            )
-          }
-
-          if let readTime = ReadTime.estimated(of: currentResult.words) {
-            StatisticsCell(
-              iconName: Icons.readTime,
-              titleText: localizable.readTime,
-              valueText: readTime
-            )
-          }
-
-          // The file size is shown only when we are viewing the full document
-          if isViewingDocument, let fileSize = FileSize.readableSize(of: fileURL) {
-            StatisticsCell(
-              iconName: Icons.fileSize,
-              titleText: localizable.fileSize,
-              valueText: fileSize
-            )
-          }
         }
         .padding(.horizontal, 8)
         .frame(maxWidth: .infinity)
@@ -154,11 +100,6 @@ private extension StatisticsView {
   enum Icons {
     static let characters = "textformat"
     static let words = "text.bubble"
-    static let sentences = "textformat.abc.dottedunderline"
-    static let paragraphs = "paragraphsign"
-    static let comments = "eye.slash"
-    static let readTime = "stopwatch"
-    static let fileSize = "doc.text.below.ecg"
   }
 
   var isViewingDocument: Bool {
@@ -172,13 +113,5 @@ private extension StatisticsView {
     }
 
     return fullResult
-  }
-
-  var currentRuleResults: [StatisticsRuleResult] {
-    if !isViewingDocument, let selectionRuleResults {
-      return selectionRuleResults
-    }
-
-    return fullRuleResults
   }
 }

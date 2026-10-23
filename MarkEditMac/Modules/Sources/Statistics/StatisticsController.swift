@@ -16,29 +16,22 @@ import MarkEditKit
 public final class StatisticsController: NSViewController {
   private enum Constants {
     static let contentWidth: Double = 266
-    static let contentHeight: Double = 314
-    static let maxExtraRows: Int = 3
+    static let contentHeight: Double = 120
   }
 
   private let content: ReadableContentPair
-  private let fileURL: URL?
   private let localizable: StatisticsLocalizable
-  private let customRules: [StatisticsRule]
   private let tintColor: NSColor?
   private var contentView: NSView?
 
   public init(
     content: ReadableContentPair,
-    fileURL: URL?,
     tintColor: NSColor? = nil,
-    localizable: StatisticsLocalizable,
-    customRules: [StatisticsRule] = []
+    localizable: StatisticsLocalizable
   ) {
     self.content = content
-    self.fileURL = fileURL
     self.tintColor = tintColor
     self.localizable = localizable
-    self.customRules = customRules
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -76,40 +69,22 @@ public final class StatisticsController: NSViewController {
 
     // Natural language processing is time-consuming for large documents
     Task.detached(priority: .userInitiated) {
-      let fullResult = self.content.fullText.result
-      let selectionResult = self.content.selection?.result
-
-      let fullRuleResults = self.customRules.map { rule in
-        StatisticsRuleResult(rule: rule, count: rule.count(in: self.content.fullText.sourceText))
-      }
-
-      let selectionRuleResults: [StatisticsRuleResult]? = self.content.selection.map { selection in
-        self.customRules.map { rule in
-          StatisticsRuleResult(rule: rule, count: rule.count(in: selection.sourceText))
-        }
-      }
+      let fullResult = StatisticsResult(content: self.content.fullText)
+      let selectionResult = self.content.selection.map { StatisticsResult(content: $0) }
 
       // Remove the spinner and show the result view on main thread
       DispatchQueue.main.async {
         spinner.stopAnimation(nil)
         spinner.removeFromSuperview()
 
-        // Visible rules are the ones initially shown, use fullRuleResults to determine sizing
-        let visibleRuleCount = fullRuleResults.count { !$0.isEmpty }
-        let extraRows = min(visibleRuleCount, Constants.maxExtraRows)
-        let contentHeight = Constants.contentHeight + Double(extraRows) * StatisticsCell.rowHeight
-
         self.preferredContentSize = CGSize(
           width: Constants.contentWidth,
-          height: contentHeight
+          height: Constants.contentHeight
         )
 
         let contentView = NSHostingView(rootView: StatisticsView(
           fullResult: fullResult,
           selectionResult: selectionResult,
-          fullRuleResults: fullRuleResults,
-          selectionRuleResults: selectionRuleResults,
-          fileURL: self.fileURL,
           localizable: self.localizable
         ))
 
@@ -128,24 +103,5 @@ public final class StatisticsController: NSViewController {
   override public func viewDidLayout() {
     super.viewDidLayout()
     contentView?.frame = view.bounds
-  }
-}
-
-// MARK: - Private
-
-private extension ReadableContent {
-  var result: StatisticsResult {
-    StatisticsResult(
-      // Length of the full text
-      characters: sourceText.count,
-      // Result from the syntax tree
-      paragraphs: paragraphCount,
-      // Result from the syntax tree
-      comments: commentCount,
-      // Result from the NLP tokenizer
-      words: Tokenizer.count(text: trimmedText, unit: .word),
-      // Result from the NLP tokenizer
-      sentences: Tokenizer.count(text: trimmedText, unit: .sentence)
-    )
   }
 }

@@ -7,30 +7,6 @@
 import AppKit
 
 public extension NSWorkspace {
-  func openTerminal(preferredIdentifier: String? = nil) {
-    let identifiers = [
-      preferredIdentifier,      // User configured
-      "com.googlecode.iterm2",  // iTerm2
-      "com.mitchellh.ghostty",  // Ghostty
-      "dev.warp.Warp-Stable",   // Warp
-      "com.github.wez.wezterm", // WezTerm
-      "com.eltima.cmd1",        // Commander One
-      "com.csw.macwise",        // MacWise
-      "net.kovidgoyal.kitty",   // Kitty
-      "co.zeit.hyper",          // Hyper
-      "co.byobu",               // Byobu
-      "net.macterm.MacTerm",    // MacTerm
-      "org.alacritty",          // Alacritty
-      "com.emtec.zoc8",         // Zoc
-      "org.tabby",              // Tabby
-      "com.apple.Terminal",     // Terminal
-    ].compactMap { $0 }
-
-    if let url = (identifiers.compactMap { urlForApplication(withBundleIdentifier: $0) }).first {
-      openApplication(at: url, configuration: Self.OpenConfiguration())
-    }
-  }
-
   /// Open the URL if we can, otherwise reveal it in Finder.
   ///
   /// The return value indicates whether it's successfully opened or revealed.

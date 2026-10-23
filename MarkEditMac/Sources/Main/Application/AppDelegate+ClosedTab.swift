@@ -22,17 +22,9 @@ extension AppDelegate {
       return
     }
 
-    // Resolve target window based on the current tabbing mode preference.
-    //
-    // .disallowed: always open standalone.
-    // .preferred: open as a tab when a suitable target window exists.
-    // .automatic: respect original state.
+    // 按关闭前的窗口或标签状态恢复。
     let targetWindow: EditorWindow? = {
-      if AppPreferences.Window.tabbingMode == .disallowed {
-        return nil
-      }
-
-      if AppPreferences.Window.tabbingMode == .preferred || !entry.wasStandalone {
+      if !entry.wasStandalone {
         if let source = entry.sourceWindow as? EditorWindow {
           return source
         }

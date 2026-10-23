@@ -80,7 +80,6 @@ enum Localized {
     static let textFormat = String(localized: "Text Format", comment: "Toolbar item to use text format menu")
     static let statistics = String(localized: "Statistics", comment: "Toolbar item to show statistics")
     static let shareDocument = String(localized: "Share this document", comment: "Toolbar item to share the document")
-    static let copyPandocCommand = String(localized: "Copy Pandoc Command", comment: "Toolbar item to copy pandoc command")
   }
 
   enum Search {
@@ -118,11 +117,6 @@ enum Localized {
     static let document = String(localized: "Document", comment: "Statistics mode: full document")
     static let characters = String(localized: "Characters", comment: "Statistics label: count characters")
     static let words = String(localized: "Words", comment: "Statistics label: count words")
-    static let sentences = String(localized: "Sentences", comment: "Statistics label: count sentences")
-    static let paragraphs = String(localized: "Paragraphs", comment: "Statistics label: count paragraphs")
-    static let comments = String(localized: "Comments", comment: "Statistics label: count comments")
-    static let readTime = String(localized: "Read Time", comment: "Statistics label: count read time")
-    static let fileSize = String(localized: "File Size", comment: "Statistics label: count file size")
   }
 
   enum WritingTools {
@@ -202,11 +196,9 @@ enum Localized {
     static let windowRestoration = String(localized: "Window Restoration:", comment: "Label for window restoration options")
     static let quitAlwaysKeepsWindows = String(localized: "Quit always keeps windows", comment: "Whether to keep windows when quit the app")
     static let newFilenameExtension = String(localized: "New Filename Extension:", comment: "Filename extension for new files")
-    static let defaultTextEncoding = String(localized: "Default Text Encoding:", comment: "Text encoding for opening and saving files")
     static let defaultLineEndings = String(localized: "Default Line Endings:", comment: "Line endings for creating new files")
     static let macOSLineEndings = String(localized: "macOS / Unix (LF)", comment: "Line endings used on macOS and Unix")
     static let windowsLineEndings = String(localized: "Windows (CRLF)", comment: "Line endings used on Windows")
-    static let classicMacLineEndings = String(localized: "Classic Mac OS (CR)", comment: "Line endings used on Classic Mac OS")
 
     // Window
     static let window = String(localized: "Window", comment: "Window title for window settings")
@@ -214,18 +206,6 @@ enum Localized {
     static let normalMode = String(localized: "Normal", comment: "Normal mode for window toolbar")
     static let compactMode = String(localized: "Compact", comment: "Compact mode for window toolbar")
     static let hiddenMode = String(localized: "Hidden", comment: "Hidden mode for window toolbar")
-    static let tabbingMode = String(localized: "Tabbing Mode:", comment: "Label for window tabbing mode settings")
-    static let automatic = String(localized: "Automatic", comment: "Automatic window tabbing mode")
-    static let preferred = String(localized: "Preferred", comment: "Preferred window tabbing mode")
-    static let disallowed = String(localized: "Disallowed", comment: "Disallowed window tabbing mode")
-    static let reduceTransparencyLabel = String(localized: "Reduce Transparency:", comment: "Label for the option to reduce window transparency")
-    static let reduceTransparencyDescription = String(localized: "Remove the toolbar blur", comment: "Explanation for the option to reduce window transparency")
-  }
-
-  enum FileVersion {
-    static let noVersionsTitle = String(localized: "No versions match the specified condition.", comment: "Alert title for no versions found")
-    static let foundVersionsFormat = String(localized: "Found %lld versions, would you like to delete them?", comment: "Alert title (format) for number of versions found")
-    static let cannotBeUndone = String(localized: "This action cannot be undone.", comment: "Alert message for cannot undo")
   }
 
   enum Scripting {

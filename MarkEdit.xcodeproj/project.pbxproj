@@ -43,7 +43,6 @@
 		8725E0822977EF46006A4961 /* EditorViewController+Toolbar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8725E0812977EF46006A4961 /* EditorViewController+Toolbar.swift */; };
 		8729C5A6294B5E6B006F262B /* EditorViewController+Menu.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8729C5A5294B5E6B006F262B /* EditorViewController+Menu.swift */; };
 		872E5FC0300918FA00D34792 /* ExtensionsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 872E5FBF300918FA00D34792 /* ExtensionsViewController.swift */; };
-		873126E4297BAC9C001521A0 /* EditorViewController+Pandoc.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873126E3297BAC9C001521A0 /* EditorViewController+Pandoc.swift */; };
 		873ACD4729644E2F00431498 /* EditorViewController+Encoding.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873ACD4629644E2F00431498 /* EditorViewController+Encoding.swift */; };
 		873D6402295FCC3E0095DEF7 /* AppResources.swift in Sources */ = {isa = PBXBuildFile; fileRef = 873D6401295FCC3E0095DEF7 /* AppResources.swift */; };
 		874065792BB505F500B5CE5A /* EditorViewController+Events.swift in Sources */ = {isa = PBXBuildFile; fileRef = 874065782BB505F500B5CE5A /* EditorViewController+Events.swift */; };
@@ -69,7 +68,6 @@
 		8780AC202982A2DD00065EF4 /* WindowSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8780AC1F2982A2DD00065EF4 /* WindowSettingsView.swift */; };
 		87850C8629482A8600D1A952 /* NSApplication+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87850C8529482A8600D1A952 /* NSApplication+Extras.swift */; };
 		878AABE92CB111410081C5E1 /* EditorMenuItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878AABE82CB111410081C5E1 /* EditorMenuItem.swift */; };
-		878B7B9A2CE0DA8A00220F39 /* EditorViewController+FileVersion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 878B7B992CE0DA7D00220F39 /* EditorViewController+FileVersion.swift */; };
 		8790ABD42A98F5F40083825C /* EditorViewController+Statistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8790ABD32A98F5F40083825C /* EditorViewController+Statistics.swift */; };
 		8790ABDB2A98FF610083825C /* Statistics in Frameworks */ = {isa = PBXBuildFile; productRef = 8790ABDA2A98FF610083825C /* Statistics */; };
 		8790B6EC297036B2000DFC1A /* EditorWindow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8790B6EB297036B2000DFC1A /* EditorWindow.swift */; };
@@ -170,7 +168,6 @@
 		8725E0812977EF46006A4961 /* EditorViewController+Toolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Toolbar.swift"; sourceTree = "<group>"; };
 		8729C5A5294B5E6B006F262B /* EditorViewController+Menu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Menu.swift"; sourceTree = "<group>"; };
 		872E5FBF300918FA00D34792 /* ExtensionsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionsViewController.swift; sourceTree = "<group>"; };
-		873126E3297BAC9C001521A0 /* EditorViewController+Pandoc.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Pandoc.swift"; sourceTree = "<group>"; };
 		873ACD4629644E2F00431498 /* EditorViewController+Encoding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Encoding.swift"; sourceTree = "<group>"; };
 		873D6401295FCC3E0095DEF7 /* AppResources.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppResources.swift; sourceTree = "<group>"; };
 		874065782BB505F500B5CE5A /* EditorViewController+Events.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Events.swift"; sourceTree = "<group>"; };
@@ -197,7 +194,6 @@
 		8780AC1F2982A2DD00065EF4 /* WindowSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowSettingsView.swift; sourceTree = "<group>"; };
 		87850C8529482A8600D1A952 /* NSApplication+Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSApplication+Extras.swift"; sourceTree = "<group>"; };
 		878AABE82CB111410081C5E1 /* EditorMenuItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorMenuItem.swift; sourceTree = "<group>"; };
-		878B7B992CE0DA7D00220F39 /* EditorViewController+FileVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+FileVersion.swift"; sourceTree = "<group>"; };
 		8790ABD32A98F5F40083825C /* EditorViewController+Statistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EditorViewController+Statistics.swift"; sourceTree = "<group>"; };
 		8790B6EB297036B2000DFC1A /* EditorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorWindow.swift; sourceTree = "<group>"; };
 		879715C82D11547F0069964D /* EditorSaveOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSaveOptionsView.swift; sourceTree = "<group>"; };
@@ -511,11 +507,9 @@
 				87DE084A294E22C5004AD33A /* EditorViewController+TextFinder.swift */,
 				873ACD4629644E2F00431498 /* EditorViewController+Encoding.swift */,
 				870F17652984D2C000003DA7 /* EditorViewController+LineEndings.swift */,
-				878B7B992CE0DA7D00220F39 /* EditorViewController+FileVersion.swift */,
 				87AA1223296560AE00BE4719 /* EditorViewController+HyperLink.swift */,
 				87BDF6E32976C97100548079 /* EditorViewController+GotoLine.swift */,
 				8790ABD32A98F5F40083825C /* EditorViewController+Statistics.swift */,
-				873126E3297BAC9C001521A0 /* EditorViewController+Pandoc.swift */,
 			);
 			path = Controllers;
 			sourceTree = "<group>";
@@ -781,7 +775,6 @@
 				87B3ED5D2CBCADD6001FA6CE /* NSDocumentController+Extras.swift in Sources */,
 				8780AC202982A2DD00065EF4 /* WindowSettingsView.swift in Sources */,
 				8763C3202F92574D00A3841D /* EditorHistoryStorage.swift in Sources */,
-				878B7B9A2CE0DA8A00220F39 /* EditorViewController+FileVersion.swift in Sources */,
 				873D6402295FCC3E0095DEF7 /* AppResources.swift in Sources */,
 				870A51BC294702AF0095C7EB /* AppDelegate.swift in Sources */,
 				87FAFFD72BE0B6A300FA509D /* AppDelegate+FileSystem.swift in Sources */,
@@ -808,7 +801,6 @@
 				0A1100013010000000000003 /* AppDelegate+QuickSearch.swift in Sources */,
 				87E2141A2DE4A8400082DDB1 /* NSMenu+Extras.swift in Sources */,
 				87AAEE0229585ADC00C8E61C /* AppPreferences.swift in Sources */,
-				873126E4297BAC9C001521A0 /* EditorViewController+Pandoc.swift in Sources */,
 				84FB00F02C6C4AED00850E94 /* AppWritingTools.swift in Sources */,
 				872E5FC0300918FA00D34792 /* ExtensionsViewController.swift in Sources */,
 				EE100017EEEE000000000017 /* ExtensionsViewController+RowSizing.swift in Sources */,

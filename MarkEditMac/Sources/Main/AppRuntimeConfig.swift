@@ -113,7 +113,6 @@ enum AppRuntimeConfig {
     let disableOpenPanelOptions: Bool?
     let disableCorsRestrictions: Bool?
     let disabledWebKitFeatures: [String]?
-    let preferredTerminalApp: String?
     let mainWindowHotKey: HotKey?
 
     enum CodingKeys: String, CodingKey {
@@ -140,7 +139,6 @@ enum AppRuntimeConfig {
       case disableOpenPanelOptions = "general.disableOpenPanelOptions"
       case disableCorsRestrictions = "general.disableCorsRestrictions"
       case disabledWebKitFeatures = "general.disabledWebKitFeatures"
-      case preferredTerminalApp = "general.preferredTerminalApp"
       case mainWindowHotKey = "general.mainWindowHotKey"
     }
   }
@@ -280,11 +278,6 @@ enum AppRuntimeConfig {
     currentDefinition?.disabledWebKitFeatures ?? []
   }
 
-  static var preferredTerminalApp: String? {
-    // Use auto-detection by default
-    currentDefinition?.preferredTerminalApp
-  }
-
   static var mainWindowHotKey: Definition.HotKey? {
     // Shift-Command-Option-M by default
     currentDefinition?.mainWindowHotKey
@@ -346,7 +339,6 @@ private extension AppRuntimeConfig {
     disableOpenPanelOptions: nil, // [macOS 26] Future macOS with the fix can be opted out
     disableCorsRestrictions: true,
     disabledWebKitFeatures: nil,
-    preferredTerminalApp: nil,
     mainWindowHotKey: .init(key: "M", modifiers: ["Shift", "Command", "Option"])
   )
 

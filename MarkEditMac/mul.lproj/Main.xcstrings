@@ -193,30 +193,6 @@
         }
       }
     },
-    "2CK-gf-sE8.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Last Edited 3 Months Ago\"; ObjectID = \"2CK-gf-sE8\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Last Edited 3 Months Ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次编辑三个月前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次編輯三個月前"
-          }
-        }
-      }
-    },
     "2oI-Rn-ZJC.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Transformations\"; ObjectID = \"2oI-Rn-ZJC\";",
       "extractionState" : "extracted_with_value",
@@ -638,30 +614,6 @@
         }
       }
     },
-    "53x-nK-wnX.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Copy Pandoc Command\"; ObjectID = \"53x-nK-wnX\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Copy Pandoc Command"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷贝 Pandoc 指令"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷貝 Pandoc 指令"
-          }
-        }
-      }
-    },
     "78Y-hA-62v.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Correct Spelling Automatically\"; ObjectID = \"78Y-hA-62v\";",
       "extractionState" : "extracted_with_value",
@@ -854,30 +806,6 @@
         }
       }
     },
-    "B2E-9g-fPK.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Last Edited 2 Weeks Ago\"; ObjectID = \"B2E-9g-fPK\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Last Edited 2 Weeks Ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次编辑两周前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次編輯兩周前"
-          }
-        }
-      }
-    },
     "BCM-0i-fPP.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Heading 3\"; ObjectID = \"BCM-0i-fPP\";",
       "extractionState" : "extracted_with_value",
@@ -922,30 +850,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "檔案"
-          }
-        }
-      }
-    },
-    "BlA-2z-1dH.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Keep Up to 100 Versions\"; ObjectID = \"BlA-2z-1dH\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Keep Up to 100 Versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留最多 100 个版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留最多 100 個版本"
           }
         }
       }
@@ -1467,30 +1371,6 @@
         }
       }
     },
-    "EoI-17-lrY.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"All Local Versions\"; ObjectID = \"EoI-17-lrY\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "All Local Versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有本地版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "所有本地版本"
-          }
-        }
-      }
-    },
     "ErA-Lh-vDf.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Bigger\"; ObjectID = \"ErA-Lh-vDf\";",
       "extractionState" : "extracted_with_value",
@@ -1960,30 +1840,6 @@
         }
       }
     },
-    "hLx-6U-DoY.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Last Edited 6 Months Ago\"; ObjectID = \"hLx-6U-DoY\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Last Edited 6 Months Ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次编辑六个月前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次編輯六個月前"
-          }
-        }
-      }
-    },
     "hQb-2v-fYv.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Smart Quotes\"; ObjectID = \"hQb-2v-fYv\";",
       "extractionState" : "extracted_with_value",
@@ -2172,30 +2028,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "程式碼"
-          }
-        }
-      }
-    },
-    "iIq-nl-rwB.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Export to HTML\"; ObjectID = \"iIq-nl-rwB\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export to HTML"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出到 HTML"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "輸出為 HTML"
           }
         }
       }
@@ -2789,30 +2621,6 @@
         }
       }
     },
-    "oc0-ce-Yrd.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Export to PDF\"; ObjectID = \"oc0-ce-Yrd\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export to PDF"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出到 PDF"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "輸出為 PDF"
-          }
-        }
-      }
-    },
     "Olw-nP-bQN.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Hide Kernmark\"; ObjectID = \"Olw-nP-bQN\";",
       "extractionState" : "extracted_with_value",
@@ -2833,30 +2641,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "隱藏 Kernmark"
-          }
-        }
-      }
-    },
-    "ORv-QM-Kju.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Export to EPUB\"; ObjectID = \"ORv-QM-Kju\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export to EPUB"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出到 EPUB"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "輸出為 EPUB"
           }
         }
       }
@@ -3053,30 +2837,6 @@
         }
       }
     },
-    "PNm-e0-aoZ.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Last Edited 1 Year Ago\"; ObjectID = \"PNm-e0-aoZ\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Last Edited 1 Year Ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次编辑一年前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次編輯一年前"
-          }
-        }
-      }
-    },
     "pTm-hL-bI5.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Copy Line Up\"; ObjectID = \"pTm-hL-bI5\";",
       "extractionState" : "extracted_with_value",
@@ -3245,54 +3005,6 @@
         }
       }
     },
-    "QVA-GW-ruk.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Export to RTF\"; ObjectID = \"QVA-GW-ruk\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export to RTF"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出到 RTF"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "輸出為 RTF"
-          }
-        }
-      }
-    },
-    "QZC-LS-WMo.title" : {
-      "comment" : "Class = \"NSMenu\"; title = \"Copy Pandoc Command\"; ObjectID = \"QZC-LS-WMo\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Copy Pandoc Command"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷贝 Pandoc 指令"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷貝 Pandoc 指令"
-          }
-        }
-      }
-    },
     "R4o-n2-Eq4.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Zoom\"; ObjectID = \"R4o-n2-Eq4\";",
       "extractionState" : "extracted_with_value",
@@ -3433,30 +3145,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "智慧型破折號"
-          }
-        }
-      }
-    },
-    "Rjg-ZG-COT.title" : {
-      "comment" : "Class = \"NSMenu\"; title = \"Purge History Versions\"; ObjectID = \"Rjg-ZG-COT\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Purge History Versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "清理历史版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "清理歷史版本"
           }
         }
       }
@@ -3845,30 +3533,6 @@
         }
       }
     },
-    "Ukm-Sm-nrt.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Export to Word Docx\"; ObjectID = \"Ukm-Sm-nrt\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Export to Word Docx"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "导出到 Word Docx"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "輸出為 Word Docx"
-          }
-        }
-      }
-    },
     "uKp-pC-7O6.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Issue Tracker\"; ObjectID = \"uKp-pC-7O6\";",
       "extractionState" : "extracted_with_value",
@@ -3937,30 +3601,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "剪下"
-          }
-        }
-      }
-    },
-    "vbS-fI-FfG.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Keep Up to 50 Versions\"; ObjectID = \"vbS-fI-FfG\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Keep Up to 50 Versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留最多 50 个版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "保留最多 50 個版本"
           }
         }
       }
@@ -4469,30 +4109,6 @@
         }
       }
     },
-    "yfL-ea-k7X.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Purge History Versions\"; ObjectID = \"yfL-ea-k7X\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Purge History Versions"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "清理历史版本"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "清理歷史版本"
-          }
-        }
-      }
-    },
     "Ynk-f8-cLZ.title" : {
       "comment" : "Class = \"NSMenuItem\"; title = \"Start Speaking\"; ObjectID = \"Ynk-f8-cLZ\";",
       "extractionState" : "extracted_with_value",
@@ -4513,54 +4129,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "開始朗讀"
-          }
-        }
-      }
-    },
-    "yOb-Z8-aCk.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Last Edited 1 Month Ago\"; ObjectID = \"yOb-Z8-aCk\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Last Edited 1 Month Ago"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次编辑一个月前"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "上次編輯一個月前"
-          }
-        }
-      }
-    },
-    "yv7-Am-Rb2.title" : {
-      "comment" : "Class = \"NSMenuItem\"; title = \"Learn More…\"; ObjectID = \"yv7-Am-Rb2\";",
-      "extractionState" : "extracted_with_value",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Learn More…"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "了解更多…"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "瞭解更多…"
           }
         }
       }

@@ -8,7 +8,6 @@ import SwiftUI
 
 struct StatisticsCell: View {
   static let cellHeight: Double = 32
-  static let rowHeight: Double = cellHeight + 1 // 1pt divider
 
   let iconName: String
   let titleText: String

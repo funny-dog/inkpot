@@ -95,7 +95,6 @@ extension EditorViewController: NSToolbarDelegate {
       case .textFormat: return textFormatItem
       case .statistics: return statisticsItem
       case .shareDocument: return shareDocumentItem
-      case .copyPandocCommand: return copyPandocCommandItem
       case .writingTools: return writingToolsItem
       default:
         if let customItem = customItem(with: itemIdentifier) {
@@ -256,10 +255,6 @@ private extension EditorViewController {
     item.image = NSImage(systemSymbolName: Icons.squareAndArrowUp, accessibilityDescription: Localized.Toolbar.shareDocument)
     item.delegate = self
     return item
-  }
-
-  var copyPandocCommandItem: NSToolbarItem {
-    .with(identifier: .copyPandocCommand, menu: NSApp.appDelegate?.copyPandocCommandMenu?.copiedMenu)
   }
 
   var writingToolsItem: NSToolbarItem? {

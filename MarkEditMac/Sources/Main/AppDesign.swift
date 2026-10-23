@@ -31,7 +31,7 @@ enum AppDesign {
   }
 
   static var reduceTransparency: Bool {
-    AppPreferences.Window.reduceTransparency || NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
+    NSWorkspace.shared.accessibilityDisplayShouldReduceTransparency
   }
 
   static var reduceMotion: Bool {

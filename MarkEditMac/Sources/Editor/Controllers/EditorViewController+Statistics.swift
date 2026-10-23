@@ -27,21 +27,14 @@ extension EditorViewController {
 
       let statisticsController = StatisticsController(
         content: content,
-        fileURL: document?.fileURL,
         tintColor: transientTintColor(for: .current),
         localizable: StatisticsLocalizable(
           mainTitle: Localized.Toolbar.statistics,
           selection: Localized.Statistics.selection,
           document: Localized.Statistics.document,
           characters: Localized.Statistics.characters,
-          words: Localized.Statistics.words,
-          sentences: Localized.Statistics.sentences,
-          paragraphs: Localized.Statistics.paragraphs,
-          comments: Localized.Statistics.comments,
-          readTime: Localized.Statistics.readTime,
-          fileSize: Localized.Statistics.fileSize
-        ),
-        customRules: Self.statisticsRules
+          words: Localized.Statistics.words
+        )
       )
 
       present(
@@ -54,21 +47,4 @@ extension EditorViewController {
       )
     }
   }
-}
-
-// MARK: - Private
-
-private extension EditorViewController {
-  static let statisticsRules: [StatisticsRule] = {
-    guard let data = try? Data(contentsOf: AppCustomization.statisticsRules.fileURL) else {
-      return []
-    }
-
-    guard let rules = try? JSONDecoder().decode([StatisticsRule].self, from: data) else {
-      Logger.log(.error, "Invalid statistics-rules.json")
-      return []
-    }
-
-    return rules
-  }()
 }

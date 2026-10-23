@@ -36,8 +36,14 @@ enum AppPreferences {
     static var hasUsedQuickSearch: Bool
 
     @Storage(key: "general.default-line-endings", defaultValue: .lf)
+    private static var storedDefaultLineEndings: LineEndings
+
     static var defaultLineEndings: LineEndings {
-      didSet {
+      get {
+        storedDefaultLineEndings == .cr ? .lf : storedDefaultLineEndings
+      }
+      set {
+        storedDefaultLineEndings = newValue == .cr ? .lf : newValue
         performUpdates { $0.setDefaultLineBreak(defaultLineEndings.characters) }
       }
     }
@@ -246,27 +252,6 @@ enum AppPreferences {
     static var toolbarMode: ToolbarMode {
       didSet {
         performUpdates { ($0.view.window as? EditorWindow)?.toolbarMode = toolbarMode }
-      }
-    }
-
-    @Storage(key: "window.tabbing-mode", defaultValue: .automatic)
-    static var tabbingMode: NSWindow.TabbingMode {
-      didSet {
-        performUpdates { $0.view.window?.tabbingMode = tabbingMode }
-      }
-    }
-
-    @Storage(key: "window.reduce-transparency", defaultValue: false)
-    static var reduceTransparency: Bool {
-      didSet {
-        performUpdates { editor in
-          Task { @MainActor in
-            // Modern title bar is implemented in the view controller layer
-            editor.updateWindowColors(AppTheme.current)
-          }
-
-          (editor.view.window as? EditorWindow)?.reduceTransparency = reduceTransparency
-        }
       }
     }
   }

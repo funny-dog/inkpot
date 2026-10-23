@@ -12,33 +12,18 @@ public struct StatisticsLocalizable {
   let document: String
   let characters: String
   let words: String
-  let sentences: String
-  let paragraphs: String
-  let comments: String
-  let readTime: String
-  let fileSize: String
 
   public init(
     mainTitle: String,
     selection: String,
     document: String,
     characters: String,
-    words: String,
-    sentences: String,
-    paragraphs: String,
-    comments: String,
-    readTime: String,
-    fileSize: String
+    words: String
   ) {
     self.mainTitle = mainTitle
     self.selection = selection
     self.document = document
     self.characters = characters
     self.words = words
-    self.sentences = sentences
-    self.paragraphs = paragraphs
-    self.comments = comments
-    self.readTime = readTime
-    self.fileSize = fileSize
   }
 }

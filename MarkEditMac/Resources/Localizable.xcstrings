@@ -570,23 +570,6 @@
         }
       }
     },
-    "Automatic" : {
-      "comment" : "Automatic window tabbing mode",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自动"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "自動"
-          }
-        }
-      }
-    },
     "Bold" : {
       "comment" : "Toolbar item to toggle bold",
       "localizations" : {
@@ -745,23 +728,6 @@
         }
       }
     },
-    "Classic Mac OS (CR)" : {
-      "comment" : "Line endings used on Classic Mac OS",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Classic Mac OS (CR)"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Classic Mac OS (CR)"
-          }
-        }
-      }
-    },
     "Clear Recents" : {
       "comment" : "Menu item: clear recents",
       "localizations" : {
@@ -826,23 +792,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "指令"
-          }
-        }
-      }
-    },
-    "Comments" : {
-      "comment" : "Statistics label: count comments",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "注释"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "註解"
           }
         }
       }
@@ -944,23 +893,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "拷貝安裝連結"
-          }
-        }
-      }
-    },
-    "Copy Pandoc Command" : {
-      "comment" : "Toolbar item to copy pandoc command",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷贝 Pandoc 指令"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "拷貝 Pandoc 指令"
           }
         }
       }
@@ -1167,23 +1099,6 @@
         }
       }
     },
-    "Default Text Encoding:" : {
-      "comment" : "Text encoding for opening and saving files",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "默认文本编码："
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "預設文字編碼："
-          }
-        }
-      }
-    },
     "Delete" : {
       "comment" : "Button title, confirm the deletion",
       "localizations" : {
@@ -1248,23 +1163,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "禁止更新檢查"
-          }
-        }
-      }
-    },
-    "Disallowed" : {
-      "comment" : "Disallowed window tabbing mode",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "禁用"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "禁止"
           }
         }
       }
@@ -1640,23 +1538,6 @@
         }
       }
     },
-    "File Size" : {
-      "comment" : "Statistics label: count file size",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "文件大小"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "檔案大小"
-          }
-        }
-      }
-    },
     "files, text, and commands" : {
       "comment" : "Search target in the Quick Search placeholder",
       "localizations" : {
@@ -1840,53 +1721,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "儲存時進行格式化。"
-          }
-        }
-      }
-    },
-    "Found %lld versions, would you like to delete them?" : {
-      "comment" : "Alert title (format) for number of versions found",
-      "localizations" : {
-        "en" : {
-          "variations" : {
-            "plural" : {
-              "one" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "Found %lld version, would you like to delete it?"
-                }
-              },
-              "other" : {
-                "stringUnit" : {
-                  "state" : "new",
-                  "value" : "Found %lld versions, would you like to delete them?"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hans" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "找到 %lld 个版本，要删除吗？"
-                }
-              }
-            }
-          }
-        },
-        "zh-Hant" : {
-          "variations" : {
-            "plural" : {
-              "other" : {
-                "stringUnit" : {
-                  "state" : "translated",
-                  "value" : "找到 %lld 個版本，要刪除嗎？"
-                }
-              }
-            }
           }
         }
       }
@@ -2996,23 +2830,6 @@
         }
       }
     },
-    "No versions match the specified condition." : {
-      "comment" : "Alert title for no versions found",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "没有符合条件的版本。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "沒有符合條件的版本。"
-          }
-        }
-      }
-    },
     "Normal" : {
       "comment" : "Normal line spacing\nNormal mode for window toolbar",
       "localizations" : {
@@ -3135,23 +2952,6 @@
     "option-esc" : {
       "shouldTranslate" : false
     },
-    "Paragraphs" : {
-      "comment" : "Statistics label: count paragraphs",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "段落数量"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "段落數量"
-          }
-        }
-      }
-    },
     "Please check your network connection or get the latest release from the version history." : {
       "comment" : "Message for failed to get the update",
       "localizations" : {
@@ -3199,23 +2999,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "縮排偏好："
-          }
-        }
-      }
-    },
-    "Preferred" : {
-      "comment" : "Preferred window tabbing mode",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "首选"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "首選"
           }
         }
       }
@@ -3339,23 +3122,6 @@
         }
       }
     },
-    "Read Time" : {
-      "comment" : "Statistics label: count read time",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "阅读时间"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "閱讀時間"
-          }
-        }
-      }
-    },
     "recent files" : {
       "comment" : "Search target in the Quick Search placeholder",
       "localizations" : {
@@ -3420,23 +3186,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "最近使用"
-          }
-        }
-      }
-    },
-    "Reduce Transparency:" : {
-      "comment" : "Label for the option to reduce window transparency",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "降低透明度："
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "減少透明度："
           }
         }
       }
@@ -3590,23 +3339,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "稍後提醒我"
-          }
-        }
-      }
-    },
-    "Remove the toolbar blur" : {
-      "comment" : "Explanation for the option to reduce window transparency",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移除工具栏模糊效果"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移除工具列模糊效果"
           }
         }
       }
@@ -3950,23 +3682,6 @@
         }
       }
     },
-    "Sentences" : {
-      "comment" : "Statistics label: count sentences",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "句子数量"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "句子數量"
-          }
-        }
-      }
-    },
     "Share this document" : {
       "comment" : "Toolbar item to share the document",
       "localizations" : {
@@ -4256,23 +3971,6 @@
         }
       }
     },
-    "Tabbing Mode:" : {
-      "comment" : "Label for window tabbing mode settings",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "标签模式："
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "標籤模式："
-          }
-        }
-      }
-    },
     "Table" : {
       "comment" : "Toolbar item to insert table",
       "localizations" : {
@@ -4388,23 +4086,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新將在 Kernmark 下次啟動時套用。"
-          }
-        }
-      }
-    },
-    "This action cannot be undone." : {
-      "comment" : "Alert message for cannot undo",
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此操作无法被撤销。"
-          }
-        },
-        "zh-Hant" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "此操作無法被撤銷。"
           }
         }
       }

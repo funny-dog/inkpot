@@ -9,7 +9,8 @@
     "codegen": "ts-gyb --config ./src/@codegen/config.json >/dev/null",
     "test": "jest",
     "render-assets": "node scripts/build-render-assets.mjs",
-    "build": "yarn lint && yarn typecheck && yarn codegen && yarn render-assets && vite build"
+    "build": "yarn lint && yarn typecheck && yarn codegen && yarn render-assets && vite build",
+    "build:mvp": "eslint mvp && tsc -p mvp/tsconfig.json && vite build --config mvp/vite.config.mts"
   },
   "keywords": [],
   "author": "",

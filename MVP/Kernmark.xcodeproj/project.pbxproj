@@ -1,0 +1,48 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 56;
+	objects = {
+		000000000000000000000001 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/Application.swift"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000002 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/DocumentContent.swift"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000003 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/EditorViewController.swift"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000004 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Sources/MVPDocument.swift"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000005 = { isa = PBXFileReference; lastKnownFileType = text.html; path = "../CoreEditor/mvp/dist/index.html"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000006 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Tests/DocumentTests.swift"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000007 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info.plist"; sourceTree = SOURCE_ROOT; };
+		000000000000000000000008 = { isa = PBXFileReference; explicitFileType = wrapper.application; path = Kernmark.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		000000000000000000000009 = { isa = PBXFileReference; explicitFileType = wrapper.cfbundle; path = KernmarkMVPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		00000000000000000000000B = { isa = PBXBuildFile; fileRef = 000000000000000000000001; };
+		00000000000000000000000C = { isa = PBXBuildFile; fileRef = 000000000000000000000002; };
+		00000000000000000000000D = { isa = PBXBuildFile; fileRef = 000000000000000000000003; };
+		00000000000000000000000E = { isa = PBXBuildFile; fileRef = 000000000000000000000004; };
+		00000000000000000000000F = { isa = PBXBuildFile; fileRef = 000000000000000000000005; };
+		000000000000000000000015 = { isa = PBXBuildFile; fileRef = 000000000000000000000002; };
+		000000000000000000000016 = { isa = PBXBuildFile; fileRef = 000000000000000000000003; };
+		000000000000000000000017 = { isa = PBXBuildFile; fileRef = 000000000000000000000004; };
+		000000000000000000000018 = { isa = PBXBuildFile; fileRef = 000000000000000000000006; };
+		00000000000000000000001E = { isa = PBXGroup; children = (000000000000000000000001, 000000000000000000000002, 000000000000000000000003, 000000000000000000000004, 000000000000000000000005, 000000000000000000000006, 000000000000000000000007, 00000000000000000000001F,); sourceTree = "<group>"; };
+		00000000000000000000001F = { isa = PBXGroup; children = (000000000000000000000008, 000000000000000000000009,); name = Products; sourceTree = "<group>"; };
+		000000000000000000000028 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (00000000000000000000000B, 00000000000000000000000C, 00000000000000000000000D, 00000000000000000000000E,); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000029 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (00000000000000000000000F,); runOnlyForDeploymentPostprocessing = 0; };
+		00000000000000000000002A = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		00000000000000000000002B = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000015, 000000000000000000000016, 000000000000000000000017, 000000000000000000000018,); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000019 = { isa = PBXBuildFile; fileRef = 000000000000000000000005; };
+		00000000000000000000002C = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000019,); runOnlyForDeploymentPostprocessing = 0; };
+		00000000000000000000002D = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+		000000000000000000000032 = { isa = PBXNativeTarget; buildConfigurationList = 00000000000000000000003D; buildPhases = (000000000000000000000028, 00000000000000000000002A, 000000000000000000000029,); buildRules = (); dependencies = (); name = Kernmark; productName = Kernmark; productReference = 000000000000000000000008; productType = "com.apple.product-type.application"; };
+		000000000000000000000033 = { isa = PBXNativeTarget; buildConfigurationList = 00000000000000000000003E; buildPhases = (00000000000000000000002B, 00000000000000000000002D, 00000000000000000000002C,); buildRules = (); dependencies = (); name = KernmarkMVPTests; productName = KernmarkMVPTests; productReference = 000000000000000000000009; productType = "com.apple.product-type.bundle.unit-test"; };
+		00000000000000000000003C = { isa = XCConfigurationList; buildConfigurations = (000000000000000000000046, 000000000000000000000047,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		00000000000000000000003D = { isa = XCConfigurationList; buildConfigurations = (000000000000000000000048, 000000000000000000000049,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		00000000000000000000003E = { isa = XCConfigurationList; buildConfigurations = (00000000000000000000004A, 00000000000000000000004B,); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		000000000000000000000046 = { isa = XCBuildConfiguration; name = Debug; buildSettings = { CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 15.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; GCC_WARN_64_TO_32_BIT_CONVERSION = YES; CLANG_WARN_DOCUMENTATION_COMMENTS = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; ENABLE_TESTABILITY = YES; DEBUG_INFORMATION_FORMAT = dwarf; }; };
+		000000000000000000000047 = { isa = XCBuildConfiguration; name = Release; buildSettings = { CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 15.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; GCC_WARN_64_TO_32_BIT_CONVERSION = YES; CLANG_WARN_DOCUMENTATION_COMMENTS = YES; SWIFT_OPTIMIZATION_LEVEL = "-O"; DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym"; }; };
+		000000000000000000000048 = { isa = XCBuildConfiguration; name = Debug; buildSettings = { PRODUCT_NAME = Kernmark; PRODUCT_MODULE_NAME = MarkEdit; PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.mvp; INFOPLIST_FILE = Info.plist; CODE_SIGN_STYLE = Automatic; ENABLE_APP_SANDBOX = YES; ENABLE_USER_SELECTED_FILES = readwrite; }; };
+		000000000000000000000049 = { isa = XCBuildConfiguration; name = Release; buildSettings = { PRODUCT_NAME = Kernmark; PRODUCT_MODULE_NAME = MarkEdit; PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.mvp; INFOPLIST_FILE = Info.plist; CODE_SIGN_STYLE = Automatic; ENABLE_APP_SANDBOX = YES; ENABLE_USER_SELECTED_FILES = readwrite; }; };
+		00000000000000000000004A = { isa = XCBuildConfiguration; name = Debug; buildSettings = { PRODUCT_NAME = KernmarkMVPTests; PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.mvp.tests; GENERATE_INFOPLIST_FILE = YES; CODE_SIGN_STYLE = Automatic; }; };
+		00000000000000000000004B = { isa = XCBuildConfiguration; name = Release; buildSettings = { PRODUCT_NAME = KernmarkMVPTests; PRODUCT_BUNDLE_IDENTIFIER = com.erhu.kernmark.mvp.tests; GENERATE_INFOPLIST_FILE = YES; CODE_SIGN_STYLE = Automatic; }; };
+		000000000000000000000064 = { isa = PBXProject; attributes = { LastUpgradeCheck = 1600; BuildIndependentTargetsInParallel = YES; }; buildConfigurationList = 00000000000000000000003C; compatibilityVersion = "Xcode 14.0"; developmentRegion = zh_CN; hasScannedForEncodings = 0; knownRegions = (zh_CN, en, Base,); mainGroup = 00000000000000000000001E; productRefGroup = 00000000000000000000001F; projectDirPath = ""; projectRoot = ""; targets = (000000000000000000000032, 000000000000000000000033,); };
+	};
+	rootObject = 000000000000000000000064;
+}
