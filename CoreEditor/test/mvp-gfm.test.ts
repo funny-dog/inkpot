@@ -7,7 +7,7 @@ import { syntaxTree } from '@codemirror/language';
 import { sourceDocument } from '../mvp/source';
 import { writingExtensions } from '../mvp/writing';
 import { liveEditing, toggleSourceMode } from '../mvp/live';
-import { footnoteDefTagName, footnoteRefTagName, inlineHighlightTagName } from '../mvp/gfm';
+import { footnoteDefTagName, inlineHighlightTagName } from '../mvp/gfm';
 
 const views: EditorView[] = [];
 afterEach(() => { for (const view of views.splice(0)) view.destroy(); });
@@ -39,10 +39,10 @@ describe('MVP GFM 语法', () => {
     expect(boxes[1].checked).toBe(true);
     boxes[0].click();
     expect(read()).toBe(original.replace('- [ ] 未完成任务', '- [x] 未完成任务'));
-    expect(view.dom.querySelectorAll('input[type="checkbox"]')[0].checked).toBe(true);
+    expect((view.dom.querySelectorAll('input[type="checkbox"]')[0] as HTMLInputElement).checked).toBe(true);
     undo(view);
     expect(read()).toBe(original);
-    expect(view.dom.querySelectorAll('input[type="checkbox"]')[0].checked).toBe(false);
+    expect((view.dom.querySelectorAll('input[type="checkbox"]')[0] as HTMLInputElement).checked).toBe(false);
     expect(undoDepth(view.state)).toBe(0);
   });
 
@@ -80,7 +80,7 @@ describe('MVP GFM 语法', () => {
 
   test('脚注引用渲染为上标并带定义提示，定义行保留源码', () => {
     const { view, read } = editor(original);
-    const ref = view.dom.querySelector('.cm-mvp-footnote-ref');
+    const ref = view.dom.querySelector('.cm-mvp-footnote-ref') as HTMLElement | null;
     expect(ref).not.toBeNull();
     expect(ref?.textContent).toBe('note1');
     expect(ref?.title).toBe('脚注定义内容');
@@ -107,7 +107,7 @@ describe('MVP GFM 语法', () => {
     const items = view.dom.querySelectorAll('.cm-mvp-toc-item');
     expect(items).toHaveLength(2);
     expect(items[0].textContent).toBe('一级');
-    expect(items[1].style.paddingLeft).toBe('18px');
+    expect((items[1] as HTMLElement).style.paddingLeft).toBe('18px');
     items[1].dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
     expect(view.state.selection.main.head).toBe(doc.indexOf('## 二级'));
     view.dispatch({ selection: { anchor: doc.indexOf('[toc]') + 1 } });

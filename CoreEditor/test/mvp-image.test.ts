@@ -23,7 +23,7 @@ describe('MVP 本地图片', () => {
   test('本地路径经自定义协议读取，保留 Unicode、转义与原文行尾', () => {
     const original = '前\r\n\r\n![示意](<assets/中文 图.png>)\r\n尾\n';
     const { view, read } = editor(original);
-    const image = view.contentDOM.querySelector('.cm-mvp-image img');
+    const image = view.contentDOM.querySelector('.cm-mvp-image img') as HTMLImageElement | null;
     expect(image?.getAttribute('src')).toContain('inkpot-image://local/assets%2F');
     expect(image?.getAttribute('src')).toContain('document=7&revision=0');
     expect(image?.alt).toBe('示意');
@@ -56,7 +56,7 @@ describe('MVP 本地图片', () => {
 
   test('图片失效时提供可编辑的提示，版本变化重新解析当前位置的图片', () => {
     const { view } = editor('前 ![缺失](missing.png)');
-    const image = view.contentDOM.querySelector('.cm-mvp-image img');
+    const image = view.contentDOM.querySelector('.cm-mvp-image img') as HTMLImageElement | null;
     image?.dispatchEvent(new Event('error'));
     expect(image?.alt).toContain('图片无法读取');
     view.dispatch({ effects: refreshImages.of(null) });
