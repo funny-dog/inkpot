@@ -7,6 +7,8 @@ export { sourceMode, toggleSourceMode } from './mode';
 import { imageDecorations, imageRevision } from './image';
 import { basicDecorations, selectionTouches } from './basic';
 import { codeBindings, codeDecorations, codeTheme, editingCodeLanguage } from './code';
+import { inlineMathTagName, mathDecorations, mathEditing, mathTheme } from './math';
+import { footnoteRefTagName, gfmDecorations, gfmEditing, inlineHighlightTagName, inlineMarkNames } from './gfm';
 
 const refreshPreview = StateEffect.define();
 
@@ -48,6 +50,11 @@ function previewDecorations(view: EditorView, searchSelection = false) {
     enter(node) {
       if (node.name === 'Table') {
         return false;
+      } else if (node.name === inlineMathTagName) {
+        const math = mathDecorations(node.node, view, searchSelection);
+        decorations.push(...math.decorations);
+        atoms.push(...math.atoms);
+        return false;
       } else if (node.name === 'Image') {
         const image = imageDecorations(node.node, state);
         decorations.push(...image.decorations);
@@ -61,13 +68,19 @@ function previewDecorations(view: EditorView, searchSelection = false) {
         const basic = basicDecorations(node.node, view, searchSelection);
         decorations.push(...basic.decorations);
         atoms.push(...basic.atoms);
-      } else if (node.name === 'StrongEmphasis' || node.name === 'Emphasis') {
+      } else if (node.name === 'StrongEmphasis' || node.name === 'Emphasis' || node.name === 'Strikethrough' || node.name === inlineHighlightTagName) {
         if (!selected(node.from, node.to, true)) {
-          for (const mark of node.node.getChildren('EmphasisMark')) {
+          const markName = inlineMarkNames[node.name] ?? 'EmphasisMark';
+          for (const mark of node.node.getChildren(markName)) {
             // 保留标记的文本节点，光标进入元素时可直接恢复局部源码。
             decorations.push(Decoration.mark({ class: 'cm-mvp-hidden-inline' }).range(mark.from, mark.to));
           }
         }
+      } else if (node.name === 'TaskMarker' || node.name === footnoteRefTagName) {
+        const gfm = gfmDecorations(node.node, view, searchSelection);
+        decorations.push(...gfm.decorations);
+        atoms.push(...gfm.atoms);
+        return false;
       } else if (/^ATXHeading[1-6]$/.test(node.name)) {
         decorations.push(Decoration.line({ class: `cm-mvp-heading${node.name.slice(-1)}` }).range(state.doc.lineAt(node.from).from));
         const marks = node.node.getChildren('HeaderMark');
@@ -139,9 +152,12 @@ const preview = ViewPlugin.fromClass(class {
 export const liveEditing = [
   sourceMode,
   ...tableEditing,
+  ...mathEditing,
+  ...gfmEditing,
   imageRevision,
   editingCodeLanguage,
   codeTheme,
+  mathTheme,
   preview,
   keymap.of([
     { key: 'Mod-Shift-m', run: toggleSourceMode },

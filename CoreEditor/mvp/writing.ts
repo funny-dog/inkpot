@@ -1,23 +1,27 @@
 import { commonmarkLanguage } from '@codemirror/lang-markdown';
 import { HighlightStyle, Language, syntaxHighlighting } from '@codemirror/language';
-import { MarkdownParser, Table } from '@lezer/markdown';
+import { MarkdownParser, Strikethrough, Table, TaskList } from '@lezer/markdown';
 import { tags } from '@lezer/highlight';
 import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { formatCommands } from './format';
 import { documentSearch, searchBindings } from './search';
 import { typingBindings } from './typing';
+import { footnoteExtension, highlightExtension, highlightTag } from './gfm';
+import { inlineMathExtension, markdownMathExtension } from './math';
 
 export const writingExtensions = [
-  new Language(commonmarkLanguage.data, (commonmarkLanguage.parser as MarkdownParser).configure(Table), [], 'markdown'),
+  new Language(commonmarkLanguage.data, (commonmarkLanguage.parser as MarkdownParser).configure([Table, markdownMathExtension, inlineMathExtension, Strikethrough, TaskList, highlightExtension, footnoteExtension]), [], 'markdown'),
   syntaxHighlighting(HighlightStyle.define([
     { tag: tags.heading, color: '#174ea6', fontWeight: 'bold' },
     { tag: tags.strong, fontWeight: 'bold' },
     { tag: tags.emphasis, fontStyle: 'italic' },
+    { tag: tags.strikethrough, textDecoration: 'line-through' },
+    { tag: highlightTag, backgroundColor: 'rgba(255, 212, 0, 0.4)' },
     { tag: [tags.link, tags.url], color: '#1769aa', textDecoration: 'underline' },
     { tag: [tags.monospace, tags.processingInstruction], color: '#8a3b12' },
     { tag: [tags.list, tags.quote, tags.meta], color: '#5f6368' },
-  ])),
+  ], { themeType: 'light' })),
   documentSearch,
   EditorState.phrases.of({
     'current match': '当前匹配项',

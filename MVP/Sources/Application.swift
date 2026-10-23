@@ -7,6 +7,7 @@ enum Application {
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.regular)
+    app.activate(ignoringOtherApps: true)
     app.mainMenu = makeMenu(delegate: delegate)
     _ = NSDocumentController.shared
     app.run()
@@ -16,12 +17,14 @@ enum Application {
   private static func makeMenu(delegate: AppDelegate) -> NSMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
-      ("Kernmark", [("退出 Kernmark", "terminate:", "q")]),
+      ("Inkpot", [("退出 Inkpot", "terminate:", "q")]),
       ("文件", [
         ("新建", "newDocument:", "n"), ("打开…", "openDocument:", "o"),
         ("打开文件夹…", "openFolder:", "o"),
         ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
         ("另存为…", "saveDocumentAs:", "S"),
+        ("导出为 PDF…", "exportPDF:", ""),
+        ("导出为 HTML…", "exportHTML:", ""),
         ("重新载入磁盘版本…", "revertDocumentToSaved:", ""),
         ("恢复未保存草稿…", "restoreDrafts:", ""),
       ]),
@@ -38,7 +41,7 @@ enum Application {
         ("三级标题", "heading3", "3"), ("四级标题", "heading4", "4"),
         ("五级标题", "heading5", "5"), ("六级标题", "heading6", "6"), ("", "", ""),
         ("有序列表", "orderedList", "7"), ("无序列表", "bulletList", "8"),
-        ("插入本地图片…", "insertImage:", ""), ("表格", "tableMenu", ""),
+        ("插入本地图片…", "insertImage:", ""), ("表格", "tableMenu", ""), ("公式块", "insertMathBlock", ""),
       ]),
       ("显示", [("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M")]),
       ("窗口", [("最小化", "performMiniaturize:", "m")]),
@@ -54,7 +57,7 @@ enum Application {
         }
         let entry = NSMenuItem(title: label, action: NSSelectorFromString(action), keyEquivalent: key.lowercased())
         entry.keyEquivalentModifierMask = key != key.lowercased() || ["orderedList", "bulletList"].contains(action) ? [.command, .shift] : [.command]
-        if action == "insertImage:" { entry.target = delegate }
+        if action == "insertImage:" || action == "exportPDF:" || action == "exportHTML:" { entry.target = delegate }
         if action == "restoreDrafts:" { entry.target = delegate }
         if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
         if ["undo:", "redo:", "selectAll:"].contains(action) { entry.target = delegate }
@@ -100,6 +103,7 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemVali
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
+    if menuItem.action == #selector(exportPDF(_:)) || menuItem.action == #selector(exportHTML(_:)) { return editor?.isReady == true }
     if menuItem.action == #selector(restoreDrafts(_:)) { return true }
     if menuItem.action == #selector(openFolder(_:)) { return true }
     if menuItem.representedObject is String {
@@ -140,6 +144,16 @@ private final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemVali
   @MainActor
   @objc func insertImage(_ sender: Any?) {
     (NSDocumentController.shared.currentDocument as? MVPDocument)?.images.choose()
+  }
+
+  @MainActor
+  @objc func exportPDF(_ sender: Any?) {
+    if let document = NSDocumentController.shared.currentDocument as? MVPDocument { Task { @MainActor in await DocumentExport.save(document, pdf: true) } }
+  }
+
+  @MainActor
+  @objc func exportHTML(_ sender: Any?) {
+    if let document = NSDocumentController.shared.currentDocument as? MVPDocument { Task { @MainActor in await DocumentExport.save(document, pdf: false) } }
   }
 
   @objc func restoreDrafts(_ sender: Any?) { recoverDrafts(automatic: false) }

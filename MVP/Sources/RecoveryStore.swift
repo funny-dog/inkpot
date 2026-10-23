@@ -8,9 +8,27 @@ struct RecoveryDraft: Codable {
 }
 
 struct RecoveryStore {
-  static let standard = Self(directory: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-    .appendingPathComponent("Kernmark/Recovery", isDirectory: true))
+  static let standard: Self = {
+    let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+    migrateLegacyDirectory(
+      from: support.appendingPathComponent("Kernmark/Recovery", isDirectory: true),
+      to: support.appendingPathComponent("Inkpot/Recovery", isDirectory: true)
+    )
+    return Self(directory: support.appendingPathComponent("Inkpot/Recovery", isDirectory: true))
+  }()
   let directory: URL
+
+  // 应用由 Kernmark 改名而来：首次运行把旧恢复目录整体搬入新目录；新目录已存在时不覆盖，失败时放弃旧草稿但不阻塞启动。
+  static func migrateLegacyDirectory(from legacy: URL, to current: URL) {
+    let fileManager = FileManager.default
+    guard fileManager.fileExists(atPath: legacy.path), !fileManager.fileExists(atPath: current.path) else { return }
+    try? fileManager.createDirectory(
+      at: current.deletingLastPathComponent(),
+      withIntermediateDirectories: true,
+      attributes: [.posixPermissions: 0o700]
+    )
+    try? fileManager.moveItem(at: legacy, to: current)
+  }
 
   func write(_ draft: RecoveryDraft) throws {
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])

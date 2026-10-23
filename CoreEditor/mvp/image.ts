@@ -24,7 +24,7 @@ class ImagePreview extends WidgetType {
     span.title = '双击图片编辑 Markdown 路径';
     const image = document.createElement('img');
     image.alt = this.alt || '图片';
-    image.src = `kernmark-image://local/${encodeURIComponent(this.path)}?document=${this.document}&revision=${this.revision}`;
+    image.src = `inkpot-image://local/${encodeURIComponent(this.path)}?document=${this.document}&revision=${this.revision}`;
     image.addEventListener('load', () => view.requestMeasure());
     image.addEventListener('error', () => {
       image.alt = `图片无法读取：${this.alt || this.path}`;

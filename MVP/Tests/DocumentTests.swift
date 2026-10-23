@@ -193,7 +193,7 @@ final class DocumentTests: XCTestCase {
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
     XCTAssertTrue(document.isDocumentEdited)
     _ = try await webView.evaluateJavaScript(
-      "window.kernmarkMVP.snapshot = () => { throw new Error('模拟同步失败'); }; null"
+      "window.inkpotMVP.snapshot = () => { throw new Error('模拟同步失败'); }; null"
     )
     do {
       try await document.synchronize()
@@ -259,7 +259,7 @@ final class DocumentTests: XCTestCase {
     let deadline = Date.now.addingTimeInterval(5)
     while !(try await condition()) {
       guard Date.now < deadline else {
-        throw NSError(domain: "KernmarkMVPTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "等待编辑器状态超时"])
+        throw NSError(domain: "InkpotMVPTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "等待编辑器状态超时"])
       }
       try await Task.sleep(for: .milliseconds(20))
     }

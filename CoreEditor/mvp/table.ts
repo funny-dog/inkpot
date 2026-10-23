@@ -108,7 +108,7 @@ class TableWidget extends WidgetType {
           const link = (event.target as HTMLElement).closest<HTMLElement>('[data-destination]');
           if (event.metaKey && link?.dataset.destination !== undefined) {
             event.preventDefault();
-            view.dom.dispatchEvent(new CustomEvent('kernmark-open-link', { bubbles: true, detail: link.dataset.destination }));
+            view.dom.dispatchEvent(new CustomEvent('inkpot-open-link', { bubbles: true, detail: link.dataset.destination }));
           } else if (event.button === 0 && !view.state.readOnly && view.state.facet(EditorView.editable)) {
             event.preventDefault(); input.focus(); input.select();
           }

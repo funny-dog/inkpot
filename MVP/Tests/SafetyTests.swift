@@ -133,7 +133,7 @@ final class SafetyTests: XCTestCase {
     try await waitUntil { editor.latestRevision > 0 }
     try await document.safety.persist()
     let bytes = try XCTUnwrap(store.drafts().first?.data)
-    _ = try await web.evaluateJavaScript("window.kernmarkMVP.snapshot = () => { throw new Error('测试读取失败'); }; null")
+    _ = try await web.evaluateJavaScript("window.inkpotMVP.snapshot = () => { throw new Error('测试读取失败'); }; null")
     do { try await document.safety.persist(); XCTFail("失败的快照不能写入恢复文件") } catch {}
     XCTAssertEqual(try store.drafts().first?.data, bytes)
     let other = UUID()
@@ -168,5 +168,33 @@ extension SafetyTests {
     XCTAssertEqual(try store.drafts().first?.data, Data("新原文".utf8))
     document.close()
     XCTAssertTrue(try store.drafts().isEmpty)
+  }
+
+  func testLegacyRecoveryDirectoryMigratesWholeFolderAndNeverOverwritesCurrent() throws {
+    let root = try directory()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let legacy = root.appendingPathComponent("Kernmark/Recovery")
+    let current = root.appendingPathComponent("Inkpot/Recovery")
+    try FileManager.default.createDirectory(at: legacy, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
+    let draft = legacy.appendingPathComponent("legacy.json")
+    try Data("旧草稿".utf8).write(to: draft)
+    try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: draft.path)
+
+    RecoveryStore.migrateLegacyDirectory(from: legacy, to: current)
+    let migrated = current.appendingPathComponent("legacy.json")
+    XCTAssertEqual(try Data(contentsOf: migrated), Data("旧草稿".utf8))
+    XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: migrated.path)[.posixPermissions] as? Int, 0o600)
+    XCTAssertEqual(try FileManager.default.attributesOfItem(atPath: current.path)[.posixPermissions] as? Int, 0o700)
+    XCTAssertFalse(FileManager.default.fileExists(atPath: legacy.path))
+
+    RecoveryStore.migrateLegacyDirectory(from: legacy, to: current)
+    XCTAssertTrue(FileManager.default.fileExists(atPath: migrated.path))
+
+    try Data("新草稿".utf8).write(to: current.appendingPathComponent("new.json"))
+    try FileManager.default.createDirectory(at: legacy, withIntermediateDirectories: true)
+    try Data("迟到旧草稿".utf8).write(to: legacy.appendingPathComponent("again.json"))
+    RecoveryStore.migrateLegacyDirectory(from: legacy, to: current)
+    XCTAssertTrue(FileManager.default.fileExists(atPath: legacy.appendingPathComponent("again.json").path))
+    XCTAssertTrue(FileManager.default.fileExists(atPath: current.appendingPathComponent("new.json").path))
   }
 }

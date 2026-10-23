@@ -7,7 +7,7 @@ enum LocalImages {
   static func validated(_ data: Data) throws -> (data: Data, type: UTType) {
     guard let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) > 0,
           let identifier = CGImageSourceGetType(source), let type = UTType(identifier as String), type.conforms(to: .image) else {
-      throw NSError(domain: "Kernmark", code: 30, userInfo: [NSLocalizedDescriptionKey: "无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。"])
+      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: "无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。"])
     }
     return (data, type)
   }
@@ -98,7 +98,7 @@ final class DocumentImages {
 
   private var canInsert: Bool {
     guard document?.fileURL != nil else {
-      document?.presentError(NSError(domain: "Kernmark", code: 31, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再插入或粘贴图片。图片将保存在文档同级的 assets 文件夹。 "]))
+      document?.presentError(NSError(domain: "Inkpot", code: 31, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再插入或粘贴图片。图片将保存在文档同级的 assets 文件夹。 "]))
       return false
     }
     return document?.editor?.isReady == true

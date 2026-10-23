@@ -5,7 +5,9 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   var onChange: (() -> Void)?
   var onOutline: (([DocumentHeading]?, Int?) -> Void)?
   var onOutlineReset: (() -> Void)?
+  var onStats: ((Int, Int, Int) -> Void)?
   private(set) var headings: [DocumentHeading] = []
+  private(set) var latestStats: (words: Int, characters: Int, lines: Int)?
   private(set) var activeHeading: Int?
   private var generation = 0
   private var pendingFragment: String?
@@ -21,9 +23,11 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   private var tableCellFocused = false
   private var initialText: String
   private let imageHandler = LocalImageHandler()
+  private let mathHandler = MathAssetHandler()
   private lazy var webView: DocumentWebView = {
     let configuration = WKWebViewConfiguration()
-    configuration.setURLSchemeHandler(imageHandler, forURLScheme: "kernmark-image")
+    configuration.setURLSchemeHandler(imageHandler, forURLScheme: "inkpot-image")
+    configuration.setURLSchemeHandler(mathHandler, forURLScheme: "inkpot-asset")
     return DocumentWebView(frame: .zero, configuration: configuration)
   }()
   private var loadingError: Error?
@@ -45,20 +49,34 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     webView.navigationDelegate = self
     webView.configuration.userContentController.add(DocumentMessageHandler(owner: self), name: "document")
     guard let url = resourceURL else {
-      return fail(NSError(domain: "Kernmark", code: 1, userInfo: [NSLocalizedDescriptionKey: "缺少编辑器资源，请重新构建应用。旧文件未被修改。"]))
+      return fail(NSError(domain: "Inkpot", code: 1, userInfo: [NSLocalizedDescriptionKey: "缺少编辑器资源，请重新构建应用。旧文件未被修改。"]))
     }
     webView.loadFileURL(url, allowingReadAccessTo: url)
+  }
+
+  /// WebKit 会拒绝与进行中的求值并发的调用（InvalidTransition），编辑器的全部脚本按序排队。
+  private var scriptTail: Task<Any?, Error> = Task { nil }
+
+  func evaluateScript(_ javaScript: String) async throws -> Any? {
+    let previous = scriptTail
+    let task = Task<Any?, Error> { [weak self] in
+      _ = try? await previous.value
+      guard let self else { return nil }
+      return try await (self.view as? WKWebView)?.evaluateJavaScript(javaScript)
+    }
+    scriptTail = task
+    return try await task.value
   }
 
   func snapshot() async throws -> (text: String, revision: Int) {
     if let loadingError { throw loadingError }
     guard isReady else {
-      throw NSError(domain: "Kernmark", code: 2, userInfo: [NSLocalizedDescriptionKey: "编辑器尚未就绪或已经停止，已阻止保存和关闭。"])
+      throw NSError(domain: "Inkpot", code: 2, userInfo: [NSLocalizedDescriptionKey: "编辑器尚未就绪或已经停止，已阻止保存和关闭。"])
     }
     let snapshotGeneration = generation
-    guard let result = try await webView.evaluateJavaScript("window.kernmarkMVP.snapshot()") as? [String: Any],
+    guard let result = try await evaluateScript("window.inkpotMVP.snapshot()") as? [String: Any],
           let text = result["text"] as? String, let revision = result["revision"] as? Int, revision >= 0, snapshotGeneration == generation else {
-      throw NSError(domain: "Kernmark", code: 3, userInfo: [NSLocalizedDescriptionKey: "读取最新内容失败，已阻止保存和关闭。"])
+      throw NSError(domain: "Inkpot", code: 3, userInfo: [NSLocalizedDescriptionKey: "读取最新内容失败，已阻止保存和关闭。"])
     }
     latestRevision = max(latestRevision, revision)
     return (text, revision)
@@ -86,7 +104,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
       do {
         guard generation == documentGeneration else { return }
         let argument = try encodedArgument(text)
-        _ = try await webView.evaluateJavaScript("window.kernmarkMVP.open(\(argument), \(documentGeneration)); null")
+        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
@@ -109,17 +127,27 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    fail(NSError(domain: "Kernmark", code: 4, userInfo: [NSLocalizedDescriptionKey: "编辑器进程意外停止。已阻止覆盖磁盘文件；尚未保存的输入可能无法恢复。请保留此窗口。"]))
+    fail(NSError(domain: "Inkpot", code: 4, userInfo: [NSLocalizedDescriptionKey: "编辑器进程意外停止。已阻止覆盖磁盘文件；尚未保存的输入可能无法恢复。请保留此窗口。"]))
+  }
+
+  /// 编辑器可能被容器视图控制器包裹，沿 parent 链向上找文档容器。
+  var documentContainer: DocumentViewController? {
+    var current: NSViewController? = self
+    while let controller = current {
+      if let container = controller as? DocumentViewController { return container }
+      current = controller.parent
+    }
+    return nil
   }
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     if menuItem.representedObject as? String == "toggleOutline" {
-      menuItem.state = (parent as? DocumentViewController)?.outlineVisible == true ? .on : .off
-      return parent is DocumentViewController
+      menuItem.state = documentContainer?.outlineVisible == true ? .on : .off
+      return documentContainer != nil
     }
     if menuItem.representedObject as? String == "toggleFiles" {
-      menuItem.state = (parent as? DocumentViewController)?.filesVisible == true ? .on : .off
-      return parent is DocumentViewController
+      menuItem.state = documentContainer?.filesVisible == true ? .on : .off
+      return documentContainer != nil
     }
     if menuItem.representedObject as? String == "toggleSourceMode" {
       menuItem.state = sourceMode ? .on : .off
@@ -178,11 +206,16 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     tableActions = Set(body["tableActions"] as? [String] ?? [])
     tableCellFocused = body["tableCellFocused"] as? Bool ?? false
     isComposing = body["composing"] as? Bool ?? false
+    if let stats = body["stats"] as? [String: Any],
+       let words = stats["words"] as? Int, let characters = stats["characters"] as? Int, let lines = stats["lines"] as? Int {
+      latestStats = (words, characters, lines)
+      onStats?(words, characters, lines)
+    }
     if changed && didAdvance { onChange?() }
   }
 
   func performCommand(_ name: String) {
-    if ["toggleOutline", "toggleFiles"].contains(name), let container = parent as? DocumentViewController {
+    if ["toggleOutline", "toggleFiles"].contains(name), let container = documentContainer {
       container.toggleContent(files: name == "toggleFiles")
       return
     }
@@ -190,7 +223,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     Task { @MainActor in
       do {
         let argument = try encodedArgument(name)
-        _ = try await webView.evaluateJavaScript("window.kernmarkMVP.command(\(argument)); null")
+        _ = try await evaluateScript("window.inkpotMVP.command(\(argument)); null")
       } catch {
         fail(error)
       }
@@ -223,7 +256,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     view.window?.makeFirstResponder(webView)
     Task { @MainActor in
       do {
-        _ = try await webView.evaluateJavaScript("window.kernmarkMVP.navigateHeading(\(id)); null")
+        _ = try await evaluateScript("window.inkpotMVP.navigateHeading(\(id)); null")
       } catch { fail(error) }
     }
   }
@@ -250,7 +283,7 @@ extension EditorViewController {
     Task { @MainActor in
       do {
         let argument = try encodedArgument(fragment.removingPercentEncoding ?? fragment)
-        _ = try await webView.evaluateJavaScript("window.kernmarkMVP.navigateFragment(\(argument)); null")
+        _ = try await evaluateScript("window.inkpotMVP.navigateFragment(\(argument)); null")
       } catch { presentError(error) }
     }
   }
@@ -263,7 +296,7 @@ extension EditorViewController {
     }
     let fileURL = (view.window?.windowController?.document as? MVPDocument)?.fileURL
     guard let url = Self.supportedLink(destination, relativeTo: fileURL) else {
-      presentError(NSError(domain: "Kernmark", code: 22, userInfo: [NSLocalizedDescriptionKey: "此链接类型暂不支持。可打开网页、邮件、Markdown 或文本文件链接。 "]))
+      presentError(NSError(domain: "Inkpot", code: 22, userInfo: [NSLocalizedDescriptionKey: "此链接类型暂不支持。可打开网页、邮件、Markdown 或文本文件链接。 "]))
       return
     }
     if !url.isFileURL {
@@ -272,7 +305,7 @@ extension EditorViewController {
       var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
       let fragment = components?.fragment
       components?.fragment = nil
-      if let file = components?.url { (parent as? DocumentViewController)?.openFile(file, fragment: fragment) }
+      if let file = components?.url { documentContainer?.openFile(file, fragment: fragment) }
     }
   }
 
@@ -286,23 +319,46 @@ extension EditorViewController {
   func setImageDocumentURL(_ url: URL?) {
     imageHandler.documentURL = url
     if isReady {
-      Task { @MainActor in _ = try? await webView.evaluateJavaScript("window.kernmarkMVP.refreshImages(); null") }
+      Task { @MainActor in _ = try? await evaluateScript("window.inkpotMVP.refreshImages(); null") }
     }
   }
 
   func insertImage(_ path: String) async throws {
     guard isReady else { throw CocoaError(.userCancelled) }
     let argument = try encodedArgument(path)
-    _ = try await webView.evaluateJavaScript("window.kernmarkMVP.insertImage(\(argument)); null")
+    _ = try await evaluateScript("window.inkpotMVP.insertImage(\(argument)); null")
     focusEditor()
   }
 }
 
 private final class DocumentWebView: WKWebView {
+  override init(frame frameRect: NSRect, configuration: WKWebViewConfiguration) {
+    super.init(frame: frameRect, configuration: configuration)
+    registerForDraggedTypes([.fileURL])
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) { fatalError("使用 init(frame:configuration:) 初始化编辑器") }
+
   override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
     // WebKit 的“重新载入”会丢失尚未保存的编辑，基础编辑器只保留安全菜单项。
     for item in menu.items where item.tag == 12 { menu.removeItem(item) }
     super.willOpenMenu(menu, with: event)
+  }
+
+  override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
+    DragDrop.accepts(urls(from: sender)) ? .copy : []
+  }
+
+  override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
+    let urls = urls(from: sender)
+    guard DragDrop.accepts(urls) else { return false }
+    DragDrop.perform(urls: urls, in: self)
+    return true
+  }
+
+  private func urls(from sender: NSDraggingInfo) -> [URL] {
+    (sender.draggingPasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL]) ?? []
   }
 }
 

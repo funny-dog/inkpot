@@ -101,9 +101,9 @@ final class TableTests: XCTestCase {
     do { _ = try await editor.snapshot(); XCTFail("表格候选不能作为确认文本保存") } catch {}
     editor.performCommand("toggleSourceMode")
     editor.performCommand("tableDeleteRow")
-    let unchanged = try await web.evaluateJavaScript("document.querySelectorAll('tr').length === 3 && document.querySelector('[data-table-composing]')?.value === '组合输入'") as? Bool
+    let unchanged = try await editor.evaluateScript("document.querySelectorAll('tr').length === 3 && document.querySelector('[data-table-composing]')?.value === '组合输入'") as? Bool
     XCTAssertTrue(try XCTUnwrap(unchanged))
-    _ = try await web.evaluateJavaScript("document.querySelector('[data-table-composing]').dispatchEvent(new CompositionEvent('compositionend', {bubbles: true})); null")
+    _ = try await editor.evaluateScript("document.querySelector('[data-table-composing]').dispatchEvent(new CompositionEvent('compositionend', {bubbles: true})); null")
     try await waitUntil { !editor.isComposing && editor.latestRevision > 0 }
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.replacingOccurrences(of: "| x |", with: "| 组合输入 |").utf8))

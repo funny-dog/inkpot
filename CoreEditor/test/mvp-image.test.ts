@@ -24,7 +24,7 @@ describe('MVP 本地图片', () => {
     const original = '前\r\n\r\n![示意](<assets/中文 图.png>)\r\n尾\n';
     const { view, read } = editor(original);
     const image = view.contentDOM.querySelector('.cm-mvp-image img');
-    expect(image?.getAttribute('src')).toContain('kernmark-image://local/assets%2F');
+    expect(image?.getAttribute('src')).toContain('inkpot-image://local/assets%2F');
     expect(image?.getAttribute('src')).toContain('document=7&revision=0');
     expect(image?.alt).toBe('示意');
     expect(read()).toBe(original);
@@ -51,7 +51,7 @@ describe('MVP 本地图片', () => {
     const { view } = editor('前 ![a][id] ![shortcut]\n\n[id]: assets/a.png\n[shortcut]: ./b.png\n\n![r](https://example.com/a.png) ![s](javascript:evil) ![d](data:image/png,test) ![p](//example.com/a.png)');
     const images = [...view.contentDOM.querySelectorAll('.cm-mvp-image img')];
     expect(images).toHaveLength(2);
-    expect(images.every(img => img.getAttribute('src')?.startsWith('kernmark-image:') === true)).toBe(true);
+    expect(images.every(img => img.getAttribute('src')?.startsWith('inkpot-image:') === true)).toBe(true);
   });
 
   test('图片失效时提供可编辑的提示，版本变化重新解析当前位置的图片', () => {

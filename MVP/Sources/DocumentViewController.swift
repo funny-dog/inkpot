@@ -44,11 +44,57 @@ final class SidebarViewController: NSViewController {
   @objc private func changeTab(_ sender: Any?) { showFiles(tabs.selectedSegment == 0) }
 }
 
+/// 编辑器区域容器：编辑器下方常驻字数统计状态条。
+final class EditorContainerViewController: NSViewController {
+  private let statusField = NSTextField(labelWithString: "")
+  var statusText: String { statusField.stringValue }
+  let editor: EditorViewController
+
+  init(editor: EditorViewController) {
+    self.editor = editor
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) { fatalError("使用 init(editor:) 初始化容器") }
+
+  override func loadView() {
+    view = NSView()
+    addChild(editor)
+    editor.view.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(editor.view)
+    statusField.alignment = .right
+    statusField.font = .systemFont(ofSize: 11)
+    statusField.textColor = .secondaryLabelColor
+    statusField.lineBreakMode = .byTruncatingHead
+    statusField.cell?.wraps = false
+    statusField.setAccessibilityLabel("字数统计")
+    statusField.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(statusField)
+    NSLayoutConstraint.activate([
+      editor.view.topAnchor.constraint(equalTo: view.topAnchor),
+      editor.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      editor.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      editor.view.bottomAnchor.constraint(equalTo: statusField.topAnchor),
+      statusField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
+      statusField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+      statusField.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
+    ])
+    editor.onStats = { [weak self] words, characters, lines in
+      self?.statusField.stringValue = "\(words) 字 · \(characters) 字符 · \(lines) 行"
+    }
+    if let stats = editor.latestStats {
+      statusField.stringValue = "\(stats.words) 字 · \(stats.characters) 字符 · \(stats.lines) 行"
+    }
+  }
+}
+
 final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
   private let sidebar = SidebarViewController()
   var outline: OutlineViewController { sidebar.outline }
   var files: FileTreeViewController { sidebar.files }
   private let editor: EditorViewController
+  private lazy var editorContainer = EditorContainerViewController(editor: editor)
   private let fileSwitch = DocumentFileSwitch()
   private var activationObserver: NSObjectProtocol?
 
@@ -69,7 +115,7 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     item.maximumThickness = 360
     item.canCollapse = true
     addSplitViewItem(item)
-    addSplitViewItem(NSSplitViewItem(viewController: editor))
+    addSplitViewItem(NSSplitViewItem(viewController: editorContainer))
     splitView.setPosition(240, ofDividerAt: 0)
     outline.onNavigate = { [weak editor] in editor?.navigateHeading($0) }
     editor.onOutline = { [weak self] headings, active in self?.outline.update(headings, active: active) }

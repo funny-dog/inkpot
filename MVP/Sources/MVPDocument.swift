@@ -11,7 +11,7 @@ final class MVPDocument: NSDocument {
 
   override var fileURL: URL? {
     didSet {
-      (editor?.parent as? DocumentViewController)?.files.selectCurrentFile(fileURL)
+      editor?.documentContainer?.files.selectCurrentFile(fileURL)
       editor?.setImageDocumentURL(fileURL)
     }
   }
@@ -76,7 +76,7 @@ final class MVPDocument: NSDocument {
 
   override func data(ofType typeName: String) throws -> Data {
     if let editor, !snapshotIsValid || !editor.isReady || editor.latestRevision != snapshotRevision {
-      throw NSError(domain: "Kernmark", code: 5, userInfo: [NSLocalizedDescriptionKey: "编辑内容尚未同步，已阻止写入旧内容，请重试保存。"])
+      throw NSError(domain: "Inkpot", code: 5, userInfo: [NSLocalizedDescriptionKey: "编辑内容尚未同步，已阻止写入旧内容，请重试保存。"])
     }
     return content.data
   }
@@ -88,7 +88,7 @@ final class MVPDocument: NSDocument {
       content.text = snapshot.text
       snapshotRevision = snapshot.revision
       guard snapshotRevision == editor.latestRevision else {
-        throw NSError(domain: "Kernmark", code: 6, userInfo: [NSLocalizedDescriptionKey: "读取期间文档发生了变化，请暂停输入后重试。"])
+        throw NSError(domain: "Inkpot", code: 6, userInfo: [NSLocalizedDescriptionKey: "读取期间文档发生了变化，请暂停输入后重试。"])
       }
       snapshotIsValid = true
       // String 的相等判断会合并 Unicode 等价字符，文件脏状态必须比较实际字节。

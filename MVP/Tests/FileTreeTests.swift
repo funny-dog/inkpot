@@ -234,8 +234,8 @@ extension FileTreeTests {
     XCTAssertFalse(session.isOpening)
     XCTAssertIdentical(window.document, current)
     _ = try await webView.evaluateJavaScript("""
-      const savedSnapshot = window.kernmarkMVP.snapshot;
-      window.kernmarkMVP.snapshot = () => { throw new Error('测试同步失败'); }; null
+      const savedSnapshot = window.inkpotMVP.snapshot;
+      window.inkpotMVP.snapshot = () => { throw new Error('测试同步失败'); }; null
       """)
     let failing = DocumentFileSwitch(openDocument: load) { _ in
       XCTFail("读取旧快照失败时不能进入关闭确认")
@@ -247,7 +247,7 @@ extension FileTreeTests {
     } catch { XCTAssertIdentical(window.document, current) }
     XCTAssertIdentical(current.editor, editor)
     XCTAssertFalse(NSDocumentController.shared.documents.contains { $0.fileURL == targetURL })
-    _ = try await webView.evaluateJavaScript("window.kernmarkMVP.snapshot = savedSnapshot; null")
+    _ = try await webView.evaluateJavaScript("window.inkpotMVP.snapshot = savedSnapshot; null")
     try await current.synchronize()
     XCTAssertFalse(current.isDocumentEdited)
   }

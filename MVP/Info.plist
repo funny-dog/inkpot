@@ -4,15 +4,15 @@
 <dict>
   <key>CFBundleIdentifier</key><string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
   <key>CFBundleExecutable</key><string>$(EXECUTABLE_NAME)</string>
-  <key>CFBundleName</key><string>Kernmark</string>
-  <key>CFBundleDisplayName</key><string>Kernmark</string>
+  <key>CFBundleName</key><string>Inkpot</string>
+  <key>CFBundleDisplayName</key><string>Inkpot</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>0.1.0</string>
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
   <key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
-  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Kernmark contributors</string>
+  <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Inkpot contributors</string>
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>

@@ -9,18 +9,24 @@ import { liveEditing, sourceMode, toggleSourceMode } from './live';
 import { documentOutline } from './outline';
 import { refreshImages, setImageDocument } from './image';
 import { tableCommands, canTableCommand, syncTableSelection } from './table';
+import { mathCommands } from './math';
+import { documentStats } from './stats';
+import { documentHTML } from './export';
+import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 
 declare const window: {
-  kernmarkMVP: {
-    open: (text: string, generation?: number) => void;
+  inkpotMVP: {
+    open: (text: string, generation?: number, dark?: boolean) => void;
     navigateHeading: (id: number) => void;
     navigateFragment: (fragment: string) => void;
     insertImage: (path: string) => void;
     refreshImages: () => void;
     snapshot: () => { text: string; revision: number };
     command: (name: string) => void;
+    setAppearance: (dark: boolean) => void;
+    exportHTML: (mode?: string) => string;
   };
   webkit: { messageHandlers: { document: { postMessage: (message: unknown) => void } } };
 };
@@ -32,7 +38,7 @@ let generation = 0;
 const outline = documentOutline((headings, active) => {
   window.webkit.messageHandlers.document.postMessage({ outline: true, headings, active, revision, generation });
 });
-const commands: Readonly<Partial<Record<string, Command>>> = { focus: view => { view.focus(); return true; }, undo, redo, selectAll, toggleSourceMode, ...formatCommands, ...searchCommands, ...tableCommands };
+const commands: Readonly<Partial<Record<string, Command>>> = { focus: view => { view.focus(); return true; }, undo, redo, selectAll, toggleSourceMode, ...formatCommands, ...searchCommands, ...tableCommands, ...mathCommands };
 
 function publish(changed: boolean) {
   if (view === undefined) return;
@@ -45,6 +51,7 @@ function publish(changed: boolean) {
     searchInputFocused: document.activeElement instanceof HTMLInputElement && !document.activeElement.matches('.cm-mvp-table-input'),
     tableCellFocused: document.activeElement?.matches('.cm-mvp-table-input') === true,
     tableActions: Object.keys(tableCommands).filter(name => view !== undefined && canTableCommand(name, view)),
+    stats: documentStats(view.state),
     editorFocused: view.contentDOM.contains(document.activeElement),
     sourceMode: view.state.field(sourceMode),
     composing: isComposing(view),
@@ -53,13 +60,13 @@ function publish(changed: boolean) {
 
 document.addEventListener('focusin', () => queueMicrotask(() => publish(false)));
 for (const event of ['compositionstart', 'compositionend']) document.addEventListener(event, () => queueMicrotask(() => publish(false)));
-document.addEventListener('kernmark-open-link', event => {
+document.addEventListener('inkpot-open-link', event => {
   if (view !== undefined && !isComposing(view)) window.webkit.messageHandlers.document.postMessage({ openLink: (event as CustomEvent<string>).detail, generation });
 });
 document.addEventListener('focusout', () => queueMicrotask(() => publish(false)));
 
-window.kernmarkMVP = {
-  open(text, documentGeneration = 0) {
+window.inkpotMVP = {
+  open(text, documentGeneration = 0, dark = false) {
     generation = documentGeneration;
     setImageDocument(generation);
     view?.destroy();
@@ -73,6 +80,7 @@ window.kernmarkMVP = {
           ...source.extensions,
           ...writingExtensions,
           ...liveEditing,
+          ...appearanceExtensionsFor(dark),
           outline.extension,
           EditorView.domEventHandlers({ paste(event) {
             if (![...(event.clipboardData?.files ?? [])].some(file => file.type.startsWith('image/'))) return false;
@@ -116,6 +124,7 @@ window.kernmarkMVP = {
       }),
     });
     view.focus();
+    publish(false);
   },
   navigateHeading(id) {
     if (view !== undefined) outline.navigate(view, id);
@@ -139,6 +148,11 @@ window.kernmarkMVP = {
     view.focus();
   },
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
+  setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
+  exportHTML(mode?: string) {
+    if (view === undefined) throw new Error('编辑器尚未就绪。');
+    return documentHTML(view, mode === 'pdf' ? 'pdf' : 'html');
+  },
   snapshot() {
     if (view === undefined) throw new Error('编辑器尚未就绪。');
     if (isComposing(view)) throw new Error('请先确认输入法候选文字，再保存或关闭。');
