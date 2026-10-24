@@ -32,9 +32,10 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
     outlineView.headerView = nil
-    outlineView.rowHeight = 28
-    outlineView.indentationPerLevel = 14
+    outlineView.indentationPerLevel = 16
     outlineView.style = .sourceList
+    outlineView.rowSizeStyle = .custom
+    outlineView.rowHeight = SidebarLabel.rowHeight
     outlineView.setAccessibilityLabel("标题大纲")
     outlineView.dataSource = self
     outlineView.delegate = self
@@ -138,14 +139,14 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
   func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
     guard let item = item as? Item else { return nil }
     let identifier = NSUserInterfaceItemIdentifier("heading")
-    let label = outlineView.makeView(withIdentifier: identifier, owner: self) as? SidebarLabel ?? SidebarLabel(labelWithString: "")
-    label.identifier = identifier
+    let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? SidebarLabel.cell(identifier: identifier, icon: false)
+    guard let label = cell.textField as? SidebarLabel else { return cell }
     label.stringValue = item.heading.title
     label.toolTip = "H\(item.heading.level) · \(item.heading.title)"
     label.lineBreakMode = .byTruncatingTail
     label.baseWeight = item.heading.level == 1 ? .semibold : .regular
     label.baseColor = item.heading.level >= 3 ? .secondaryLabelColor : .labelColor
     label.setAccessibilityLabel("\(item.heading.level)级标题，\(item.heading.title)")
-    return label
+    return cell
   }
 }

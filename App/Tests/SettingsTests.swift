@@ -89,6 +89,38 @@ final class SettingsTests: XCTestCase {
     XCTAssertEqual(settings.imageFolder(beside: root.appendingPathComponent(".hidden.md")), "文档.assets")
   }
 
+  func testChosenImageFolderIndentAndZoomPreferences() throws {
+    let settings = AppSettings(defaults: defaults)
+    let document = root.appendingPathComponent("文稿/笔记.md")
+    settings.customImageFolder = root.appendingPathComponent("图片 素材/博客")
+    XCTAssertEqual(settings.imageFolder(beside: document), "../图片 素材/博客")
+    settings.customImageFolder = root.appendingPathComponent("文稿")
+    XCTAssertEqual(settings.imageFolder(beside: document), ".")
+    settings.documentImageFolder = true
+    XCTAssertEqual(settings.imageFolder(beside: document), "笔记.assets")
+    settings.documentImageFolder = false
+    settings.customImageFolder = nil
+    XCTAssertEqual(settings.imageFolder(beside: document), "assets")
+
+    XCTAssertEqual(settings.indentWidth, 2)
+    settings.indentWidth = 4
+    XCTAssertEqual(AppSettings(defaults: defaults).indentWidth, 4)
+    XCTAssertTrue(try settings.editingScript().contains("\"indent\":4"))
+    settings.indentWidth = 3
+    XCTAssertEqual(settings.indentWidth, 2)
+
+    let zoom = EditorZoom(defaults: defaults)
+    XCTAssertEqual(zoom.level, 1)
+    zoom.zoomIn(nil)
+    XCTAssertEqual(zoom.level, 1.1)
+    zoom.level = 0.1
+    XCTAssertEqual(zoom.level, 0.5)
+    zoom.zoomOut(nil)
+    XCTAssertEqual(zoom.level, 0.5)
+    zoom.resetZoom(nil)
+    XCTAssertEqual(settings.zoomLevel, 1)
+  }
+
   func testExplicitPlainPasteAndMarkdownCopyPreserveSourceAndUndo() async throws {
     let original = "**中文**\r\n尾\n"
     let (document, editor, _) = try await document(original)
@@ -218,7 +250,9 @@ final class SettingsTests: XCTestCase {
       XCTAssertEqual(controller.selectedPane, pane)
       try await waitUntil { window.title == pane.title }
       try await waitUntil { window.contentView?.frame.width == SettingsWindowController.contentWidth }
-      XCTAssertGreaterThan(try XCTUnwrap(window.contentView?.frame.height), 150)
+      // 固定大小：各分类高度一致，且不能拖动缩放。
+      try await waitUntil { window.contentLayoutRect.height == SettingsWindowController.contentHeight }
+      XCTAssertFalse(window.styleMask.contains(.resizable))
       XCTAssertLessThanOrEqual(window.frame.height, try XCTUnwrap(window.screen ?? NSScreen.main).visibleFrame.height)
     }
     controller.show(.general)

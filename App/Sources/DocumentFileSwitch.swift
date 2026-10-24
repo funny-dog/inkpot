@@ -42,6 +42,14 @@ final class DocumentFileSwitch {
   }
 
   static func load(_ url: URL) async throws -> (InkpotDocument, Bool) {
+    // 文件树显示所有文件时，其他扩展名按纯文本载入；不是 UTF-8 文本的文件由读取校验报错，原文件不受影响。
+    if !FileTree.isText(url) {
+      if let existing = NSDocumentController.shared.document(for: url) as? InkpotDocument { return (existing, true) }
+      let document = try InkpotDocument(contentsOf: url, ofType: "public.plain-text")
+      NSDocumentController.shared.addDocument(document)
+      NSDocumentController.shared.noteNewRecentDocument(document)
+      return (document, false)
+    }
     let (document, alreadyOpen) = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: false)
     guard let document = document as? InkpotDocument else { throw CocoaError(.fileReadUnsupportedScheme) }
     return (document, alreadyOpen)

@@ -1,11 +1,24 @@
 import AppKit
 
-/// 许可原文随应用离线提供，窗口按需创建。
+/// 许可原文随应用离线提供，从“设置 → 通用 → 关于”打开只读窗口查看，窗口按需创建。
 @MainActor
-final class ThirdPartyNoticesWindowController: NSWindowController {
-  init(bundle: Bundle = Bundle(for: ThirdPartyNoticesWindowController.self)) throws {
+enum ThirdPartyNotices {
+  private static var window: NSWindow?
+
+  static func text(bundle: Bundle = Bundle(for: AppDelegate.self)) throws -> String {
     guard let url = bundle.url(forResource: "ThirdPartyNotices", withExtension: "md") else { throw CocoaError(.fileNoSuchFile) }
-    let notices = try String(contentsOf: url, encoding: .utf8)
+    return try String(contentsOf: url, encoding: .utf8)
+  }
+
+  /// 版本号与构建号，例如“0.1.0（1）”。
+  static var version: String {
+    let info = Bundle.main.infoDictionary
+    let short = info?["CFBundleShortVersionString"] as? String ?? "—"
+    return (info?["CFBundleVersion"] as? String).map { "\(short)（\($0)）" } ?? short
+  }
+
+  static func makeWindow(bundle: Bundle = Bundle(for: AppDelegate.self)) throws -> NSWindow {
+    let notices = try text(bundle: bundle)
     let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 540), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
     window.title = "第三方许可"
     window.minSize = NSSize(width: 480, height: 320)
@@ -29,9 +42,16 @@ final class ThirdPartyNoticesWindowController: NSWindowController {
     text.setAccessibilityLabel("第三方依赖及许可原文")
     scroll.documentView = text
     window.contentView = scroll
-    super.init(window: window)
     window.center()
+    return window
   }
 
-  required init?(coder: NSCoder) { nil }
+  static func show() {
+    do {
+      if window == nil { window = try makeWindow() }
+      window?.makeKeyAndOrderFront(nil)
+    } catch {
+      NSApp.presentError(error)
+    }
+  }
 }

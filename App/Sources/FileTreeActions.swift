@@ -29,13 +29,14 @@ final class FileTreeActions {
     return URL(fileURLWithPath: destination.standardizedFileURL.path + path.dropFirst(sourcePath.count))
   }
 
-  static func named(_ name: String, in folder: URL, directory: Bool) throws -> URL {
+  /// requireText 为真时只接受 Markdown 与纯文本扩展名；重命名其他类型文件时不限制扩展名。
+  static func named(_ name: String, in folder: URL, directory: Bool, requireText: Bool = true) throws -> URL {
     guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !name.hasPrefix("."),
           name.rangeOfCharacter(from: CharacterSet(charactersIn: "/:\0\r\n")) == nil else {
       throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: "请输入有效名称；不能以点开头或包含斜杠、冒号和换行。"])
     }
     let url = folder.appendingPathComponent(name, isDirectory: directory).standardizedFileURL
-    guard directory || ["md", "markdown", "txt"].contains(url.pathExtension.lowercased()) else {
+    guard directory || !requireText || FileTree.textExtensions.contains(url.pathExtension.lowercased()) else {
       throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: "文件请使用 .md、.markdown 或 .txt 扩展名。"])
     }
     return url
@@ -52,12 +53,31 @@ final class FileTreeActions {
     return target
   }
 
+  /// 在同一文件夹复制为“原名 副本”，重名时依次加序号；复制的是磁盘上的版本。
+  func duplicate(_ source: URL) throws -> URL {
+    guard !isWorking else { throw CocoaError(.userCancelled) }
+    let folder = source.deletingLastPathComponent()
+    let base = source.deletingPathExtension().lastPathComponent
+    let ext = source.pathExtension
+    var index = 1
+    var target: URL
+    repeat {
+      let name = (index == 1 ? "\(base) 副本" : "\(base) 副本 \(index)") + (ext.isEmpty ? "" : ".\(ext)")
+      target = folder.appendingPathComponent(name).standardizedFileURL
+      index += 1
+    } while FileManager.default.fileExists(atPath: target.path)
+    try FileManager.default.copyItem(at: source, to: target)
+    changed()
+    return target
+  }
+
   func rename(_ source: URL, name: String) async throws -> URL {
     guard !isWorking else { throw CocoaError(.userCancelled) }
     isWorking = true
     defer { isWorking = false }
     let directory = try source.resourceValues(forKeys: [.isDirectoryKey]).isDirectory == true
-    let target = try Self.named(name, in: source.deletingLastPathComponent(), directory: directory)
+    let requireText = FileTree.textExtensions.contains(source.pathExtension.lowercased())
+    let target = try Self.named(name, in: source.deletingLastPathComponent(), directory: directory, requireText: requireText)
     guard target != source.standardizedFileURL else { return target }
     guard !FileManager.default.fileExists(atPath: target.path) else { throw CocoaError(.fileWriteFileExists) }
     let affected = matching(source)

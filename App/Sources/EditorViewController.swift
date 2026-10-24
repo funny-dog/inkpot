@@ -46,6 +46,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     NotificationCenter.default.addObserver(self, selector: #selector(updateFonts), name: EditorFonts.didChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateDisplayModes), name: DisplayModes.didChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateEditingPreferences), name: AppSettings.editingDidChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateZoom), name: EditorZoom.didChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -55,6 +56,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
 
   override func loadView() {
     view = webView
+    webView.pageZoom = EditorZoom.shared.level
     webView.navigationDelegate = self
     webView.configuration.userContentController.add(DocumentMessageHandler(owner: self), name: "document")
     guard let url = resourceURL else {
@@ -376,9 +378,13 @@ private final class DocumentWebView: WKWebView {
   required init?(coder: NSCoder) { fatalError("使用 init(frame:configuration:) 初始化编辑器") }
 
   override func willOpenMenu(_ menu: NSMenu, with event: NSEvent) {
-    // WebKit 的“重新载入”会丢失尚未保存的编辑，基础编辑器只保留安全菜单项。
-    for item in menu.items where item.tag == 12 { menu.removeItem(item) }
+    // 换成 Inkpot 自己的编辑菜单；WebKit 的“重新载入”等会丢失未保存编辑的项一并去掉。
+    EditorContextMenu.rebuild(menu)
     super.willOpenMenu(menu, with: event)
+  }
+
+  override func scrollWheel(with event: NSEvent) {
+    if !EditorZoom.shared.handleScroll(event) { super.scrollWheel(with: event) }
   }
 
   override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {

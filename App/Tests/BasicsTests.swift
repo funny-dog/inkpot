@@ -17,6 +17,27 @@ final class BasicsTests: XCTestCase {
     try XCTUnwrap(menu?.items.first { $0.title == title }, "缺少菜单项：\(title)")
   }
 
+  func testEditorContextMenuKeepsSpellingAndReusesMenuCommands() throws {
+    _ = NSApplication.shared
+    let delegate = AppDelegate()
+    let main = MainMenu.make(delegate: delegate)
+    let menu = NSMenu()
+    let guess = NSMenuItem(title: "建议", action: nil, keyEquivalent: "")
+    guess.tag = 15
+    let reload = NSMenuItem(title: "重新载入", action: nil, keyEquivalent: "")
+    reload.tag = 12
+    menu.items = [guess, reload]
+    EditorContextMenu.rebuild(menu, mainMenu: main)
+    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["建议", "剪切", "拷贝", "粘贴", "复制 / 粘贴为…", "段落", "格式", "插入"])
+    let format = try XCTUnwrap(menu.items.first { $0.title == "格式" }?.submenu)
+    XCTAssertEqual(format.items.map(\.title), ["粗体", "斜体", "删除线", "行内代码", "链接"])
+    XCTAssertEqual(format.items.first?.keyEquivalent, "b")
+    XCTAssertIdentical(format.items.first?.target, delegate)
+    let insert = try XCTUnwrap(menu.items.first { $0.title == "插入" }?.submenu)
+    XCTAssertEqual(insert.items.map(\.title), ["插入本地图片…", "插入表格", "分隔线"])
+    XCTAssertEqual(menu.items.first { $0.title == "段落" }?.submenu?.items.filter { !$0.isSeparatorItem }.count, 12)
+  }
+
   func testMenusIncludeStandardMacItemsWithExpectedShortcuts() throws {
     _ = NSApplication.shared
     let delegate = AppDelegate()
@@ -27,19 +48,15 @@ final class BasicsTests: XCTestCase {
     let display = menu.items[4].submenu
     let window = menu.items[5].submenu
 
-    XCTAssertEqual(try item(app, "关于 Inkpot").action, NSSelectorFromString("showAbout:"))
-    let notices = try item(app, "第三方许可…")
-    XCTAssertEqual(notices.action, NSSelectorFromString("showThirdPartyNotices:"))
-    XCTAssertIdentical(notices.target, delegate)
-    XCTAssertTrue(delegate.validateMenuItem(notices))
-    let hide = try item(app, "隐藏 Inkpot")
-    XCTAssertEqual(hide.action, NSSelectorFromString("hide:"))
-    XCTAssertEqual(hide.keyEquivalent, "h")
-    XCTAssertEqual(hide.keyEquivalentModifierMask, NSEvent.ModifierFlags([.command]))
-    let others = try item(app, "隐藏其他")
-    XCTAssertEqual(others.keyEquivalent, "h")
-    XCTAssertEqual(others.keyEquivalentModifierMask, NSEvent.ModifierFlags([.command, .option]))
-    XCTAssertEqual(try item(app, "全部显示").action, NSSelectorFromString("unhideAllApplications:"))
+    // 应用菜单依次为设置、检查更新与退出；第三方许可在设置 → 通用 → 关于中查看。
+    XCTAssertEqual(app?.items.filter { !$0.isSeparatorItem }.map(\.title), ["设置…", "检查更新…", "退出 Inkpot"])
+    let updates = try item(app, "检查更新…")
+    XCTAssertIdentical(updates.target, delegate)
+    XCTAssertTrue(delegate.validateMenuItem(updates))
+    let help = menu.items.last?.submenu
+    XCTAssertEqual(help?.items.map(\.title), ["官方网站", "反馈"])
+    XCTAssertNotIdentical(NSApp.helpMenu, help)
+    XCTAssertEqual(help?.items.allSatisfy { $0.target === delegate && delegate.validateMenuItem($0) }, true)
     XCTAssertEqual(app?.items.last?.title, "退出 Inkpot")
 
     let recent = try item(file, "打开最近使用")
@@ -56,6 +73,19 @@ final class BasicsTests: XCTestCase {
     XCTAssertEqual(spelling.items.compactMap { $0.action.map(NSStringFromSelector) }, ["showGuessPanel:", "checkSpelling:", "toggleContinuousSpellChecking:"])
     XCTAssertTrue(spelling.items.allSatisfy { $0.target == nil })
 
+    for (title, key) in [("实际大小", "0"), ("放大", "+"), ("缩小", "-")] {
+      let zoom = try item(display, title)
+      XCTAssertEqual(zoom.keyEquivalent, key)
+      XCTAssertEqual(zoom.keyEquivalentModifierMask, NSEvent.ModifierFlags([.command]))
+      XCTAssertIdentical(zoom.target, EditorZoom.shared)
+    }
+    XCTAssertEqual(display?.items.contains { $0.isHidden && $0.keyEquivalent == "=" && $0.allowsKeyEquivalentWhenHidden }, true)
+    XCTAssertEqual(try item(file, "重命名…").action, NSSelectorFromString("renameFile:"))
+    let dock = try XCTUnwrap(delegate.applicationDockMenu(NSApp))
+    XCTAssertEqual(dock.items.map(\.title), ["新建", "打开…"])
+    // 没有当前编辑器（其他应用在前台）时程序坞菜单也必须可用。
+    XCTAssertTrue(dock.items.allSatisfy { delegate.validateMenuItem($0) })
+
     let fullScreen = try item(display, "进入全屏幕")
     XCTAssertEqual(fullScreen.action, NSSelectorFromString("toggleFullScreen:"))
     XCTAssertEqual(fullScreen.keyEquivalent, "f")
@@ -71,8 +101,8 @@ final class BasicsTests: XCTestCase {
 
   func testThirdPartyNoticesLoadsBundledTextInReadOnlyWindow() throws {
     _ = NSApplication.shared
-    let controller = try ThirdPartyNoticesWindowController()
-    let scroll = try XCTUnwrap(controller.window?.contentView as? NSScrollView)
+    let window = try ThirdPartyNotices.makeWindow()
+    let scroll = try XCTUnwrap(window.contentView as? NSScrollView)
     let text = try XCTUnwrap(scroll.documentView as? NSTextView)
     XCTAssertFalse(text.isEditable)
     XCTAssertTrue(text.isSelectable)
@@ -81,10 +111,7 @@ final class BasicsTests: XCTestCase {
     XCTAssertTrue(text.string.contains("Copyright (c) 2023 MarkEdit.app"))
     XCTAssertTrue(text.string.contains("EPL-2.0"))
     XCTAssertTrue(text.string.contains("Apache License"))
-  }
-
-  func testThirdPartyNoticesReportsMissingResource() {
-    XCTAssertThrowsError(try ThirdPartyNoticesWindowController(bundle: Bundle(for: NSObject.self)))
+    XCTAssertThrowsError(try ThirdPartyNotices.makeWindow(bundle: Bundle(for: NSObject.self)))
   }
 
   func testRecentMenuDisambiguatesNamesOpensAndClears() throws {

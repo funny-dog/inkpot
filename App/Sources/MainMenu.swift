@@ -7,15 +7,13 @@ enum MainMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
       ("Inkpot", [
-        ("关于 Inkpot", "showAbout:", ""), ("第三方许可…", "showThirdPartyNotices:", ""), ("", "", ""), ("设置…", "showSettings:", ","), ("", "", ""),
-        ("隐藏 Inkpot", "hide:", "h"), ("隐藏其他", "hideOtherApplications:", "h"), ("全部显示", "unhideAllApplications:", ""),
-        ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
+        ("设置…", "showSettings:", ","), ("检查更新…", "checkForUpdates:", ""), ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
       ]),
       ("文件", [
         ("新建", "newDocument:", "n"), ("新建标签页", "newWindowForTab:", "n"), ("打开…", "openDocument:", "o"),
         ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""), ("打开最近的文件夹", "recentFoldersMenu", ""),
         ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
-        ("另存为…", "saveDocumentAs:", "S"),
+        ("另存为…", "saveDocumentAs:", "S"), ("重命名…", "renameFile:", ""),
         ("导出为 PDF…", "exportPDF:", ""),
         ("导出为 HTML…", "exportHTML:", ""),
         ("重新载入磁盘版本…", "revertDocumentToSaved:", ""),
@@ -47,7 +45,9 @@ enum MainMenu {
         ("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M"),
         ("专注模式", "toggleFocusMode:", "F8"), ("打字机模式", "toggleTypewriterMode:", "F9"),
         ("", "", ""), ("正文字体与字号…", "showBodyFont:", "t"), ("代码字体与字号…", "showCodeFont:", ""),
-        ("恢复默认字体", "resetFonts:", ""), ("", "", ""), ("进入全屏幕", "toggleFullScreen:", "f"),
+        ("恢复默认字体", "resetFonts:", ""), ("", "", ""),
+        ("实际大小", "resetZoom:", "0"), ("放大", "zoomIn:", "+"), ("缩小", "zoomOut:", "-"),
+        ("", "", ""), ("进入全屏幕", "toggleFullScreen:", "f"),
       ]),
       ("窗口", [
         ("最小化", "performMiniaturize:", "m"), ("缩放", "performZoom:", ""), ("", "", ""),
@@ -56,6 +56,7 @@ enum MainMenu {
         ("将标签页移到新窗口", "moveTabToNewWindow:", ""), ("合并所有窗口", "mergeAllWindows:", ""),
         ("", "", ""), ("前置全部窗口", "arrangeInFront:", ""),
       ]),
+      ("帮助", [("官方网站", "openWebsite:", ""), ("反馈", "sendFeedback:", "")]),
     ]
     for (title, entries) in groups {
       let item = NSMenuItem()
@@ -68,8 +69,8 @@ enum MainMenu {
         }
         let entry = NSMenuItem(title: label, action: NSSelectorFromString(action), keyEquivalent: key.lowercased())
         entry.keyEquivalentModifierMask = key != key.lowercased() || ["orderedList", "bulletList", "taskList", "blockquote"].contains(action) ? [.command, .shift] : [.command]
-        if ["insertImage:", "exportPDF:", "exportHTML:", "printMarkdown:", "showAbout:", "showThirdPartyNotices:"].contains(action) { entry.target = delegate }
-        if action == "hideOtherApplications:" { entry.keyEquivalentModifierMask = [.command, .option] }
+        if ["insertImage:", "exportPDF:", "exportHTML:", "printMarkdown:", "openWebsite:", "sendFeedback:", "checkForUpdates:"].contains(action) { entry.target = delegate }
+        if ["resetZoom:", "zoomIn:", "zoomOut:"].contains(action) { entry.target = EditorZoom.shared }
         if action == "newWindowForTab:" { entry.keyEquivalentModifierMask = [.command, .option] }
         if action == "selectNextTab:" { entry.keyEquivalentModifierMask = [.control] }
         if action == "selectPreviousTab:" { entry.keyEquivalentModifierMask = [.control, .shift] }
@@ -127,9 +128,19 @@ enum MainMenu {
           entry.submenu = tables
         }
         submenu.addItem(entry)
+        if action == "zoomIn:" {
+          // 美式键盘上 ⌘+ 需要按 Shift，补一个隐藏的 ⌘= 让不按 Shift 也能放大。
+          let alternate = NSMenuItem(title: label, action: entry.action, keyEquivalent: "=")
+          alternate.target = EditorZoom.shared
+          alternate.isHidden = true
+          alternate.allowsKeyEquivalentWhenHidden = true
+          submenu.addItem(alternate)
+        }
       }
       menu.addItem(item)
       if title == "窗口" { NSApp.windowsMenu = submenu }
+      // 系统会给帮助菜单自动加入搜索框；把帮助菜单指向一个不显示的空菜单，真正的帮助菜单就只有官方网站和反馈。
+      if title == "帮助" { NSApp.helpMenu = NSMenu(title: "") }
     }
     return menu
   }

@@ -4,14 +4,14 @@ struct FolderEntry: Sendable {
   let url: URL
   let isDirectory: Bool
 
-  static func read(_ folder: URL) throws -> [Self] {
+  static func read(_ folder: URL, filter: FileTree.Filter = .init()) throws -> [Self] {
     let keys: Set<URLResourceKey> = [.isDirectoryKey, .isRegularFileKey, .isSymbolicLinkKey, .isPackageKey]
-    return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: Array(keys), options: [.skipsHiddenFiles])
+    return try FileManager.default.contentsOfDirectory(at: folder, includingPropertiesForKeys: Array(keys), options: filter.hidden ? [] : [.skipsHiddenFiles])
       .compactMap { url -> Self? in
         let values = try url.resourceValues(forKeys: keys)
-        guard values.isSymbolicLink != true, values.isPackage != true else { return nil }
+        guard values.isSymbolicLink != true, values.isPackage != true, url.lastPathComponent != ".DS_Store" else { return nil }
         let directory = values.isDirectory == true
-        guard directory || (values.isRegularFile == true && ["md", "markdown", "txt"].contains(url.pathExtension.lowercased())) else { return nil }
+        guard directory || (values.isRegularFile == true && (filter.allFiles || FileTree.isText(url))) else { return nil }
         return Self(url: url.standardizedFileURL, isDirectory: directory)
       }
       .sorted {
@@ -33,6 +33,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
 
   var onOpen: ((URL) -> Void)?
   var onOpenInTab: ((URL) -> Void)?
+  var onOpenInWindow: ((URL) -> Void)?
   /// 根目录变化时通知侧栏其他页面（例如文件夹搜索）。
   var onFolderChange: ((URL?) -> Void)?
   var folderURL: URL? { root?.entry.url }
@@ -80,9 +81,11 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
     outlineView.headerView = nil
-    outlineView.rowHeight = 28
-    outlineView.indentationPerLevel = 14
+    outlineView.indentationPerLevel = 16
     outlineView.style = .sourceList
+    // 源列表样式默认按系统侧栏尺寸排版、忽略 rowHeight；设置 style 会重置尺寸样式，须在其后改为自定义。
+    outlineView.rowSizeStyle = .custom
+    outlineView.rowHeight = SidebarLabel.rowHeight
     outlineView.setAccessibilityLabel("文件树")
     outlineView.dataSource = self
     outlineView.delegate = self
@@ -92,6 +95,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     let menu = NSMenu()
     menu.delegate = self
     outlineView.menu = menu
+    NotificationCenter.default.addObserver(self, selector: #selector(refresh(_:)), name: FileTree.filterDidChange, object: nil)
     changeObserver = NotificationCenter.default.addObserver(forName: .inkpotFileTreeChanged, object: nil, queue: .main) { [weak self] notification in
       MainActor.assumeIsolated { self?.reloadAfterChange(notification) }
     }
@@ -175,7 +179,8 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     let generation = generation
     let url = item.entry.url
     Task { @MainActor in
-      let result = await Task.detached { Result { try FolderEntry.read(url) } }.value
+      let filter = AppSettings.shared.fileTreeFilter
+      let result = await Task.detached { Result { try FolderEntry.read(url, filter: filter) } }.value
       guard self.generation == generation else { return }
       item.loading = false
       let origin = scrollView.contentView.bounds.origin
@@ -196,7 +201,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
         folderLabel.toolTip = item.error ?? url.path
         outlineView.reloadData()
         emptyState.title = item.error == nil ? "没有可显示的文件" : "无法读取文件夹"
-        emptyState.message = item.error ?? "此文件夹中没有 Markdown 或文本文件。"
+        emptyState.message = item.error ?? (AppSettings.shared.fileTreeFilter.allFiles ? "此文件夹是空的。" : "此文件夹中没有 Markdown 或文本文件。")
         emptyState.isHidden = item.children?.isEmpty == false
       } else {
         outlineView.reloadItem(item, reloadChildren: true)
@@ -254,7 +259,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     guard let item = outlineView.item(atRow: outlineView.clickedRow >= 0 ? outlineView.clickedRow : outlineView.selectedRow) as? Item else { return }
     if item.entry.isDirectory {
       if outlineView.isItemExpanded(item) { outlineView.collapseItem(item) } else { outlineView.expandItem(item) }
-    } else { onOpen?(item.entry.url) }
+    } else { open(item.entry.url, in: .current) }
   }
 
   func outlineViewItemWillExpand(_ notification: Notification) {
@@ -289,22 +294,8 @@ extension FileTreeViewController {
   func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
     guard let item = item as? Item else { return nil }
     let identifier = NSUserInterfaceItemIdentifier("file")
-    let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? NSTableCellView()
-    if cell.textField == nil {
-      let text = SidebarLabel(labelWithString: "")
-      text.lineBreakMode = .byTruncatingMiddle
-      text.refresh()
-      let image = NSImageView()
-      image.contentTintColor = .secondaryLabelColor
-      cell.addSubview(image)
-      cell.addSubview(text)
-      cell.imageView = image
-      cell.textField = text
-      image.frame = NSRect(x: 0, y: 5, width: 18, height: 18)
-      text.frame = NSRect(x: 24, y: 5, width: 100, height: 18)
-      text.autoresizingMask = [.width]
-    }
-    cell.identifier = identifier
+    let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? SidebarLabel.cell(identifier: identifier, icon: true)
+    cell.textField?.lineBreakMode = .byTruncatingMiddle
     cell.textField?.stringValue = item.entry.url.lastPathComponent + (item.error == nil ? "" : "（无法读取）")
     cell.imageView?.image = NSImage(systemSymbolName: item.entry.isDirectory ? "folder" : "doc.text", accessibilityDescription: nil)
     cell.toolTip = item.error ?? item.entry.url.path

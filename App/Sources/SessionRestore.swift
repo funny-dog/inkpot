@@ -183,6 +183,7 @@ enum DocumentSession {
         guard let controller = tabWindow.contentViewController as? DocumentViewController else { continue }
         let file = (tabWindow.windowController?.document as? InkpotDocument)?.fileURL
         let folder = controller.files.root?.entry.url
+        if let file, let folder { DocumentFolders.remember(file: file, folder: folder) }
         guard file != nil || folder != nil else { continue }
         if tabWindow === selected { selectedTab = tabs.count }
         let sidebar = controller.sidebarState
@@ -259,7 +260,7 @@ enum DocumentSession {
       window.tabbingMode = .disallowed
       window.setFrame(NSRectFromString(frame), display: false)
       document.showWindows()
-      window.tabbingMode = .automatic
+      window.tabbingMode = .preferred
     }
     return window
   }

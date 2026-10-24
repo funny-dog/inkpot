@@ -24,12 +24,13 @@ final class AppSettings: ObservableObject {
   nonisolated static let defaultImageFolder = "assets"
   private let defaults: UserDefaults
   private lazy var displayModes = DisplayModes(defaults: defaults)
+  private lazy var zoom = EditorZoom(defaults: defaults)
   private var observers: [NSObjectProtocol] = []
 
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
     // 字体面板与菜单也会改这些偏好，设置窗口打开时同步刷新。
-    for (name, object) in [(EditorFonts.didChange, nil), (DisplayModes.didChange, nil), (UserDefaults.didChangeNotification, defaults as AnyObject?)] {
+    for (name, object) in [(EditorFonts.didChange, nil), (DisplayModes.didChange, nil), (EditorZoom.didChange, nil), (UserDefaults.didChangeNotification, defaults as AnyObject?)] {
       observers.append(NotificationCenter.default.addObserver(forName: name, object: object, queue: .main) { [weak self] _ in
         Task { @MainActor in self?.objectWillChange.send() }
       })
@@ -50,6 +51,35 @@ final class AppSettings: ObservableObject {
   var typewriterMode: Bool {
     get { displayModes.typewriterEnabled }
     set { objectWillChange.send(); displayModes.set(typewriter: newValue) }
+  }
+
+  var zoomLevel: Double {
+    get { zoom.level }
+    set { objectWillChange.send(); zoom.level = newValue }
+  }
+
+  var zoomWithCommandScroll: Bool {
+    get { zoom.commandScroll }
+    set { objectWillChange.send(); zoom.commandScroll = newValue }
+  }
+
+  /// 文件树显示范围：所有文件或仅支持的文件，及是否显示隐藏项；修改后已打开的文件树立即刷新。
+  var fileTreeShowsAllFiles: Bool {
+    get { defaults.bool(forKey: "fileTree.allFiles") }
+    set { setFileTreePreference(newValue, key: "fileTree.allFiles") }
+  }
+
+  var fileTreeShowsHidden: Bool {
+    get { defaults.bool(forKey: "fileTree.hidden") }
+    set { setFileTreePreference(newValue, key: "fileTree.hidden") }
+  }
+
+  var fileTreeFilter: FileTree.Filter { FileTree.Filter(allFiles: fileTreeShowsAllFiles, hidden: fileTreeShowsHidden) }
+
+  private func setFileTreePreference(_ value: Bool, key: String) {
+    objectWillChange.send()
+    defaults.set(value, forKey: key)
+    NotificationCenter.default.post(name: FileTree.filterDidChange, object: self)
   }
 
   /// 打开文档时默认进入源码模式；默认实时模式。
@@ -90,14 +120,20 @@ final class AppSettings: ObservableObject {
     set { setEditingPreference(newValue, key: "images.loadRemote") }
   }
 
-  private func setEditingPreference(_ value: Bool, key: String) {
+  /// Tab 缩进的空格数，只提供 2 与 4；其他值回退为 2。
+  var indentWidth: Int {
+    get { defaults.integer(forKey: "editor.indentWidth") == 4 ? 4 : 2 }
+    set { setEditingPreference(newValue == 4 ? 4 : 2, key: "editor.indentWidth") }
+  }
+
+  private func setEditingPreference(_ value: Any, key: String) {
     objectWillChange.send()
     defaults.set(value, forKey: key)
     NotificationCenter.default.post(name: Self.editingDidChange, object: self)
   }
 
   func editingScript() throws -> String {
-    let data = try JSONSerialization.data(withJSONObject: ["brackets": pairBrackets, "markdown": pairMarkdown, "remoteImages": loadRemoteImages])
+    let data = try JSONSerialization.data(withJSONObject: ["brackets": pairBrackets, "markdown": pairMarkdown, "remoteImages": loadRemoteImages, "indent": indentWidth])
     guard let json = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
     return "window.inkpot.setEditingPreferences(\(json))"
   }
@@ -107,8 +143,18 @@ final class AppSettings: ObservableObject {
     set { objectWillChange.send(); defaults.set(newValue, forKey: "images.documentFolder") }
   }
 
+  /// 在设置中选择的图片文件夹（绝对路径）；未选择时使用文档同级的默认文件夹。
+  var customImageFolder: URL? {
+    get { defaults.string(forKey: "images.customFolder").map { URL(fileURLWithPath: $0, isDirectory: true) } }
+    set { objectWillChange.send(); defaults.set(newValue?.standardizedFileURL.path, forKey: "images.customFolder") }
+  }
+
+  /// 返回相对文档所在文件夹的图片目录，同时用作写入位置与 Markdown 中的引用路径。
   func imageFolder(beside url: URL) -> String {
-    guard documentImageFolder else { return imageFolder }
+    guard documentImageFolder else {
+      guard let customImageFolder else { return imageFolder }
+      return Self.relativePath(from: url.deletingLastPathComponent(), to: customImageFolder)
+    }
     let name = Self.validImageFolder(String(url.deletingPathExtension().lastPathComponent.prefix(48))) ?? "文档"
     return name + ".assets"
   }
@@ -133,6 +179,16 @@ final class AppSettings: ObservableObject {
 
   /// 图片保存在文档同级的单层文件夹；空白、含路径分隔符、以点开头等无效名称回退为 assets。
   var imageFolder: String { Self.validImageFolder(imageFolderInput) ?? Self.defaultImageFolder }
+
+  /// 两个文件夹之间的相对路径，例如 ../图片/博客；同一文件夹返回“.”。
+  nonisolated static func relativePath(from base: URL, to target: URL) -> String {
+    let from = base.standardizedFileURL.resolvingSymlinksInPath().pathComponents
+    let to = target.standardizedFileURL.resolvingSymlinksInPath().pathComponents
+    var common = 0
+    while common < min(from.count, to.count), from[common] == to[common] { common += 1 }
+    let parts = Array(repeating: "..", count: from.count - common) + to[common...]
+    return parts.isEmpty ? "." : parts.joined(separator: "/")
+  }
 
   nonisolated static func validImageFolder(_ name: String) -> String? {
     let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -191,6 +247,15 @@ struct GeneralSettingsView: View {
       } header: { Text("启动") } footer: {
         Caption("下次启动生效。从访达打开文件时优先打开指定文件；未保存草稿仍会提示恢复。")
       }
+      Section {
+        Picker("文件树", selection: $settings.fileTreeShowsAllFiles) {
+          Text("支持的文件（Markdown 和纯文本）").tag(false)
+          Text("所有文件").tag(true)
+        }
+        Toggle("显示隐藏的文件夹／文件", isOn: $settings.fileTreeShowsHidden)
+      } header: { Text("文件树") } footer: {
+        Caption("Markdown 和纯文本在 Inkpot 中打开，其他文件使用系统默认应用打开。")
+      }
       Section("保存") {
         Toggle(isOn: $settings.autosave) {
           Text("编辑后自动保存")
@@ -203,21 +268,49 @@ struct GeneralSettingsView: View {
           Text("文档名.assets").tag(true)
         }
         if !settings.documentImageFolder {
-          TextField("图片保存文件夹", text: $settings.imageFolderInput)
-            .multilineTextAlignment(.trailing)
+          LabeledContent("图片保存文件夹") {
+            Text(settings.customImageFolder.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "文档同级的 \(settings.imageFolder)")
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .truncationMode(.middle)
+            Button("选择…") { chooseImageFolder() }
+            if settings.customImageFolder != nil {
+              Button("恢复默认") { settings.customImageFolder = nil }
+            }
+          }
         }
         Toggle("加载远程图片（HTTPS）", isOn: $settings.loadRemoteImages)
       } header: { Text("图片") } footer: {
         Caption(settings.documentImageFolder ? "新插入的图片保存到文档同级的“文档名.assets”；不会迁移原有图片。"
-          : AppSettings.validImageFolder(settings.imageFolderInput) == nil
-          ? "名称无效，将使用 \(AppSettings.defaultImageFolder)。不能为空、以点开头或包含 / : 等字符。"
-          : "插入或粘贴的图片保存在文档同级的“\(settings.imageFolder)”文件夹中。")
+          : settings.customImageFolder == nil
+          ? "插入或粘贴的图片保存在文档同级的“\(settings.imageFolder)”文件夹中。"
+          : "插入或粘贴的图片保存到所选文件夹，文档中写入相对路径。")
         Caption("远程图片默认不加载；开启后会向图片所在网站发出请求，不发送 Cookie。不支持远程 SVG。")
+      }
+      Section("关于") {
+        LabeledContent("版本", value: ThirdPartyNotices.version)
+        LabeledContent("第三方许可") {
+          Button("查看…") { ThirdPartyNotices.show() }
+        }
       }
     }
     .formStyle(.grouped)
-    .frame(width: SettingsWindowController.contentWidth)
-    .fixedSize(horizontal: false, vertical: true)
+    .frame(width: SettingsWindowController.contentWidth, height: SettingsWindowController.contentHeight)
+  }
+}
+
+extension GeneralSettingsView {
+  /// 系统文件夹面板选择图片目录，可直接新建文件夹。
+  func chooseImageFolder() {
+    let panel = NSOpenPanel()
+    panel.canChooseDirectories = true
+    panel.canChooseFiles = false
+    panel.canCreateDirectories = true
+    panel.allowsMultipleSelection = false
+    panel.prompt = "选择"
+    panel.message = "选择插入或粘贴图片时保存的文件夹"
+    panel.directoryURL = settings.customImageFolder
+    if panel.runModal() == .OK, let url = panel.url { settings.customImageFolder = url }
   }
 }
 
@@ -235,6 +328,14 @@ struct EditingSettingsView: View {
         .pickerStyle(.segmented)
         .fixedSize()
       }
+      Section {
+        Picker("缩进宽度", selection: $settings.indentWidth) {
+          Text("2 个空格").tag(2)
+          Text("4 个空格").tag(4)
+        }
+      } header: { Text("缩进") } footer: {
+        Caption("Tab 缩进、⇧Tab 取消缩进；列表项按层级整行缩进。")
+      }
       Section("写作辅助") {
         Toggle("自动配对括号与引号", isOn: $settings.pairBrackets)
         Toggle("自动配对 Markdown 字符", isOn: $settings.pairMarkdown)
@@ -250,8 +351,7 @@ struct EditingSettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: SettingsWindowController.contentWidth)
-    .fixedSize(horizontal: false, vertical: true)
+    .frame(width: SettingsWindowController.contentWidth, height: SettingsWindowController.contentHeight)
   }
 }
 
@@ -270,6 +370,18 @@ struct AppearanceSettingsView: View {
         .padding(.vertical, 4)
         .accessibilityElement(children: .contain)
         .accessibilityLabel("外观")
+      }
+      Section {
+        HStack {
+          Picker("缩放", selection: $settings.zoomLevel) {
+            ForEach(EditorZoom.levels, id: \.self) { level in Text("\(Int((level * 100).rounded()))%").tag(level) }
+          }
+          Button("重置") { settings.zoomLevel = 1 }
+            .disabled(settings.zoomLevel == 1)
+        }
+        Toggle("按住 Command 时使用鼠标滚轮缩放", isOn: $settings.zoomWithCommandScroll)
+      } header: { Text("缩放") } footer: {
+        Caption("也可使用 显示 → 实际大小 ⌘0／放大 ⌘+／缩小 ⌘−，所有窗口同步。")
       }
       Section {
         LabeledContent("正文") {
@@ -294,8 +406,7 @@ struct AppearanceSettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: SettingsWindowController.contentWidth)
-    .fixedSize(horizontal: false, vertical: true)
+    .frame(width: SettingsWindowController.contentWidth, height: SettingsWindowController.contentHeight)
   }
 }
 
@@ -343,6 +454,8 @@ private struct AppearanceSwatch: View {
 final class SettingsWindowController: NSWindowController {
   static let shared = SettingsWindowController()
   static let contentWidth: CGFloat = 520
+  /// 各分类共用的固定高度；内容超出时在页内滚动，窗口不随分类伸缩，也不能拖动改变大小。
+  static let contentHeight: CGFloat = 520
   let tabs = NSTabViewController()
 
   private init() {
@@ -355,7 +468,6 @@ final class SettingsWindowController: NSWindowController {
       case .appearance: AnyView(AppearanceSettingsView(settings: settings))
       }
       let hosting = NSHostingController(rootView: root)
-      // 切换分类时窗口按各页内容高度伸缩。
       hosting.sizingOptions = [.preferredContentSize]
       hosting.title = pane.title
       let item = NSTabViewItem(viewController: hosting)

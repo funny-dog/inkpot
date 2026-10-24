@@ -24,6 +24,8 @@ final class InkpotDocument: NSDocument {
 
   override static var autosavesDrafts: Bool { false }
   override static var autosavesInPlace: Bool { false }
+  /// 仅在“新建”（⌘N）创建窗口期间为真，使新文档以独立窗口显示。
+  static var opensInSeparateWindow = false
 
   func makeEditor() -> EditorViewController {
     if let editor { return editor }
@@ -61,7 +63,8 @@ final class InkpotDocument: NSDocument {
       defer: false
     )
     window.tabbingIdentifier = "com.erhu.inkpot.document"
-    window.tabbingMode = .automatic
+    // 打开文件与 ⌥⌘N 默认并入当前窗口的标签组，不受系统“优先使用标签页”设置影响；⌘N 另开窗口。
+    window.tabbingMode = Self.opensInSeparateWindow ? .disallowed : .preferred
     window.minSize = NSSize(width: 360, height: 240)
     window.collectionBehavior.insert(.fullScreenPrimary)
     let controller = DocumentViewController(editor: makeEditor())
@@ -153,7 +156,13 @@ final class InkpotDocument: NSDocument {
     safety.saved(content.data)
   }
 
+  override func showWindows() {
+    super.showWindows()
+    DocumentFolders.adopt(self)
+  }
+
   override func close() {
+    DocumentFolders.remember(self)
     autosave.cancel()
     safety.close()
     super.close()

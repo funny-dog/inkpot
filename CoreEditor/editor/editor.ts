@@ -22,6 +22,7 @@ import { richPaste } from './paste';
 import { welcomeHints } from './welcome';
 import { searchPanelTheme } from './search';
 import { pairingCompartment, pairingPreferences, PairingPreferences } from './typing';
+import { indentBindings, indentCompartment, indentWidth } from './indent';
 
 declare const window: {
   inkpot: {
@@ -36,7 +37,7 @@ declare const window: {
     setAppearance: (dark: boolean) => void;
     setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
     setFonts: (fonts: EditorFonts) => void;
-    setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean }) => void;
+    setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean; indent?: number }) => void;
     selectedMarkdown: () => string;
     pastePlainText: (text: string) => void;
     exportHTML: (mode?: string) => Promise<string>;
@@ -113,7 +114,8 @@ window.inkpot = {
             return true;
           } }]),
           history(),
-          keymap.of([...historyKeymap, ...defaultKeymap]),
+          indentCompartment.of(indentWidth(2)),
+          keymap.of([...indentBindings, ...historyKeymap, ...defaultKeymap]),
           EditorView.lineWrapping,
           // 拼写检查的开关由原生“输入时检查拼写”控制；自动纠正、首字母大写保持 CodeMirror 默认关闭，不改写原文。
           EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'true' }),
@@ -183,6 +185,7 @@ window.inkpot = {
     if (view !== undefined) view.dispatch({ effects: [
       pairingCompartment.reconfigure(pairingPreferences.of(preferences)),
       setRemoteImages.of(preferences.remoteImages),
+      indentCompartment.reconfigure(indentWidth(preferences.indent ?? 2)),
     ] });
   },
   selectedMarkdown() {

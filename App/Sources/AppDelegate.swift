@@ -4,7 +4,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   private var isTerminating = false
   // 启动恢复窗口完成前不让系统另开未命名文档；之后点按程序坞图标等仍按系统默认新建。
   private var launchFinished = false
-  private var noticesWindow: ThirdPartyNoticesWindowController?
 
   private var textInput: NSTextView? { NSApp.keyWindow?.firstResponder as? NSTextView }
 
@@ -16,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
     if [#selector(exportPDF(_:)), #selector(exportHTML(_:)), #selector(printMarkdown(_:))].contains(menuItem.action) { return editor?.isReady == true }
-    if [#selector(showAbout(_:)), #selector(showSettings(_:)), #selector(showThirdPartyNotices(_:))].contains(menuItem.action) { return true }
+    if [#selector(showSettings(_:)), #selector(openWebsite(_:)), #selector(sendFeedback(_:)), #selector(checkForUpdates(_:)), #selector(newDocument(_:)), #selector(openFromDock(_:))].contains(menuItem.action) { return true }
     if menuItem.action == #selector(restoreDrafts(_:)) { return true }
     if menuItem.action == #selector(openFolder(_:)) { return true }
     if menuItem.representedObject is String {
@@ -85,24 +84,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     if let document = NSDocumentController.shared.currentDocument as? InkpotDocument { Task { @MainActor in await DocumentPrint.run(document) } }
   }
 
-  @objc func showAbout(_ sender: Any?) {
-    // 保留上游及主要依赖的许可声明。
-    let credits = NSAttributedString(
-      string: "基于 MarkEdit 的编辑器内核分叉开发（MIT 许可）。\n使用 CodeMirror、Lezer、KaTeX、Mermaid 与 Turndown；完整声明见 Inkpot 菜单中的“第三方许可…”。",
-      attributes: [.font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize), .foregroundColor: NSColor.secondaryLabelColor]
-    )
-    NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+  static let websiteURL = URL(string: "https://github.com/funny-dog/inkpot")
+  static let feedbackURL = URL(string: "https://github.com/funny-dog/inkpot/issues")
+
+  @objc func openWebsite(_ sender: Any?) { if let url = Self.websiteURL { NSWorkspace.shared.open(url) } }
+
+  @objc func sendFeedback(_ sender: Any?) { if let url = Self.feedbackURL { NSWorkspace.shared.open(url) } }
+
+  /// 新建（⌘N、程序坞）：另开独立窗口；打开的文件与“新建标签页”仍并入当前窗口的标签组。
+  @objc func newDocument(_ sender: Any?) {
+    NSApp.activate(ignoringOtherApps: true)
+    InkpotDocument.opensInSeparateWindow = true
+    defer { InkpotDocument.opensInSeparateWindow = false }
+    NSDocumentController.shared.newDocument(sender)
+    // 窗口显示后恢复为接收标签，之后在它上面打开的文件仍进入标签页。
+    NSDocumentController.shared.documents.last?.windowControllers.first?.window?.tabbingMode = .preferred
   }
 
-  @MainActor
-  @objc func showThirdPartyNotices(_ sender: Any?) {
-    do {
-      if noticesWindow == nil { noticesWindow = try ThirdPartyNoticesWindowController() }
-      noticesWindow?.showWindow(sender)
-      noticesWindow?.window?.makeKeyAndOrderFront(sender)
-    } catch {
-      NSApp.presentError(error)
+  /// 更新源确定前先打开发布页，由用户自行下载新版本。
+  @objc func checkForUpdates(_ sender: Any?) {
+    if let url = URL(string: "https://github.com/funny-dog/inkpot/releases") { NSWorkspace.shared.open(url) }
+  }
+
+  /// 程序坞右键菜单：新建与打开，与文件菜单行为一致。
+  func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
+    let menu = NSMenu()
+    for (title, action) in [("新建", #selector(newDocument(_:))), ("打开…", #selector(openFromDock(_:)))] {
+      let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+      item.target = self
+      menu.addItem(item)
     }
+    return menu
+  }
+
+  /// 从程序坞打开时应用可能还在后台，先激活，使打开面板出现在最前面。
+  @objc func openFromDock(_ sender: Any?) {
+    NSApp.activate(ignoringOtherApps: true)
+    NSDocumentController.shared.openDocument(sender)
   }
 
   @objc func restoreDrafts(_ sender: Any?) { recoverDrafts(automatic: false) }
@@ -171,7 +189,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     guard !isTerminating else { return .terminateLater }
     isTerminating = true
     // 关闭文档前记录窗口与标签；取消退出时下次退出会重新记录。
-    DocumentSession.save(DocumentSession.capture())
+    // 优先使用询问未保存文档之前记录的会话，那时被关闭的文档还在。
+    DocumentSession.save(InkpotDocumentController.quitSnapshot ?? DocumentSession.capture())
+    InkpotDocumentController.quitSnapshot = nil
     Task { @MainActor in
       do {
         // 退出前也要等待 WebKit，避免最后一次输入尚未通知原生窗口就被关闭。
@@ -194,6 +214,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
 
   @objc private func didCloseAll(_ controller: NSDocumentController, didCloseAll: Bool, contextInfo: UnsafeMutableRawPointer?) {
     isTerminating = false
+    MainActor.assumeIsolated { InkpotDocumentController.quitSnapshot = nil }
     NSApp.reply(toApplicationShouldTerminate: didCloseAll)
   }
 }

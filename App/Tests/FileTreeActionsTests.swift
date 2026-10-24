@@ -46,16 +46,91 @@ final class FileTreeActionsTests: XCTestCase {
     XCTAssertEqual(Set(try FolderEntry.read(root).map { $0.url.lastPathComponent }), Set(["中文 空格.md", "子目录"]))
   }
 
+  func testDuplicateAddsCopySuffixAndFilterShowsAllFiles() throws {
+    let root = try folder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let source = root.appendingPathComponent("笔记.md")
+    try Data("内容".utf8).write(to: source)
+    try Data().write(to: root.appendingPathComponent("图.png"))
+    try Data().write(to: root.appendingPathComponent(".隐藏.md"))
+    let actions = FileTreeActions { [] }
+    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, "笔记 副本.md")
+    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, "笔记 副本 2.md")
+    XCTAssertEqual(try String(contentsOf: root.appendingPathComponent("笔记 副本.md"), encoding: .utf8), "内容")
+    let names = { (filter: FileTree.Filter) in Set(try FolderEntry.read(root, filter: filter).map(\.url.lastPathComponent)) }
+    XCTAssertFalse(try names(.init()).contains("图.png"))
+    XCTAssertTrue(try names(.init(allFiles: true)).contains("图.png"))
+    XCTAssertFalse(try names(.init(allFiles: true)).contains(".隐藏.md"))
+    XCTAssertTrue(try names(.init(hidden: true)).contains(".隐藏.md"))
+  }
+
+  func testOtherFileTypesOpenAsPlainTextAndFolderIsRemembered() async throws {
+    _ = NSApplication.shared
+    let root = try folder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let json = root.appendingPathComponent("配置.json")
+    try Data("{\"a\": 1}".utf8).write(to: json)
+    let (document, alreadyOpen) = try await DocumentFileSwitch.load(json)
+    defer { document.close() }
+    XCTAssertFalse(alreadyOpen)
+    XCTAssertEqual(document.fileType, "public.plain-text")
+    XCTAssertEqual(try document.data(ofType: "public.plain-text"), Data("{\"a\": 1}".utf8))
+    let reopened = try await DocumentFileSwitch.load(json)
+    XCTAssertIdentical(reopened.0, document)
+    XCTAssertTrue(reopened.1)
+    let binary = root.appendingPathComponent("图.png")
+    try Data([0xFF, 0xFE, 0x00, 0xC3]).write(to: binary)
+    do {
+      _ = try await DocumentFileSwitch.load(binary)
+      XCTFail("非 UTF-8 文件应提示无法打开")
+    } catch {}
+
+    let defaults = try XCTUnwrap(UserDefaults(suiteName: "DocumentFoldersTests"))
+    defer { defaults.removePersistentDomain(forName: "DocumentFoldersTests") }
+    DocumentFolders.remember(file: json, folder: root, defaults: defaults)
+    XCTAssertEqual(DocumentFolders.folder(for: json, defaults: defaults)?.standardizedFileURL, root.standardizedFileURL)
+    // 文件不在文件夹内时不记录。
+    let outside = FileManager.default.temporaryDirectory.appendingPathComponent("外部.md")
+    DocumentFolders.remember(file: outside, folder: root, defaults: defaults)
+    XCTAssertNil(DocumentFolders.folder(for: outside, defaults: defaults))
+  }
+
+  func testFileTreeRowsCenterIconAndTextInSelectionBackground() async throws {
+    _ = NSApplication.shared
+    let root = try folder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    try Data().write(to: root.appendingPathComponent("AGENTS.md"))
+    let tree = FileTreeViewController()
+    let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 260, height: 400), styleMask: [.titled], backing: .buffered, defer: false)
+    window.contentView = tree.view
+    tree.openFolder(root)
+    let deadline = Date().addingTimeInterval(3)
+    while tree.outlineView.numberOfRows == 0, Date() < deadline { try await Task.sleep(for: .milliseconds(20)) }
+    tree.outlineView.layoutSubtreeIfNeeded()
+    let row = try XCTUnwrap(tree.outlineView.rowView(atRow: 0, makeIfNecessary: true))
+    let cell = try XCTUnwrap(tree.outlineView.view(atColumn: 0, row: 0, makeIfNecessary: true) as? NSTableCellView)
+    row.layoutSubtreeIfNeeded()
+    let image = try XCTUnwrap(cell.imageView)
+    let text = try XCTUnwrap(cell.textField)
+    let glyphs = text.convert(text.cell?.titleRect(forBounds: text.bounds) ?? text.bounds, to: row)
+    let icon = image.convert(image.bounds, to: row)
+    XCTAssertEqual(row.frame.height, SidebarLabel.rowHeight, accuracy: 3)
+    XCTAssertEqual(icon.midY, row.bounds.midY, accuracy: 1)
+    XCTAssertEqual(glyphs.midY, row.bounds.midY, accuracy: 1)
+  }
+
   func testContextMenuUsesClickedItemAndRootMenuOnlyCreates() throws {
     _ = NSApplication.shared
     let root = try folder()
     defer { try? FileManager.default.removeItem(at: root) }
     let tree = FileTreeViewController()
     tree.openFolder(root)
-    XCTAssertEqual(tree.contextMenu(for: nil).items.map(\.title), ["新建 Markdown 文件…", "新建文件夹…"])
+    let blank = tree.contextMenu(for: nil)
+    XCTAssertEqual(blank.items.filter { !$0.isSeparatorItem }.map(\.title), ["新建文件", "新建文件夹", "复制文件路径", "在 Finder 中显示"])
+    XCTAssertEqual(blank.items.last?.representedObject as? URL, root.standardizedFileURL)
     let url = root.appendingPathComponent("目标.md")
     let menu = tree.contextMenu(for: FolderEntry(url: url, isDirectory: false))
-    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["在新标签页中打开", "新建 Markdown 文件…", "新建文件夹…", "重命名…", "移到废纸篓"])
+    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["打开", "在新标签页中打开", "在新窗口中打开", "新建文件", "新建文件夹", "创建副本", "重命名…", "删除…", "复制文件路径", "在 Finder 中显示"])
     XCTAssertEqual(menu.items.first?.representedObject as? URL, url)
     XCTAssertEqual(menu.items.last?.representedObject as? URL, url)
     let directory = tree.contextMenu(for: FolderEntry(url: root.appendingPathComponent("目录"), isDirectory: true))
@@ -115,7 +190,9 @@ final class FileTreeActionsTests: XCTestCase {
     XCTAssertEqual(document.fileURL, root.appendingPathComponent("a.md"))
     XCTAssertEqual(try String(contentsOf: occupied, encoding: .utf8), "目标内容")
   }
+}
 
+extension FileTreeActionsTests {
   func testTrashCancellationAndFailureKeepDocumentsAndDiskContents() async throws {
     let root = try folder()
     defer { try? FileManager.default.removeItem(at: root) }

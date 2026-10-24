@@ -24,6 +24,28 @@ enum DocumentTabs {
     return document
   }
 
+  /// 在独立窗口中打开，并带上来源窗口的文件树；文件已打开时直接前置它所在的窗口。
+  static func openInWindow(
+    _ url: URL,
+    from parent: NSWindow,
+    load: (URL) async throws -> (InkpotDocument, Bool) = DocumentFileSwitch.load
+  ) async throws {
+    let (document, alreadyOpen) = try await load(url)
+    guard !alreadyOpen, document.windowControllers.isEmpty else { return document.showWindows() }
+    InkpotDocument.opensInSeparateWindow = true
+    document.makeWindowControllers()
+    InkpotDocument.opensInSeparateWindow = false
+    guard let window = document.windowControllers.first?.window else { return }
+    if let source = parent.contentViewController as? DocumentViewController, let folder = source.files.root?.entry.url,
+       let container = window.contentViewController as? DocumentViewController {
+      container.files.openFolder(folder)
+      if source.filesVisible { container.toggleContent(files: true) }
+    }
+    window.setFrameTopLeftPoint(NSPoint(x: parent.frame.minX + 28, y: parent.frame.maxY - 28))
+    document.showWindows()
+    window.tabbingMode = .preferred
+  }
+
   static func new(in parent: NSWindow) {
     let document = InkpotDocument()
     NSDocumentController.shared.addDocument(document)

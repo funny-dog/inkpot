@@ -47,9 +47,9 @@ final class SidebarTests: XCTestCase {
       DocumentHeading(id: 2, from: 5, to: 9, level: 3, title: "选题"),
     ], active: 2)
     XCTAssertTrue(outline.outlineView(outline.outlineView, rowViewForItem: NSObject()) is SidebarRowView)
-    let top = outline.outlineView.view(atColumn: 0, row: 0, makeIfNecessary: true) as? SidebarLabel
+    let top = (outline.outlineView.view(atColumn: 0, row: 0, makeIfNecessary: true) as? NSTableCellView)?.textField as? SidebarLabel
     XCTAssertEqual(top?.baseWeight, .semibold)
-    let deep = outline.outlineView.view(atColumn: 0, row: 1, makeIfNecessary: true) as? SidebarLabel
+    let deep = (outline.outlineView.view(atColumn: 0, row: 1, makeIfNecessary: true) as? NSTableCellView)?.textField as? SidebarLabel
     XCTAssertEqual(deep?.baseColor, .secondaryLabelColor)
     XCTAssertEqual(outline.outlineView.selectedRow, 1)
   }

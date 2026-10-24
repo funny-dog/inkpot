@@ -108,13 +108,52 @@ final class SidebarTabBar: NSView {
 
 /// 侧栏行内文字：记住未选中时的颜色与字重，所在行成为当前项时换成强调色并加粗。
 final class SidebarLabel: NSTextField {
+  /// 文件树与大纲共用的字号与行高。
+  static let fontSize: CGFloat = 15
+  static let rowHeight: CGFloat = 34
+
+  /// 侧栏单元格：可选图标加文字，二者在行内垂直居中；行高变化时不需要重新计算坐标。
+  static func cell(identifier: NSUserInterfaceItemIdentifier, icon: Bool) -> NSTableCellView {
+    let cell = NSTableCellView()
+    cell.identifier = identifier
+    let text = SidebarLabel(labelWithString: "")
+    text.refresh()
+    text.translatesAutoresizingMaskIntoConstraints = false
+    text.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+    cell.addSubview(text)
+    cell.textField = text
+    var constraints = [
+      text.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+      text.trailingAnchor.constraint(lessThanOrEqualTo: cell.trailingAnchor, constant: -4),
+    ]
+    if icon {
+      let image = NSImageView()
+      image.contentTintColor = .secondaryLabelColor
+      image.symbolConfiguration = .init(pointSize: fontSize, weight: .regular)
+      image.translatesAutoresizingMaskIntoConstraints = false
+      cell.addSubview(image)
+      cell.imageView = image
+      constraints += [
+        image.leadingAnchor.constraint(equalTo: cell.leadingAnchor),
+        image.centerYAnchor.constraint(equalTo: cell.centerYAnchor),
+        image.widthAnchor.constraint(equalToConstant: 20),
+        image.heightAnchor.constraint(equalToConstant: 20),
+        text.leadingAnchor.constraint(equalTo: image.trailingAnchor, constant: 7),
+      ]
+    } else {
+      constraints.append(text.leadingAnchor.constraint(equalTo: cell.leadingAnchor, constant: 2))
+    }
+    NSLayoutConstraint.activate(constraints)
+    return cell
+  }
+
   var baseColor: NSColor = .labelColor { didSet { refresh() } }
   var baseWeight: NSFont.Weight = .regular { didSet { refresh() } }
   var isCurrent = false { didSet { if oldValue != isCurrent { refresh() } } }
 
   func refresh() {
     textColor = isCurrent ? .inkpotAccent : baseColor
-    font = .systemFont(ofSize: 13, weight: isCurrent ? .semibold : baseWeight)
+    font = .systemFont(ofSize: Self.fontSize, weight: isCurrent ? .semibold : baseWeight)
   }
 }
 
