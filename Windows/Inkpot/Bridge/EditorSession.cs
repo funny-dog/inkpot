@@ -42,7 +42,8 @@ internal sealed class EditorSession : IDisposable
             RoutedEventHandler? handler = null;
             handler = (_, _) => { Control.Loaded -= handler; loaded.TrySetResult(); };
             Control.Loaded += handler;
-            await loaded.Task.WaitAsync(TimeSpan.FromSeconds(20));
+            try { await loaded.Task.WaitAsync(TimeSpan.FromSeconds(20)); }
+            catch (TimeoutException error) { throw new IOException("编辑器控件未能进入可视树。", error); }
         }
         await Control.EnsureCoreWebView2Async(await environment);
         var core = Control.CoreWebView2;
