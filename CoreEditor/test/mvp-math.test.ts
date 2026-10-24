@@ -34,6 +34,14 @@ async function flushed() {
   await new Promise(resolve => setTimeout(resolve, 0));
 }
 
+// 机器繁忙时首轮解析可能在时间预算内未覆盖整篇，KaTeX 也是异步渲染；等到预期数量的公式渲染完成再断言。
+async function rendered(view: EditorView, count: number) {
+  await flushed();
+  for (let waited = 0; view.dom.querySelectorAll('.cm-mvp-math.fake-katex').length < count && waited < 2000; waited += 10) {
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+}
+
 function hasNode(view: EditorView, name: string) {
   let found = false;
   syntaxTree(view.state).iterate({ enter(node) { if (node.name === name) found = true; } });
@@ -46,7 +54,7 @@ const plain = original.replace(/\r\n/g, '\n');
 describe('MVP 公式', () => {
   test('块级与行内公式实时渲染，光标进入局部展开源码，原文与历史不变', async () => {
     const { view, read } = editor(original);
-    await flushed();
+    await rendered(view, 2);
     const widgets = view.dom.querySelectorAll('.cm-mvp-math');
     expect(widgets).toHaveLength(2);
     expect(renders.at(-2)).toEqual({ tex: 'x^2', display: false });
