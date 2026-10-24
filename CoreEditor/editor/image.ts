@@ -3,6 +3,7 @@ import { EditorState, Range, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import { SyntaxNode } from '@lezer/common';
 import { linkDestination, selectionTouches } from './basic';
+import { imageBase } from './bridge';
 
 let documentGeneration = 0;
 export const setRemoteImages = StateEffect.define<boolean>();
@@ -30,7 +31,7 @@ class ImagePreview extends WidgetType {
     span.title = t('双击图片编辑 Markdown 路径');
     const image = document.createElement('img');
     image.alt = this.alt || t('图片');
-    image.src = `inkpot-image://local/${encodeURIComponent(this.path)}?document=${this.document}&revision=${this.revision}`;
+    image.src = `${imageBase}${encodeURIComponent(this.path)}?document=${this.document}&revision=${this.revision}`;
     image.addEventListener('load', () => view.requestMeasure());
     image.addEventListener('error', () => {
       image.alt = t('图片无法读取：{0}', this.alt || this.path);

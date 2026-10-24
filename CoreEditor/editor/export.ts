@@ -4,6 +4,7 @@ import { EditorView } from '@codemirror/view';
 import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
 import { applyAppearance } from './theme';
 import { loadDocumentLanguages } from './code-languages';
+import { assetBase, imageBase } from './bridge';
 
 const exportCSS = `
 body { font: 16px/1.7 -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif; color: #202020; background: #fff; margin: 0 auto; padding: 32px 28px; max-width: 740px; }
@@ -81,7 +82,7 @@ async function embedImages(clone: HTMLElement) {
   let total = 0;
   for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
     const source = image.getAttribute('src') ?? '';
-    if (!source.startsWith('inkpot-image://local/')) throw new Error(t('图片来源不受支持，已取消导出。'));
+    if (!source.startsWith(imageBase)) throw new Error(t('图片来源不受支持，已取消导出。'));
     let dataURL = embedded.get(source);
     if (dataURL === undefined) {
       const controller = new AbortController();
@@ -201,7 +202,7 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
 
     const firstLine = view.state.doc.line(1).text.trim();
     const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : t('文档');
-    const katex = mode === 'pdf' ? '<link rel="stylesheet" href="inkpot-asset://math/katex.min.css">\n' : '';
+    const katex = mode === 'pdf' ? `<link rel="stylesheet" href="${escapeHTML(assetBase)}katex.min.css">\n` : '';
     return `<!doctype html>
   <html lang="zh-CN">
   <head>

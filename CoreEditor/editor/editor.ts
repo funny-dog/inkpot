@@ -18,45 +18,25 @@ import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { applyDisplayModes, displayExtensions } from './focus';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
-import { applyFonts, EditorFonts } from './fonts';
+import { applyFonts } from './fonts';
 import { richPaste } from './paste';
 import { searchPanelTheme } from './search';
-import { pairingCompartment, pairingPreferences, PairingPreferences } from './typing';
+import { pairingCompartment, pairingPreferences } from './typing';
 import { indentBindings, indentCompartment, indentWidth } from './indent';
-
-declare const window: {
-  inkpot: {
-    open: (text: string, generation?: number, dark?: boolean, language?: string) => void;
-    navigateHeading: (id: number) => void;
-    navigateFragment: (fragment: string) => void;
-    selectMatch: (line: number, column: number, length: number) => void;
-    insertImage: (path: string) => void;
-    refreshImages: () => void;
-    snapshot: () => { text: string; revision: number };
-    command: (name: string) => void;
-    setAppearance: (dark: boolean) => void;
-    setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
-    setFonts: (fonts: EditorFonts) => void;
-    setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean; indent?: number }) => void;
-    selectedMarkdown: () => string;
-    pastePlainText: (text: string) => void;
-    exportHTML: (mode?: string) => Promise<string>;
-  };
-  webkit: { messageHandlers: { document: { postMessage: (message: unknown) => void } } };
-};
+import { configureResources, listenToHost, postToHost } from './bridge';
 
 let view: EditorView | undefined;
 let source = sourceDocument('');
 let revision = 0;
 let generation = 0;
 const outline = documentOutline((headings, active) => {
-  window.webkit.messageHandlers.document.postMessage({ outline: true, headings, active, revision, generation });
+  postToHost({ outline: true, headings, active, revision, generation });
 });
 const commands: Readonly<Partial<Record<string, Command>>> = { focus: view => { view.focus(); return true; }, undo, redo, selectAll, toggleSourceMode, ...formatCommands, ...searchCommands, ...tableCommands, ...mathCommands };
 
 function publish(changed: boolean) {
   if (view === undefined) return;
-  window.webkit.messageHandlers.document.postMessage({
+  postToHost({
     changed,
     revision,
     generation,
@@ -75,11 +55,12 @@ function publish(changed: boolean) {
 document.addEventListener('focusin', () => queueMicrotask(() => publish(false)));
 for (const event of ['compositionstart', 'compositionend']) document.addEventListener(event, () => queueMicrotask(() => publish(false)));
 document.addEventListener('inkpot-open-link', event => {
-  if (view !== undefined && !isComposing(view)) window.webkit.messageHandlers.document.postMessage({ openLink: (event as CustomEvent<string>).detail, generation });
+  if (view !== undefined && !isComposing(view)) postToHost({ openLink: (event as CustomEvent<string>).detail, generation });
 });
 document.addEventListener('focusout', () => queueMicrotask(() => publish(false)));
 
 window.inkpot = {
+  configure: configureResources,
   open(text, documentGeneration = 0, dark = false, language = 'en') {
     setEditorLanguage(language);
     generation = documentGeneration;
@@ -102,16 +83,16 @@ window.inkpot = {
           EditorView.domEventHandlers({ paste(event) {
             if (![...(event.clipboardData?.files ?? [])].some(file => file.type.startsWith('image/'))) return false;
             event.preventDefault();
-            window.webkit.messageHandlers.document.postMessage({ pasteImage: true, generation });
+            postToHost({ pasteImage: true, generation });
             return true;
           } }),
           richPaste,
-          linkNavigation(destination => window.webkit.messageHandlers.document.postMessage({ openLink: destination, generation })),
+          linkNavigation(destination => postToHost({ openLink: destination, generation })),
           keymap.of([{ key: 'Mod-Enter', run: view => {
             if (isComposing(view)) return true;
             const destination = linkAt(view, view.state.selection.main.head);
             if (destination === undefined) return false;
-            window.webkit.messageHandlers.document.postMessage({ openLink: destination, generation });
+            postToHost({ openLink: destination, generation });
             return true;
           } }]),
           history(),
@@ -233,4 +214,5 @@ window.inkpot = {
   },
 };
 
-window.webkit.messageHandlers.document.postMessage({ ready: true });
+listenToHost(window.inkpot);
+postToHost({ ready: true });

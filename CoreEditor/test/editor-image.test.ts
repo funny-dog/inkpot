@@ -6,9 +6,14 @@ import { sourceDocument } from '../editor/source';
 import { writingExtensions } from '../editor/writing';
 import { liveEditing, toggleSourceMode } from '../editor/live';
 import { refreshImages, setImageDocument, setRemoteImages } from '../editor/image';
+import { configureResources, imageBase } from '../editor/bridge';
 
 const views: EditorView[] = [];
-afterEach(() => { for (const view of views.splice(0)) view.destroy(); });
+const defaultImageBase = imageBase;
+afterEach(() => {
+  for (const view of views.splice(0)) view.destroy();
+  configureResources({ imageBase: defaultImageBase });
+});
 function editor(text: string) {
   setImageDocument(7);
   const source = sourceDocument(text);
@@ -20,6 +25,16 @@ function editor(text: string) {
 }
 
 describe('Inkpot 本地图片', () => {
+  test('配置图片入口后保留路径编码、文档代次与刷新版本', () => {
+    configureResources({ imageBase: 'https://images.inkpot.local/local/' });
+    const { view } = editor('前 ![图](<assets/中文 图.png>)');
+    expect(view.contentDOM.querySelector('.cm-inkpot-image img')?.getAttribute('src')).toBe(
+      `https://images.inkpot.local/local/${encodeURIComponent('assets/中文 图.png')}?document=7&revision=0`,
+    );
+    view.dispatch({ effects: refreshImages.of(null) });
+    expect(view.contentDOM.querySelector('.cm-inkpot-image img')?.getAttribute('src')).toContain('document=7&revision=1');
+  });
+
   test('本地路径经自定义协议读取，保留 Unicode、转义与原文行尾', () => {
     const original = '前\r\n\r\n![示意](<assets/中文 图.png>)\r\n尾\n';
     const { view, read } = editor(original);

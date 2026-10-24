@@ -55,7 +55,8 @@
     "picomatch": "^4.0.4"
   },
   "browserslist": [
-    "safari >= 18"
+    "safari >= 18",
+    "chrome >= 120"
   ],
   "engines": {
     "node": ">=22.12.0"

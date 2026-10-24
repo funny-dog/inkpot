@@ -1,0 +1,10 @@
+<Window x:Class="Inkpot.MainWindow"
+ xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid x:Name="Root">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <MenuBar x:Name="Menus" />
+    <TabView x:Name="Tabs" Grid.Row="1" IsAddTabButtonVisible="True"
+      AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
+  </Grid>
+</Window>

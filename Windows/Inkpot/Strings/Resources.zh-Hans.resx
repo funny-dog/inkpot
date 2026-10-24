@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="File" xml:space="preserve">
+    <value>文件</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>格式</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>新建</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>打开…</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>保存</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>另存为…</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>关闭标签页</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>退出</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>撤销</value>
+  </data>
+  <data name="Redo" xml:space="preserve">
+    <value>重做</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>剪切</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>复制</value>
+  </data>
+  <data name="Paste" xml:space="preserve">
+    <value>粘贴</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="Find" xml:space="preserve">
+    <value>查找与替换…</value>
+  </data>
+  <data name="FindNext" xml:space="preserve">
+    <value>查找下一个</value>
+  </data>
+  <data name="FindPrevious" xml:space="preserve">
+    <value>查找上一个</value>
+  </data>
+  <data name="Bold" xml:space="preserve">
+    <value>粗体</value>
+  </data>
+  <data name="Italic" xml:space="preserve">
+    <value>斜体</value>
+  </data>
+  <data name="Strike" xml:space="preserve">
+    <value>删除线</value>
+  </data>
+  <data name="InlineCode" xml:space="preserve">
+    <value>行内代码</value>
+  </data>
+  <data name="Link" xml:space="preserve">
+    <value>链接</value>
+  </data>
+  <data name="OrderedList" xml:space="preserve">
+    <value>编号列表</value>
+  </data>
+  <data name="BulletList" xml:space="preserve">
+    <value>项目符号列表</value>
+  </data>
+  <data name="TaskList" xml:space="preserve">
+    <value>任务列表</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>引用</value>
+  </data>
+  <data name="CodeBlock" xml:space="preserve">
+    <value>代码块</value>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>水平分隔线</value>
+  </data>
+  <data name="SourceMode" xml:space="preserve">
+    <value>源码模式</value>
+  </data>
+  <data name="Untitled" xml:space="preserve">
+    <value>未命名</value>
+  </data>
+  <data name="TextFile" xml:space="preserve">
+    <value>文本文件</value>
+  </data>
+  <data name="UnsupportedFile" xml:space="preserve">
+    <value>请选择 .md、.markdown 或 .txt 文件。</value>
+  </data>
+  <data name="ExternalChange" xml:space="preserve">
+    <value>文件已在外部修改，是否覆盖？</value>
+  </data>
+  <data name="Overwrite" xml:space="preserve">
+    <value>覆盖</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Unsaved" xml:space="preserve">
+    <value>关闭前保存修改吗？</value>
+  </data>
+  <data name="Discard" xml:space="preserve">
+    <value>不保存</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>好</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>操作未能完成</value>
+  </data>
+  <data name="RuntimeMissing" xml:space="preserve">
+    <value>缺少 WebView2 运行时</value>
+  </data>
+  <data name="RuntimeHelp" xml:space="preserve">
+    <value>请安装 Microsoft Edge WebView2 Evergreen 运行时，再重新打开 Inkpot。</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>前往下载</value>
+  </data>
+  <data name="SnapshotFailed" xml:space="preserve">
+    <value>无法读取最新文本，已阻止保存和关闭。</value>
+  </data>
+  <data name="EditorFailed" xml:space="preserve">
+    <value>编辑器已停止，请保留此窗口以避免丢失未保存内容。</value>
+  </data>
+  <data name="Heading1" xml:space="preserve">
+    <value>1 级标题</value>
+  </data>
+  <data name="Heading2" xml:space="preserve">
+    <value>2 级标题</value>
+  </data>
+  <data name="Heading3" xml:space="preserve">
+    <value>3 级标题</value>
+  </data>
+  <data name="Heading4" xml:space="preserve">
+    <value>4 级标题</value>
+  </data>
+  <data name="Heading5" xml:space="preserve">
+    <value>5 级标题</value>
+  </data>
+  <data name="Heading6" xml:space="preserve">
+    <value>6 级标题</value>
+  </data>
+</root>

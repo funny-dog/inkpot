@@ -6,11 +6,11 @@ import { Parser } from '@lezer/common';
 import { highlightTree, tagHighlighter, tags } from '@lezer/highlight';
 import { isComposing } from './mode';
 import type { BlockNest } from './math-parser';
+import { assetBase } from './bridge';
 
 // 代码块按语言着色：复用已有 @codemirror/legacy-modes，每个语言文件单独打包到应用包，
-// 首次遇到对应围栏时经 inkpot-asset:// 加载，未用到的语言不增加启动开销。测试注入替代实现。
+// 首次遇到对应围栏时经宿主资源目录加载，未用到的语言不增加启动开销。测试注入替代实现。
 type Modes = Record<string, StreamParser<unknown> | undefined>;
-const assetBase = 'inkpot-asset://math/';
 
 let loadModule: (file: string) => Promise<Modes> = file => import(/* @vite-ignore */ `${assetBase}lang-${file}.mjs`) as Promise<Modes>;
 

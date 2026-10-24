@@ -7,6 +7,7 @@ import { writingExtensions } from '../editor/writing';
 import { liveEditing, toggleSourceMode } from '../editor/live';
 import { documentHTML } from '../editor/export';
 import { useKatexForTests } from '../editor/math';
+import { assetBase, imageBase, configureResources } from '../editor/bridge';
 
 useKatexForTests({
   render(tex, element) {
@@ -16,9 +17,11 @@ useKatexForTests({
 
 const views: EditorView[] = [];
 const originalFetch = globalThis.fetch;
+const defaultResources = { assetBase, imageBase };
 afterEach(() => {
   for (const view of views.splice(0)) view.destroy();
   globalThis.fetch = originalFetch;
+  configureResources(defaultResources);
 });
 
 function editor(text: string) {
@@ -43,6 +46,24 @@ async function flushed() {
 }
 
 describe('Inkpot 导出', () => {
+  test('导出读取配置后的图片入口和 PDF 样式，拒绝入口外的图片', async () => {
+    configureResources({ assetBase: 'https://editor.inkpot.local/math/', imageBase: 'https://images.inkpot.local/local/' });
+    const loader = jest.fn<typeof fetch>().mockResolvedValue({ ok: true, blob: async () => new Blob(['png'], { type: 'image/png' }) } as Response);
+    globalThis.fetch = loader;
+    const { view, read } = editor('前 ![图](assets/a.png)');
+    const html = await documentHTML(view, 'pdf');
+    expect(html).toContain('href="https://editor.inkpot.local/math/katex.min.css"');
+    expect(html).toContain('src="data:image/png;base64,cG5n"');
+    expect(loader.mock.calls[0][0]).toBe('https://images.inkpot.local/local/assets%2Fa.png?document=0&revision=0');
+    expect(read()).toBe('前 ![图](assets/a.png)');
+    // 导出会重建预览，直接在导出副本中模拟入口外的图片。
+    const clone = view.contentDOM.cloneNode(true) as HTMLElement;
+    clone.querySelector('.cm-inkpot-image img')?.setAttribute('src', 'https://images.inkpot.local.evil/local/a.png');
+    const cloneNode = jest.spyOn(view.contentDOM, 'cloneNode').mockReturnValue(clone);
+    try { await expect(documentHTML(view)).rejects.toThrow('图片来源不受支持'); } finally { cloneNode.mockRestore(); }
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
+
   test('同一段落软换行合并，显式硬换行与代码中的换行保留，原文不变', async () => {
     const original = '第一行\r\n第二行  \r\n第三行\\\r\n第四行\r\n\r\n下一段\r\n\r\n```\r\na  b\r\nc\r\n```';
     const { view, read } = editor(original);

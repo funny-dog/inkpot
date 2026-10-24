@@ -9,6 +9,7 @@ import { mathTag } from './math-parser';
 import { selectionMissesBlocks, topBlocks } from './blocks';
 import { selectionTouches } from './basic';
 import { isComposing, previewExport, sourceMode } from './mode';
+import { assetBase } from './bridge';
 
 export { blockMathTagName, blockMathContentTagName, markdownMathExtension, mathTag } from './math-parser';
 
@@ -50,8 +51,6 @@ export const inlineMathExtension: MarkdownConfig = {
 type Katex = { render(tex: string, element: HTMLElement, options: { displayMode: boolean; throwOnError: boolean; trust: boolean }): void };
 
 // KaTeX 是现有依赖；从应用包按需加载，文档没有公式时不增加启动开销。测试注入替代实现。
-const assetBase = 'inkpot-asset://math/';
-
 async function loadFromApp(): Promise<Katex> {
   if (document.querySelector('link[data-katex]') === null) {
     const link = document.createElement('link');

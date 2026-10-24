@@ -2,7 +2,7 @@ name: Inkpot build and test
 
 on:
   push:
-    branches: ['main']
+    branches: ['main', 'feat/windows-mvp']
   pull_request:
     branches: ['main']
     types: [synchronize, opened, reopened, ready_for_review]
@@ -19,7 +19,7 @@ jobs:
   inkpot:
     runs-on: [self-hosted, macOS, ARM64, inkpot]
     timeout-minutes: 30
-    if: github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.ref != 'refs/heads/feat/windows-mvp' && (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository))
     env:
       DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
@@ -79,3 +79,76 @@ jobs:
             test -s "$resources/$file"
           done
           test -d "$resources/math/fonts"
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22.x'
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: Windows/global.json
+
+      - name: Build and test shared editor
+        working-directory: CoreEditor
+        run: |
+          node .yarn/releases/yarn-4.18.0.cjs install --immutable
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node .yarn/releases/yarn-4.18.0.cjs build
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node .yarn/releases/yarn-4.18.0.cjs test --runInBand
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Build Windows application
+        working-directory: Windows
+        run: dotnet build Inkpot.Windows.sln -c Release -p:Platform=x64
+
+      - name: Test file safety
+        working-directory: Windows
+        run: dotnet test Inkpot.Tests/Inkpot.Tests.csproj -c Release --logger trx --results-directory TestResults
+
+      - name: Publish trimmed application
+        working-directory: Windows
+        run: dotnet publish Inkpot/Inkpot.csproj -c Release -p:Platform=x64 --no-restore -o ../build/Windows
+
+      - name: Install shared Windows runtimes
+        shell: pwsh
+        run: |
+          $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
+          Invoke-WebRequest 'https://aka.ms/windowsappsdk/2.5/2.5.1/windowsappruntimeinstall-x64.exe' -OutFile $installer
+          $signature = Get-AuthenticodeSignature $installer
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'Windows App Runtime installer signature is invalid.' }
+          $install = Start-Process $installer -ArgumentList '--quiet' -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "Windows App Runtime install failed: $($install.ExitCode)" }
+          if (!(Test-Path "${env:ProgramFiles(x86)}\Microsoft\EdgeWebView\Application")) {
+            $webview = Join-Path $env:RUNNER_TEMP 'MicrosoftEdgeWebview2Setup.exe'
+            Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $webview
+            if ((Get-AuthenticodeSignature $webview).Status -ne 'Valid') { throw 'WebView2 installer signature is invalid.' }
+            $install = Start-Process $webview -ArgumentList '/silent /install' -Wait -PassThru
+            if ($install.ExitCode -ne 0) { throw "WebView2 install failed: $($install.ExitCode)" }
+          }
+
+      - name: Launch application and record measurements
+        run: ./Windows/scripts/measure.ps1 -AppDirectory build/Windows -ResultsDirectory build/WindowsResults
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkpot-windows-x64
+          path: build/Windows/
+          retention-days: 7
+
+      - name: Upload Windows validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: inkpot-windows-validation
+          path: |
+            Windows/TestResults/
+            build/WindowsResults/
+          retention-days: 7

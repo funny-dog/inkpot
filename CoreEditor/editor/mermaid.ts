@@ -5,9 +5,9 @@ import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/v
 import { selectionTouches } from './basic';
 import { selectionMissesBlocks, topBlocks } from './blocks';
 import { isComposing, previewExport, sourceMode } from './mode';
+import { assetBase } from './bridge';
 
 type Mermaid = Pick<typeof import('mermaid').default, 'initialize' | 'render'>;
-const assetBase = 'inkpot-asset://math/';
 let load = async (): Promise<Mermaid> => (await import(/* @vite-ignore */ `${assetBase}mermaid.mjs`) as { default: Mermaid }).default;
 let library: Promise<Mermaid> | undefined;
 let renderTail: Promise<void> = Promise.resolve();

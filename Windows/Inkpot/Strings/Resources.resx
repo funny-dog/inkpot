@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <data name="File" xml:space="preserve">
+    <value>File</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="Format" xml:space="preserve">
+    <value>Format</value>
+  </data>
+  <data name="New" xml:space="preserve">
+    <value>New</value>
+  </data>
+  <data name="Open" xml:space="preserve">
+    <value>Open…</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="SaveAs" xml:space="preserve">
+    <value>Save As…</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close Tab</value>
+  </data>
+  <data name="Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="Undo" xml:space="preserve">
+    <value>Undo</value>
+  </data>
+  <data name="Redo" xml:space="preserve">
+    <value>Redo</value>
+  </data>
+  <data name="Cut" xml:space="preserve">
+    <value>Cut</value>
+  </data>
+  <data name="Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Paste" xml:space="preserve">
+    <value>Paste</value>
+  </data>
+  <data name="SelectAll" xml:space="preserve">
+    <value>Select All</value>
+  </data>
+  <data name="Find" xml:space="preserve">
+    <value>Find and Replace…</value>
+  </data>
+  <data name="FindNext" xml:space="preserve">
+    <value>Find Next</value>
+  </data>
+  <data name="FindPrevious" xml:space="preserve">
+    <value>Find Previous</value>
+  </data>
+  <data name="Bold" xml:space="preserve">
+    <value>Bold</value>
+  </data>
+  <data name="Italic" xml:space="preserve">
+    <value>Italic</value>
+  </data>
+  <data name="Strike" xml:space="preserve">
+    <value>Strikethrough</value>
+  </data>
+  <data name="InlineCode" xml:space="preserve">
+    <value>Inline Code</value>
+  </data>
+  <data name="Link" xml:space="preserve">
+    <value>Link</value>
+  </data>
+  <data name="OrderedList" xml:space="preserve">
+    <value>Numbered List</value>
+  </data>
+  <data name="BulletList" xml:space="preserve">
+    <value>Bullet List</value>
+  </data>
+  <data name="TaskList" xml:space="preserve">
+    <value>Task List</value>
+  </data>
+  <data name="Quote" xml:space="preserve">
+    <value>Blockquote</value>
+  </data>
+  <data name="CodeBlock" xml:space="preserve">
+    <value>Code Block</value>
+  </data>
+  <data name="Rule" xml:space="preserve">
+    <value>Horizontal Rule</value>
+  </data>
+  <data name="SourceMode" xml:space="preserve">
+    <value>Source Mode</value>
+  </data>
+  <data name="Untitled" xml:space="preserve">
+    <value>Untitled</value>
+  </data>
+  <data name="TextFile" xml:space="preserve">
+    <value>Text File</value>
+  </data>
+  <data name="UnsupportedFile" xml:space="preserve">
+    <value>Choose a .md, .markdown, or .txt file.</value>
+  </data>
+  <data name="ExternalChange" xml:space="preserve">
+    <value>The file changed outside Inkpot. Overwrite it?</value>
+  </data>
+  <data name="Overwrite" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Unsaved" xml:space="preserve">
+    <value>Save changes before closing?</value>
+  </data>
+  <data name="Discard" xml:space="preserve">
+    <value>Don’t Save</value>
+  </data>
+  <data name="OK" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Unable to complete the operation</value>
+  </data>
+  <data name="RuntimeMissing" xml:space="preserve">
+    <value>WebView2 Runtime is missing</value>
+  </data>
+  <data name="RuntimeHelp" xml:space="preserve">
+    <value>Install the Microsoft Edge WebView2 Evergreen Runtime, then restart Inkpot.</value>
+  </data>
+  <data name="Download" xml:space="preserve">
+    <value>Download</value>
+  </data>
+  <data name="SnapshotFailed" xml:space="preserve">
+    <value>Unable to read the latest text. Saving and closing have been blocked.</value>
+  </data>
+  <data name="EditorFailed" xml:space="preserve">
+    <value>The editor stopped. Keep this window open to avoid losing unsaved changes.</value>
+  </data>
+  <data name="Heading1" xml:space="preserve">
+    <value>Heading 1</value>
+  </data>
+  <data name="Heading2" xml:space="preserve">
+    <value>Heading 2</value>
+  </data>
+  <data name="Heading3" xml:space="preserve">
+    <value>Heading 3</value>
+  </data>
+  <data name="Heading4" xml:space="preserve">
+    <value>Heading 4</value>
+  </data>
+  <data name="Heading5" xml:space="preserve">
+    <value>Heading 5</value>
+  </data>
+  <data name="Heading6" xml:space="preserve">
+    <value>Heading 6</value>
+  </data>
+</root>

@@ -7,6 +7,9 @@ Local.xcconfig
 *.local.entitlements
 
 ## Local release tools and build output
+/Windows/**/bin/
+/Windows/**/obj/
+/Windows/TestResults/
 /build/
 /App/build/
 /Inkpot*.dmg
