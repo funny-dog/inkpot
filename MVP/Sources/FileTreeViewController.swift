@@ -33,6 +33,9 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
 
   var onOpen: ((URL) -> Void)?
   var onOpenInTab: ((URL) -> Void)?
+  /// 根目录变化时通知侧栏其他页面（例如文件夹搜索）。
+  var onFolderChange: ((URL?) -> Void)?
+  var folderURL: URL? { root?.entry.url }
   private var changeObserver: NSObjectProtocol?
   let outlineView = NSOutlineView()
   private(set) var root: Item?
@@ -144,6 +147,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     folderLabel.stringValue = url.lastPathComponent
     folderLabel.toolTip = url.path
     outlineView.reloadData()
+    onFolderChange?(root?.entry.url)
     if let root { load(root) }
   }
 
