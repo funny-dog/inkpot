@@ -6,13 +6,12 @@ final class SidebarViewController: NSViewController {
   let outline = OutlineViewController()
   let files = FileTreeViewController()
   let search = FolderSearchViewController()
-  private let tabs = NSSegmentedControl(labels: ["文件", "大纲", "搜索"], trackingMode: .selectOne, target: nil, action: nil)
+  let tabs = SidebarTabBar(titles: ["文件", "大纲", "搜索"])
   private(set) var content: Content = .outline
 
   override func loadView() {
     view = NSView()
-    tabs.target = self
-    tabs.action = #selector(changeTab(_:))
+    tabs.onSelect = { [weak self] index in self?.show(index == 0 ? .files : index == 2 ? .search : .outline) }
     tabs.setAccessibilityLabel("侧栏内容")
     tabs.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(tabs)
@@ -21,6 +20,7 @@ final class SidebarViewController: NSViewController {
       tabs.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
       tabs.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
       tabs.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
+      tabs.heightAnchor.constraint(equalToConstant: 28),
     ])
     for controller in [files, outline, search] {
       addChild(controller)
@@ -40,9 +40,9 @@ final class SidebarViewController: NSViewController {
     _ = view
     self.content = content
     switch content {
-    case .files: tabs.selectedSegment = 0
-    case .outline: tabs.selectedSegment = 1
-    case .search: tabs.selectedSegment = 2
+    case .files: tabs.select(0)
+    case .outline: tabs.select(1)
+    case .search: tabs.select(2)
     }
     files.view.isHidden = content != .files
     outline.view.isHidden = content != .outline
@@ -50,22 +50,17 @@ final class SidebarViewController: NSViewController {
   }
 
   func showFiles(_ show: Bool) { self.show(show ? .files : .outline) }
-
-  @objc private func changeTab(_ sender: Any?) {
-    switch tabs.selectedSegment {
-    case 0: show(.files)
-    case 2: show(.search)
-    default: show(.outline)
-    }
-  }
 }
 
-/// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式，右侧显示字数统计。
+/// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式与保存状态，右侧显示字数统计。
 final class EditorContainerViewController: NSViewController {
   private let statusField = NSTextField(labelWithString: "")
   private let modeField = NSTextField(labelWithString: "实时模式")
+  private let saveField = NSTextField(labelWithString: "")
+  private let divider = NSBox()
   var statusText: String { statusField.stringValue }
   var modeText: String { modeField.stringValue }
+  var saveText: String { saveField.stringValue }
   let editor: EditorViewController
 
   init(editor: EditorViewController) {
@@ -82,7 +77,11 @@ final class EditorContainerViewController: NSViewController {
     let bar = NSView()
     let separator = NSBox()
     separator.boxType = .separator
-    for field in [modeField, statusField] {
+    divider.boxType = .custom
+    divider.borderWidth = 0
+    divider.fillColor = .separatorColor
+    divider.isHidden = true
+    for field in [modeField, saveField, statusField] {
       field.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
       field.textColor = .secondaryLabelColor
       field.cell?.wraps = false
@@ -92,7 +91,8 @@ final class EditorContainerViewController: NSViewController {
     statusField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     statusField.setAccessibilityLabel("字数统计")
     modeField.setAccessibilityLabel("编辑模式")
-    for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (statusField, bar)] {
+    saveField.setAccessibilityLabel("保存状态")
+    for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (divider, bar), (saveField, bar), (statusField, bar)] {
       child.translatesAutoresizingMaskIntoConstraints = false
       parent.addSubview(child)
     }
@@ -111,7 +111,13 @@ final class EditorContainerViewController: NSViewController {
       separator.trailingAnchor.constraint(equalTo: bar.trailingAnchor),
       modeField.leadingAnchor.constraint(equalTo: bar.leadingAnchor, constant: 14),
       modeField.centerYAnchor.constraint(equalTo: bar.centerYAnchor, constant: 0.5),
-      statusField.leadingAnchor.constraint(greaterThanOrEqualTo: modeField.trailingAnchor, constant: 12),
+      divider.leadingAnchor.constraint(equalTo: modeField.trailingAnchor, constant: 10),
+      divider.centerYAnchor.constraint(equalTo: bar.centerYAnchor),
+      divider.widthAnchor.constraint(equalToConstant: 1),
+      divider.heightAnchor.constraint(equalToConstant: 11),
+      saveField.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: 10),
+      saveField.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
+      statusField.leadingAnchor.constraint(greaterThanOrEqualTo: saveField.trailingAnchor, constant: 12),
       statusField.trailingAnchor.constraint(equalTo: bar.trailingAnchor, constant: -14),
       statusField.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
     ])
@@ -123,6 +129,13 @@ final class EditorContainerViewController: NSViewController {
 
   private func showStats(_ words: Int, _ characters: Int, _ lines: Int) {
     statusField.stringValue = "\(words.formatted()) 字 · \(characters.formatted()) 字符 · \(lines.formatted()) 行"
+  }
+
+  /// 保存状态：有未保存修改、已保存或已自动保存；从未保存过的空白文档不显示。
+  func showSaveState(edited: Bool, saved: Bool, autosave: Bool) {
+    _ = view
+    saveField.stringValue = edited ? "未保存" : saved ? (autosave ? "已自动保存" : "已保存") : ""
+    divider.isHidden = saveField.stringValue.isEmpty
   }
 
   private func showMode(_ source: Bool) {
@@ -188,6 +201,13 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
       }
     }
     files.selectCurrentFile((window.windowController?.document as? InkpotDocument)?.fileURL)
+    updateSaveState()
+  }
+
+  /// 文档编辑状态变化（窗口控制器转发）或首次显示时刷新状态栏的保存状态。
+  func updateSaveState() {
+    let document = view.window?.windowController?.document as? InkpotDocument
+    editorContainer.showSaveState(edited: document?.isDocumentEdited ?? false, saved: document?.fileURL != nil, autosave: AppSettings.shared.autosave)
   }
 
   var outlineVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.content == .outline }

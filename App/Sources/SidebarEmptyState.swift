@@ -21,7 +21,8 @@ final class SidebarEmptyState: NSStackView {
     orientation = .vertical
     alignment = .centerX
     spacing = 4
-    imageView.image = NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+    imageView.image = symbol.isEmpty ? nil : NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
+    imageView.isHidden = symbol.isEmpty
     imageView.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 26, weight: .light)
     imageView.contentTintColor = .tertiaryLabelColor
     imageView.setAccessibilityElement(false)

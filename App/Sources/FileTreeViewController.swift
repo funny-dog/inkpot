@@ -81,7 +81,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     outlineView.outlineTableColumn = column
     outlineView.headerView = nil
     outlineView.rowHeight = 28
-    outlineView.indentationPerLevel = 12
+    outlineView.indentationPerLevel = 14
     outlineView.style = .sourceList
     outlineView.setAccessibilityLabel("文件树")
     outlineView.dataSource = self
@@ -284,14 +284,18 @@ extension FileTreeViewController {
 
   func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool { (item as? Item)?.entry.isDirectory == true }
 
+  func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? { SidebarRowView() }
+
   func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
     guard let item = item as? Item else { return nil }
     let identifier = NSUserInterfaceItemIdentifier("file")
     let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? NSTableCellView()
     if cell.textField == nil {
-      let text = NSTextField(labelWithString: "")
+      let text = SidebarLabel(labelWithString: "")
       text.lineBreakMode = .byTruncatingMiddle
+      text.refresh()
       let image = NSImageView()
+      image.contentTintColor = .secondaryLabelColor
       cell.addSubview(image)
       cell.addSubview(text)
       cell.imageView = image

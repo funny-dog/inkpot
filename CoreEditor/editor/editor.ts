@@ -19,6 +19,8 @@ import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 import { applyFonts, EditorFonts } from './fonts';
 import { richPaste } from './paste';
+import { welcomeHints } from './welcome';
+import { searchPanelTheme } from './search';
 
 declare const window: {
   inkpot: {
@@ -113,6 +115,7 @@ window.inkpot = {
           EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'true' }),
           spellingExclusions,
           placeholder('开始写作…'),
+          welcomeHints,
           EditorView.updateListener.of(update => {
             if (update.docChanged) {
               revision++;
@@ -127,13 +130,9 @@ window.inkpot = {
             // 正文限制在约 45 个汉字宽并居中；em 随正文/代码字号缩放，窄窗口时退回铺满。
             '.cm-content': { padding: '44px 48px', minHeight: '100%', maxWidth: 'calc(45em + 96px)', margin: '0 auto' },
             '&.cm-focused': { outline: 'none' },
-            '.cm-panels': { backgroundColor: '#f7f7f7', color: '#202020' },
-            '.cm-inkpot-search': { padding: '8px', font: '13px system-ui' },
-            '.cm-inkpot-search > div': { display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' },
-            '.cm-inkpot-search > div + div': { marginTop: '6px' },
-            '.cm-inkpot-search input:not([type=checkbox])': { font: 'inherit', flex: '1 1 140px', minWidth: '0', maxWidth: '360px', padding: '4px' },
-            '.cm-inkpot-search label': { display: 'inline-flex', gap: '4px', alignItems: 'center' },
-            '.cm-inkpot-search button': { font: 'inherit', padding: '4px 8px' },
+            '.cm-panels': { backgroundColor: '#f7f7f8', color: '#1d1d1f' },
+            '.cm-panels.cm-panels-top': { borderBottom: '1px solid rgba(0, 0, 0, 0.09)' },
+            ...searchPanelTheme,
           }),
         ],
       }),

@@ -33,8 +33,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     outlineView.outlineTableColumn = column
     outlineView.headerView = nil
     outlineView.rowHeight = 28
-    outlineView.indentationPerLevel = 12
-    outlineView.selectionHighlightStyle = .sourceList
+    outlineView.indentationPerLevel = 14
     outlineView.style = .sourceList
     outlineView.setAccessibilityLabel("标题大纲")
     outlineView.dataSource = self
@@ -130,6 +129,8 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     ((item as? Item)?.children ?? roots)[index]
   }
 
+  func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? { SidebarRowView() }
+
   func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
     (item as? Item)?.children.isEmpty == false
   }
@@ -137,13 +138,13 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
   func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
     guard let item = item as? Item else { return nil }
     let identifier = NSUserInterfaceItemIdentifier("heading")
-    let label = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTextField ?? NSTextField(labelWithString: "")
+    let label = outlineView.makeView(withIdentifier: identifier, owner: self) as? SidebarLabel ?? SidebarLabel(labelWithString: "")
     label.identifier = identifier
     label.stringValue = item.heading.title
     label.toolTip = "H\(item.heading.level) · \(item.heading.title)"
     label.lineBreakMode = .byTruncatingTail
-    label.font = .systemFont(ofSize: 13, weight: item.heading.level == 1 ? .semibold : .regular)
-    label.textColor = item.heading.level >= 3 ? .secondaryLabelColor : .labelColor
+    label.baseWeight = item.heading.level == 1 ? .semibold : .regular
+    label.baseColor = item.heading.level >= 3 ? .secondaryLabelColor : .labelColor
     label.setAccessibilityLabel("\(item.heading.level)级标题，\(item.heading.title)")
     return label
   }

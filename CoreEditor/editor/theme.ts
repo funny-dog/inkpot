@@ -24,6 +24,20 @@ const darkTheme = EditorView.theme({
   '&.cm-inkpot-dark .cm-scroller': { backgroundColor: '#1e1f22', color: '#dfe1e5' },
   // editor.ts 搜索面板。
   '&.cm-inkpot-dark .cm-panels': { backgroundColor: '#2a2b2f', color: '#dfe1e5' },
+  '&.cm-inkpot-dark .cm-panels.cm-panels-top': { borderBottom: '1px solid rgba(255, 255, 255, 0.08)' },
+  '&.cm-inkpot-dark .cm-inkpot-search-field': { backgroundColor: '#1e1f22', borderColor: 'rgba(255, 255, 255, 0.14)', color: '#9a9da4' },
+  '&.cm-inkpot-dark .cm-inkpot-search-field:focus-within': { borderColor: '#7cb0e8', boxShadow: '0 0 0 3px rgba(124, 176, 232, 0.25)' },
+  '&.cm-inkpot-dark .cm-inkpot-search-field input': { color: '#dfe1e5' },
+  '&.cm-inkpot-dark .cm-inkpot-search-options label': { color: '#9a9da4' },
+  '&.cm-inkpot-dark .cm-inkpot-search-options label:has(input:checked)': { backgroundColor: 'rgba(124, 176, 232, 0.18)', color: '#7cb0e8' },
+  '&.cm-inkpot-dark .cm-inkpot-search-divider': { backgroundColor: 'rgba(255, 255, 255, 0.14)' },
+  '&.cm-inkpot-dark .cm-inkpot-search-nav, &.cm-inkpot-dark .cm-inkpot-search-action': { backgroundColor: '#3a3b40', borderColor: 'rgba(255, 255, 255, 0.12)', color: '#dfe1e5' },
+  '&.cm-inkpot-dark .cm-inkpot-search-nav button': { color: '#dfe1e5' },
+  '&.cm-inkpot-dark .cm-inkpot-search-nav button + button': { borderLeftColor: 'rgba(255, 255, 255, 0.12)' },
+  '&.cm-inkpot-dark .cm-inkpot-search [role=status]': { color: '#9a9da4' },
+  // welcome.ts 空文档快捷键提示。
+  '&.cm-inkpot-dark .cm-inkpot-welcome dt': { backgroundColor: '#33353a', color: '#c8cbd2' },
+  '&.cm-inkpot-dark .cm-inkpot-welcome dd': { color: '#9a9da4' },
   '&.cm-inkpot-dark .cm-searchMatch': { backgroundColor: 'rgba(255, 212, 0, 0.25)' },
   '&.cm-inkpot-dark .cm-searchMatch-selected': { backgroundColor: 'rgba(255, 171, 64, 0.45)' },
   // writing.ts 源码高亮配色的深色版由 darkHighlightStyle 提供，此处不重复。

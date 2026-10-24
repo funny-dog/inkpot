@@ -33,6 +33,12 @@ enum DocumentTabs {
 }
 
 final class DocumentWindowController: NSWindowController {
+  /// 文档编辑状态变化时同步状态栏的保存状态。
+  override func setDocumentEdited(_ dirtyFlag: Bool) {
+    super.setDocumentEdited(dirtyFlag)
+    (contentViewController as? DocumentViewController)?.updateSaveState()
+  }
+
   override func newWindowForTab(_ sender: Any?) {
     if let window { DocumentTabs.new(in: window) }
   }

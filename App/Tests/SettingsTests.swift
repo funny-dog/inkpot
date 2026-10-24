@@ -171,13 +171,22 @@ final class SettingsTests: XCTestCase {
     XCTAssertIdentical(item.target, delegate)
     XCTAssertTrue(delegate.validateMenuItem(item))
     delegate.showSettings(nil)
-    let window = try XCTUnwrap(SettingsWindowController.shared.window)
+    let controller = SettingsWindowController.shared
+    let window = try XCTUnwrap(controller.window)
     XCTAssertTrue(window.isVisible)
-    XCTAssertEqual(window.title, "设置")
-    try await waitUntil { window.contentView?.frame.size == NSSize(width: 480, height: 620) }
-    XCTAssertEqual(window.contentView?.frame.width, 480)
-    XCTAssertEqual(window.contentView?.frame.height, 620)
-    XCTAssertLessThanOrEqual(window.frame.height, try XCTUnwrap(window.screen ?? NSScreen.main).visibleFrame.height)
+    // 工具栏式分类：通用、编辑、外观三页，窗口标题跟随当前分类。
+    XCTAssertEqual(controller.tabs.tabStyle, .toolbar)
+    XCTAssertEqual(controller.tabs.tabViewItems.map(\.label), ["通用", "编辑", "外观"])
+    XCTAssertEqual(window.toolbar?.items.count, 3)
+    for pane in SettingsPane.allCases {
+      controller.show(pane)
+      XCTAssertEqual(controller.selectedPane, pane)
+      try await waitUntil { window.title == pane.title }
+      try await waitUntil { window.contentView?.frame.width == SettingsWindowController.contentWidth }
+      XCTAssertGreaterThan(try XCTUnwrap(window.contentView?.frame.height), 150)
+      XCTAssertLessThanOrEqual(window.frame.height, try XCTUnwrap(window.screen ?? NSScreen.main).visibleFrame.height)
+    }
+    controller.show(.general)
     window.close()
   }
 }

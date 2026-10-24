@@ -35,6 +35,7 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     message: "先打开一个文件夹，再搜索其中所有 Markdown 与文本文件。",
     button: NSButton(title: "打开文件夹…", target: self, action: #selector(chooseFolder(_:)))
   )
+  private let noResults = SidebarEmptyState(symbol: "", title: "没有找到匹配内容", message: "换个关键词，或检查是否打开了正确的文件夹。")
   private var groups: [Group] = []
   private var searchTask: Task<Void, Never>?
   private var activeToken: SearchCancellation?
@@ -98,6 +99,7 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
     ])
     emptyState.pin(in: view, centeredOn: scrollView)
+    noResults.pin(in: view, centeredOn: scrollView)
     reloadResults()
     updateStatus()
   }
@@ -170,6 +172,9 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     guard isViewLoaded else { return }
     let hasFolder = folderURL != nil
     emptyState.isHidden = hasFolder
+    noResults.isHidden = !hasFolder || isSearching || activeQuery.isEmpty || result.matchCount > 0
+    // 无结果时由居中提示说明，搜索框下的状态行不再重复。
+    statusLabel.isHidden = !noResults.isHidden
     searchField.isEnabled = hasFolder
     scrollView.isHidden = !hasFolder
     statusLabel.stringValue = statusText
@@ -208,6 +213,8 @@ extension FolderSearchViewController {
   func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
     item is Group
   }
+
+  func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? { SidebarRowView() }
 
   func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
     if let group = item as? Group {
