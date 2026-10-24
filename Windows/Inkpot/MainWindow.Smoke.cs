@@ -81,12 +81,12 @@ public sealed partial class MainWindow
     }
 
     // 冒烟必须确认编辑器真的显示出来：逻辑通过但组合层不可见时，用户看到的就是空白窗口。
-    // 布局可能在 ready 之后才完成，先短等；仍不可视时输出布局链关键尺寸供定位。
+    // 布局尺寸、XamlRoot 与 Loaded 事件就位时机有先后，统一短等；超时仍缺项时输出布局链关键尺寸供定位。
     private async Task AssertEditorVisibleAsync(DocumentTab document, string label)
     {
         var control = document.Editor?.Control ?? throw new IOException($"{label}没有编辑器。");
         var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
-        while (control.ActualHeight < 100 || control.ActualWidth < 100)
+        while (control.ActualHeight < 100 || control.ActualWidth < 100 || control.XamlRoot is null || !control.IsLoaded)
         {
             if (DateTime.UtcNow > deadline)
                 throw new IOException(
@@ -96,7 +96,5 @@ public sealed partial class MainWindow
                     $"父级={control.Parent?.GetType().Name ?? "null"} 选中={ReferenceEquals(Tabs.SelectedItem, document.Item)}");
             await Task.Delay(100);
         }
-        if (control.XamlRoot is null || !control.IsLoaded)
-            throw new IOException($"{label}的编辑器有可视尺寸但未完成挂载。");
     }
 }
