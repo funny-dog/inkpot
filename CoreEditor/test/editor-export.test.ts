@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test } from '@jest/globals';
+import { afterEach, describe, expect, jest, test } from '@jest/globals';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
 import { history, undoDepth } from '@codemirror/commands';
@@ -15,7 +15,11 @@ useKatexForTests({
 });
 
 const views: EditorView[] = [];
-afterEach(() => { for (const view of views.splice(0)) view.destroy(); });
+const originalFetch = globalThis.fetch;
+afterEach(() => {
+  for (const view of views.splice(0)) view.destroy();
+  globalThis.fetch = originalFetch;
+});
 
 function editor(text: string) {
   const source = sourceDocument(text);
@@ -39,6 +43,36 @@ async function flushed() {
 }
 
 describe('Inkpot 导出', () => {
+  test('同一段落软换行合并，显式硬换行与代码中的换行保留，原文不变', async () => {
+    const original = '第一行\r\n第二行  \r\n第三行\\\r\n第四行\r\n\r\n下一段\r\n\r\n```\r\na  b\r\nc\r\n```';
+    const { view, read } = editor(original);
+    const html = await documentHTML(view);
+    const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
+    const paragraphs = doc.querySelectorAll('p');
+    expect(paragraphs).toHaveLength(2);
+    expect(paragraphs[0].textContent).toContain('第一行\n第二行');
+    expect(paragraphs[0].querySelectorAll('br')).toHaveLength(2);
+    expect(paragraphs[0].textContent).not.toContain('\\');
+    expect(paragraphs[1].textContent).toBe('下一段');
+    expect(doc.querySelector('.cm-inkpot-code')?.textContent).toBe('纯文本');
+    expect(html).toContain('a  b');
+    expect(read()).toBe(original);
+  });
+
+  test('图片以 data URL 内嵌，重复引用只读取一次，失败时中止导出并恢复模式', async () => {
+    const loader = jest.fn<typeof fetch>().mockResolvedValue({ ok: true, blob: async () => new Blob(['png'], { type: 'image/png' }) } as Response);
+    globalThis.fetch = loader;
+    const { view, read } = editor('前 ![图](assets/a.png) ![重复](assets/a.png)');
+    const original = read();
+    const html = await documentHTML(view);
+    expect(html.match(/src="data:image\/png;base64,cG5n"/g)).toHaveLength(2);
+    expect(loader).toHaveBeenCalledTimes(1);
+    toggleSourceMode(view);
+    loader.mockRejectedValue(new Error('文件不存在'));
+    await expect(documentHTML(view)).rejects.toThrow('文件不存在');
+    expect(view.dom.matches('.cm-inkpot-source')).toBe(true);
+    expect(read()).toBe(original);
+  });
   test('PDF 模式输出完整结构：标题、行内样式、表格与公式排版副本', async () => {
     const { view } = editor(original);
     await flushed();

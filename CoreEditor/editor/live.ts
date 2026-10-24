@@ -5,7 +5,7 @@ import { sourceMode, toggleSourceMode, isComposing, previewExport } from './mode
 import { hasMermaidPreview, mermaidEditing } from './mermaid';
 import { tableEditing } from './table';
 export { sourceMode, toggleSourceMode } from './mode';
-import { imageDecorations, imageRevision } from './image';
+import { imageDecorations, imageRevision, remoteImages } from './image';
 import { basicDecorations, selectionTouches } from './basic';
 import { codeBindings, codeDecorations, codeTheme, editingCodeLanguage } from './code';
 import { inlineMathTagName, mathDecorations, mathEditing, mathTheme } from './math';
@@ -152,7 +152,7 @@ const preview = ViewPlugin.fromClass(class {
 });
 
 export const liveEditing = [
-  sourceMode, previewExport,
+  sourceMode, previewExport, remoteImages,
   ...mermaidEditing,
   ...tableEditing,
   ...mathEditing,

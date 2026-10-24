@@ -6,7 +6,7 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { formatCommands } from './format';
 import { documentSearch, searchBindings } from './search';
-import { autoPairs, typingBindings } from './typing';
+import { autoPairs, pairingCompartment, typingBindings } from './typing';
 import { footnoteExtension, highlightExtension, highlightTag } from './gfm';
 import { inlineMathExtension } from './math';
 import { markdownMathWith } from './math-parser';
@@ -28,6 +28,7 @@ export const writingExtensions = [
   ], { themeType: 'light' })),
   documentSearch,
   autoPairs,
+  pairingCompartment.of([]),
   EditorState.phrases.of({
     'current match': '当前匹配项',
     'on line': '所在行',

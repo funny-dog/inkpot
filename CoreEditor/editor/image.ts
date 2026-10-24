@@ -4,10 +4,15 @@ import { SyntaxNode } from '@lezer/common';
 import { linkDestination, selectionTouches } from './basic';
 
 let documentGeneration = 0;
+export const setRemoteImages = StateEffect.define<boolean>();
+export const remoteImages = StateField.define({
+  create: () => false,
+  update: (value, transaction) => transaction.effects.find(effect => effect.is(setRemoteImages))?.value ?? value,
+});
 export const refreshImages = StateEffect.define();
 export const imageRevision = StateField.define({
   create: () => 0,
-  update: (revision, transaction) => transaction.effects.some(effect => effect.is(refreshImages)) ? revision + 1 : revision,
+  update: (revision, transaction) => transaction.effects.some(effect => effect.is(refreshImages) || effect.is(setRemoteImages)) ? revision + 1 : revision,
 });
 export function setImageDocument(generation: number) { documentGeneration = generation; }
 
@@ -48,7 +53,14 @@ export function imageDecorations(node: SyntaxNode, state: EditorState) {
   const atoms: Range<Decoration>[] = [];
   if (selectionTouches(state, node.from, node.to, true)) return { decorations, atoms };
   const path = linkDestination(node, state);
-  if (path === undefined || /^(?!file:)[a-z][a-z\d+.-]*:/i.test(path) || path.startsWith('//')) return { decorations, atoms };
+  if (path === undefined || path.startsWith('//')) return { decorations, atoms };
+  if (/^[a-z][a-z\d+.-]*:/i.test(path) && !/^file:/i.test(path)) {
+    if (state.field(remoteImages, false) !== true) return { decorations, atoms };
+    try {
+      const url = new URL(path);
+      if (url.protocol !== 'https:' || url.username !== '' || url.password !== '') return { decorations, atoms };
+    } catch { return { decorations, atoms }; }
+  }
   const marks = node.getChildren('LinkMark');
   const alt = state.sliceDoc(marks[0]?.to ?? node.from, marks[1]?.from ?? node.to);
   const range = Decoration.replace({ widget: new ImagePreview(path, alt, node.from, node.to, documentGeneration, state.field(imageRevision)) }).range(node.from, node.to);

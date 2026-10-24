@@ -23,6 +23,30 @@ enum DocumentPrint {
     return (operation, webView)
   }
 
+  /// 将文档按页面设置分页打印为 PDF 并写入指定目标文件，由导出流程复用。
+  static func printToPDF(for document: InkpotDocument, to fileURL: URL) async throws {
+    guard let info = document.printInfo.copy() as? NSPrintInfo else {
+      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: "读取页面设置失败，已取消导出。"])
+    }
+    info.jobDisposition = .save
+    info.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = fileURL
+
+    let (operation, webView) = try await operation(for: document, printInfo: info)
+    operation.showsPrintPanel = false
+    operation.showsProgressPanel = false
+
+    let window = document.windowForSheet ?? NSWindow(contentRect: NSRect(x: 0, y: 0, width: 400, height: 300), styleMask: [.borderless], backing: .buffered, defer: false)
+    let runner = PrintRunner()
+    let success = await withCheckedContinuation { continuation in
+      runner.continuation = continuation
+      operation.runModal(for: window, delegate: runner, didRun: #selector(PrintRunner.printOperationDidRun(_:success:contextInfo:)), contextInfo: nil)
+    }
+    withExtendedLifetime(webView) {}
+    guard success, FileManager.default.fileExists(atPath: fileURL.path) else {
+      throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: "生成分页 PDF 失败。"])
+    }
+  }
+
   static func run(_ document: InkpotDocument) async {
     do {
       let (operation, webView) = try await operation(for: document, printInfo: document.printInfo)
@@ -55,5 +79,16 @@ private final class PrintSession: NSObject {
 
   @objc func printOperationDidRun(_ operation: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
     finish()
+  }
+}
+
+/// 导出分页 PDF 时用于无界面等待打印完成。
+@MainActor
+private final class PrintRunner: NSObject {
+  var continuation: CheckedContinuation<Bool, Never>?
+
+  @objc func printOperationDidRun(_ operation: NSPrintOperation, success: Bool, contextInfo: UnsafeMutableRawPointer?) {
+    continuation?.resume(returning: success)
+    continuation = nil
   }
 }

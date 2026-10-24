@@ -26,6 +26,7 @@ enum MainMenu {
         ("撤销", "undo:", "z"), ("重做", "redo:", "Z"),
         ("剪切", "cut:", "x"), ("复制", "copy:", "c"),
         ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a"),
+        ("复制 Markdown", "copyMarkdown", ""), ("粘贴为纯文本", "pastePlainText", "V"),
         ("", "", ""), ("查找与替换…", "find", "f"),
         ("查找下一个", "findNext", "g"), ("查找上一个", "findPrevious", "G"),
         ("", "", ""), ("在文件夹中查找…", "findInFolder:", "F"),

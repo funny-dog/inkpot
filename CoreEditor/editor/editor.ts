@@ -7,7 +7,7 @@ import { formatCommands } from './format';
 import { searchCommands } from './search';
 import { liveEditing, sourceMode, toggleSourceMode } from './live';
 import { documentOutline } from './outline';
-import { refreshImages, setImageDocument } from './image';
+import { refreshImages, setImageDocument, setRemoteImages } from './image';
 import { tableCommands, canTableCommand, syncTableSelection } from './table';
 import { mathCommands } from './math';
 import { documentStats, statsExtension } from './stats';
@@ -21,6 +21,7 @@ import { applyFonts, EditorFonts } from './fonts';
 import { richPaste } from './paste';
 import { welcomeHints } from './welcome';
 import { searchPanelTheme } from './search';
+import { pairingCompartment, pairingPreferences, PairingPreferences } from './typing';
 
 declare const window: {
   inkpot: {
@@ -35,6 +36,9 @@ declare const window: {
     setAppearance: (dark: boolean) => void;
     setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
     setFonts: (fonts: EditorFonts) => void;
+    setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean }) => void;
+    selectedMarkdown: () => string;
+    pastePlainText: (text: string) => void;
     exportHTML: (mode?: string) => Promise<string>;
   };
   webkit: { messageHandlers: { document: { postMessage: (message: unknown) => void } } };
@@ -175,6 +179,30 @@ window.inkpot = {
   },
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
   setFonts(fonts) { if (view !== undefined) applyFonts(view, fonts); },
+  setEditingPreferences(preferences) {
+    if (view !== undefined) view.dispatch({ effects: [
+      pairingCompartment.reconfigure(pairingPreferences.of(preferences)),
+      setRemoteImages.of(preferences.remoteImages),
+    ] });
+  },
+  selectedMarkdown() {
+    if (view === undefined || isComposing(view)) return '';
+    const input = document.activeElement;
+    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      return input.value.slice(input.selectionStart ?? 0, input.selectionEnd ?? 0);
+    }
+    return view.state.selection.ranges.map(range => view?.state.sliceDoc(range.from, range.to) ?? '').join('\n');
+  },
+  pastePlainText(text) {
+    if (view === undefined || isComposing(view) || view.state.readOnly) return;
+    const input = document.activeElement;
+    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+      document.execCommand('insertText', false, text);
+      return;
+    }
+    view.dispatch(view.state.update({ ...view.state.replaceSelection(text), annotations: isolateHistory.of('full'), userEvent: 'input.paste', scrollIntoView: true }));
+    view.focus();
+  },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
   setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {

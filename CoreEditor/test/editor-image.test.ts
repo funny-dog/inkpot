@@ -5,7 +5,7 @@ import { history, undoDepth } from '@codemirror/commands';
 import { sourceDocument } from '../editor/source';
 import { writingExtensions } from '../editor/writing';
 import { liveEditing, toggleSourceMode } from '../editor/live';
-import { refreshImages, setImageDocument } from '../editor/image';
+import { refreshImages, setImageDocument, setRemoteImages } from '../editor/image';
 
 const views: EditorView[] = [];
 afterEach(() => { for (const view of views.splice(0)) view.destroy(); });
@@ -61,6 +61,20 @@ describe('Inkpot 本地图片', () => {
     expect(image?.alt).toContain('图片无法读取');
     view.dispatch({ effects: refreshImages.of(null) });
     expect(view.contentDOM.querySelector('.cm-inkpot-image img')?.getAttribute('src')).toContain('revision=1');
+  });
+
+  test('HTTPS 图片仅在允许后预览，禁用时恢复原文且不接受凭据或其他协议', () => {
+    const original = '前 ![远程](https://example.com/a.png) ![明文](http://example.com/a.png) ![凭据](https://user:secret@example.com/a.png)';
+    const { view, read } = editor(original);
+    expect(view.contentDOM.querySelectorAll('.cm-inkpot-image img')).toHaveLength(0);
+    view.dispatch({ effects: setRemoteImages.of(true) });
+    const images = view.contentDOM.querySelectorAll('.cm-inkpot-image img');
+    expect(images).toHaveLength(1);
+    expect(images[0].getAttribute('src')).toContain(encodeURIComponent('https://example.com/a.png'));
+    view.dispatch({ effects: setRemoteImages.of(false) });
+    expect(view.contentDOM.querySelectorAll('.cm-inkpot-image img')).toHaveLength(0);
+    expect(read()).toBe(original);
+    expect(undoDepth(view.state)).toBe(0);
   });
 
   test('代码、原始 HTML 和行内代码中的图片标记不渲染', () => {

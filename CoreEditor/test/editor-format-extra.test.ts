@@ -8,6 +8,7 @@ import { sourceDocument } from '../editor/source';
 import { writingExtensions } from '../editor/writing';
 import { formatCommands } from '../editor/format';
 import { searchCommands } from '../editor/search';
+import { pairingCompartment, pairingPreferences } from '../editor/typing';
 
 const views: EditorView[] = [];
 function editor(text: string, anchor = 0, head = anchor, readOnly = false) {
@@ -120,6 +121,20 @@ function type(view: EditorView, text: string, userEvent = 'input.type') {
   if (!handled) view.dispatch(insert());
   return handled;
 }
+
+test('两类配对可独立关闭，切换不改正文或撤销历史', () => {
+  const { view, read } = editor('');
+  view.dispatch({ effects: pairingCompartment.reconfigure(pairingPreferences.of({ brackets: false, markdown: true })) });
+  expect(type(view, '(')).toBe(false);
+  expect(type(view, '*')).toBe(true);
+  expect(read()).toBe('(**');
+  undo(view);
+  expect(read()).toBe('');
+  view.dispatch({ effects: pairingCompartment.reconfigure(pairingPreferences.of({ brackets: true, markdown: false })) });
+  expect(type(view, '*')).toBe(false);
+  expect(type(view, '[')).toBe(true);
+  expect(read()).toBe('*[]');
+});
 
 test.each([['(', ')'], ['[', ']'], ['"', '"'], ['`', '`'], ['*', '*']])('%s 自动闭合、包住反向选区并保留原始行尾', (open, close) => {
   const empty = editor('');

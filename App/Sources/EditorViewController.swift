@@ -45,6 +45,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     super.init(nibName: nil, bundle: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateFonts), name: EditorFonts.didChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateDisplayModes), name: DisplayModes.didChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateEditingPreferences), name: AppSettings.editingDidChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -117,7 +118,8 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
         let argument = try encodedArgument(text)
         // 设置中选择默认源码模式时，打开后立即切换；切换不改动文档与撤销历史。
         let mode = AppSettings.shared.defaultSourceMode ? "window.inkpot.command('toggleSourceMode'); " : ""
-        _ = try await evaluateScript("window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(mode)null")
+        imageHandler.allowRemoteImages = AppSettings.shared.loadRemoteImages
+        _ = try await evaluateScript("window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(try AppSettings.shared.editingScript()); \(mode)null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
@@ -228,22 +230,6 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     if changed && didAdvance { onChange?() }
   }
 
-  func performCommand(_ name: String) {
-    if ["toggleOutline", "toggleFiles"].contains(name), let container = documentContainer {
-      container.toggleContent(files: name == "toggleFiles")
-      return
-    }
-    guard isReady else { return }
-    Task { @MainActor in
-      do {
-        let argument = try encodedArgument(name)
-        _ = try await evaluateScript("window.inkpot.command(\(argument)); null")
-      } catch {
-        fail(error)
-      }
-    }
-  }
-
   private func receiveOutline(_ body: [String: Any]) {
     guard body["generation"] as? Int == generation,
           let revision = body["revision"] as? Int, revision >= latestRevision else { return }
@@ -276,6 +262,41 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
 }
 
 extension EditorViewController {
+  func performCommand(_ name: String) {
+    if ["toggleOutline", "toggleFiles"].contains(name), let container = documentContainer {
+      container.toggleContent(files: name == "toggleFiles")
+      return
+    }
+    guard isReady else { return }
+    Task { @MainActor in
+      do {
+        if name == "copyMarkdown" {
+          guard !isComposing, let text = try await evaluateScript("window.inkpot.selectedMarkdown()") as? String, !text.isEmpty else { return }
+          NSPasteboard.general.clearContents()
+          NSPasteboard.general.setString(text, forType: .string)
+          return
+        }
+        if name == "pastePlainText" {
+          guard !isComposing, let text = NSPasteboard.general.string(forType: .string) else { return }
+          _ = try await evaluateScript("window.inkpot.pastePlainText(\(try encodedArgument(text))); null")
+          return
+        }
+        let argument = try encodedArgument(name)
+        _ = try await evaluateScript("window.inkpot.command(\(argument)); null")
+      } catch {
+        fail(error)
+      }
+    }
+  }
+
+  @objc func updateEditingPreferences() {
+    imageHandler.allowRemoteImages = AppSettings.shared.loadRemoteImages
+    guard isReady else { return }
+    Task { @MainActor in
+      do { _ = try await evaluateScript(AppSettings.shared.editingScript() + "; null") } catch { presentError(error) }
+    }
+  }
+
   func focusEditor() {
     view.window?.makeFirstResponder(webView)
     performCommand("focus")

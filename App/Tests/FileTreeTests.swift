@@ -59,6 +59,18 @@ final class FileTreeTests: XCTestCase {
     XCTAssertThrowsError(try FolderEntry.read(root.appendingPathComponent("missing")))
   }
 
+  func testFolderDropAcceptsRealFoldersAndRejectsPackagesAndSymbolicLinks() throws {
+    let root = try folder()
+    defer { try? FileManager.default.removeItem(at: root) }
+    let package = root.appendingPathComponent("Demo.app")
+    let link = root.appendingPathComponent("link")
+    try FileManager.default.createDirectory(at: package, withIntermediateDirectories: true)
+    try FileManager.default.createSymbolicLink(at: link, withDestinationURL: root)
+    XCTAssertTrue(DragDrop.accepts([root]))
+    XCTAssertFalse(DragDrop.accepts([package]))
+    XCTAssertFalse(DragDrop.accepts([link]))
+  }
+
   func testTreeLoadsLazilyRefreshesAndIgnoresPreviousFolderResults() async throws {
     _ = NSApplication.shared
     let root = try folder()

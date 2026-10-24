@@ -1,4 +1,4 @@
-import { ensureSyntaxTree, syntaxParserRunning } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxParserRunning, syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
 import { applyAppearance } from './theme';
@@ -6,12 +6,13 @@ import { loadDocumentLanguages } from './code-languages';
 
 const exportCSS = `
 body { font: 16px/1.7 -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif; color: #202020; background: #fff; margin: 0 auto; padding: 32px 28px; max-width: 740px; }
-.inkpot-export { white-space: pre-wrap; overflow-wrap: anywhere; }
+.inkpot-export { overflow-wrap: anywhere; }
 .inkpot-export .cm-line { min-height: 1.7em; padding: 0 2px; }
+.inkpot-export p { margin: 0; }
 img { max-width: 100%; }
 .cm-inkpot-image { display: inline-block; max-width: 100%; }
-.cm-inkpot-inline-code { font-family: Menlo, monospace; border-radius: 3px; padding: 1px 4px; }
-.cm-inkpot-code { background: #f4f5f7; font-family: Menlo, monospace; padding: 1px 12px; }
+.cm-inkpot-inline-code { font-family: Menlo, monospace; border-radius: 3px; padding: 1px 4px; white-space: pre-wrap; }
+.cm-inkpot-code { background: #f4f5f7; font-family: Menlo, monospace; padding: 1px 12px; white-space: pre-wrap; }
 .cm-inkpot-code-header { border-radius: 6px 6px 0 0; padding-top: 6px; font-size: 13px; }
 .cm-inkpot-code-footer { border-radius: 0 0 6px 6px; padding-bottom: 6px; }
 table { border-collapse: collapse; width: 100%; table-layout: fixed; margin: 12px 0; }
@@ -33,6 +34,77 @@ blockquote, .cm-inkpot-quote { border-left: 3px solid #c6cbd1; color: #5f6368; p
   thead { display: table-header-group; }
 }
 `;
+
+/** 只在导出副本中合并同一 Markdown 段落的软换行，代码与显式硬换行保持原样。 */
+function exportParagraphs(view: EditorView, clone: HTMLElement) {
+  const originals = Array.from(view.contentDOM.children);
+  const copies = Array.from(clone.children);
+  let paragraph: HTMLElement | undefined;
+  let paragraphFrom = -1;
+  let previousHardBreak = false;
+  originals.forEach((line, index) => {
+    const copy = copies[index];
+    if (!(copy instanceof HTMLElement) || !line.matches('.cm-line') || line.matches('.cm-inkpot-code')) {
+      paragraph = undefined;
+      return;
+    }
+    const position = view.posAtDOM(line, 0);
+    const sourceLine = view.state.doc.lineAt(position);
+    let node = syntaxTree(view.state).resolveInner(position, 1);
+    while (node.name !== 'Paragraph' && node.parent !== null) node = node.parent;
+    if (node.name !== 'Paragraph') { paragraph = undefined; return; }
+    if (paragraph === undefined || paragraphFrom !== node.from) {
+      paragraph = document.createElement('p');
+      paragraph.className = copy.className;
+      paragraph.style.cssText = copy.style.cssText;
+      copy.replaceWith(paragraph);
+      paragraphFrom = node.from;
+    } else {
+      paragraph.append(previousHardBreak ? document.createElement('br') : document.createTextNode('\n'));
+      copy.remove();
+    }
+    if (/(?:^|[^\\])(?:\\\\)*\\$/.test(sourceLine.text)) {
+      const walker = document.createTreeWalker(copy, NodeFilter.SHOW_TEXT);
+      let last: Node | null = null;
+      while (walker.nextNode()) last = walker.currentNode;
+      if (last !== null && last.textContent?.endsWith('\\') === true) last.textContent = last.textContent.slice(0, -1);
+    }
+    paragraph.append(...Array.from(copy.childNodes));
+    previousHardBreak = / {2,}$/.test(sourceLine.text) || /(?:^|[^\\])(?:\\\\)*\\$/.test(sourceLine.text);
+  });
+}
+
+/** 图片内嵌后，HTML 和 PDF 不依赖原文件夹；失败时中止，不能悄悄交付缺图文档。 */
+async function embedImages(clone: HTMLElement) {
+  const embedded = new Map<string, string>();
+  let total = 0;
+  for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
+    const source = image.getAttribute('src') ?? '';
+    if (!source.startsWith('inkpot-image://local/')) throw new Error('图片来源不受支持，已取消导出。');
+    let dataURL = embedded.get(source);
+    if (dataURL === undefined) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 20000);
+      try {
+        const response = await fetch(source, { signal: controller.signal });
+        if (!response.ok) throw new Error('图片无法读取');
+        const blob = await response.blob();
+        total += blob.size;
+        if (blob.size > 20 * 1024 * 1024 || total > 50 * 1024 * 1024) throw new Error('图片体积超过导出限制（单张 20 MB，总计 50 MB）');
+        dataURL = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('图片编码失败'));
+          reader.onerror = () => reject(new Error('图片编码失败'));
+          reader.readAsDataURL(blob);
+        });
+        embedded.set(source, dataURL);
+      } catch (error) {
+        throw new Error(`无法导出图片“${image.alt || '图片'}”：${error instanceof Error ? error.message : '读取失败'}`);
+      } finally { clearTimeout(timer); }
+    }
+    image.src = dataURL;
+  }
+}
 
 /** 导出用的独立 HTML 文档：基于实时视图序列化，配色固定浅色，不依赖编辑器运行时。 */
 export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'html'): Promise<string> {
@@ -95,7 +167,7 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
       svg?.setAttribute('width', '100%');
     }
 
-    for (const element of [...clone.querySelectorAll('.cm-inkpot-table-input, .cm-inkpot-table-hint, .cm-inkpot-hidden-inline, .cm-cursor, .cm-dropCursor, .cm-selectionBackground')]) {
+    for (const element of [...clone.querySelectorAll('.cm-inkpot-table-input, .cm-inkpot-table-hint, .cm-inkpot-hidden-inline, .cm-widgetBuffer, .cm-cursor, .cm-dropCursor, .cm-selectionBackground')]) {
       element.remove();
     }
 
@@ -110,13 +182,9 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
       boxes[index].disabled = true;
     }
 
-    // 本地图片还原为相对路径：导出 HTML 与文档放在一起时可显示，PDF 通过 baseURL 解析。
-    for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
-      try {
-        const url = new URL(image.getAttribute('src') ?? '');
-        if (url.host === 'local') image.setAttribute('src', decodeURIComponent(url.pathname.slice(1)));
-      } catch { /* 非 URL 的 src 原样保留 */ }
-    }
+    exportParagraphs(view, clone);
+    await embedImages(clone);
+    if (!view.dom.isConnected || view.state.doc !== original) throw new Error('导出期间发生编辑或文档已关闭，请重新导出。');
 
     if (mode === 'html') {
       // 独立 HTML 无 KaTeX 样式：保留浏览器原生渲染的 MathML，去掉依赖样式的排版副本。

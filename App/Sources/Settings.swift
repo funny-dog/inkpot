@@ -20,6 +20,7 @@ enum AppearanceMode: String, CaseIterable {
 @MainActor
 final class AppSettings: ObservableObject {
   static let shared = AppSettings()
+  static let editingDidChange = Notification.Name("InkpotEditingPreferencesDidChange")
   nonisolated static let defaultImageFolder = "assets"
   private let defaults: UserDefaults
   private lazy var displayModes = DisplayModes(defaults: defaults)
@@ -72,6 +73,44 @@ final class AppSettings: ObservableObject {
   var autosave: Bool {
     get { defaults.bool(forKey: "document.autosave") }
     set { objectWillChange.send(); defaults.set(newValue, forKey: "document.autosave") }
+  }
+
+  var pairBrackets: Bool {
+    get { defaults.object(forKey: "editor.pairBrackets") as? Bool ?? true }
+    set { setEditingPreference(newValue, key: "editor.pairBrackets") }
+  }
+
+  var pairMarkdown: Bool {
+    get { defaults.object(forKey: "editor.pairMarkdown") as? Bool ?? true }
+    set { setEditingPreference(newValue, key: "editor.pairMarkdown") }
+  }
+
+  var loadRemoteImages: Bool {
+    get { defaults.bool(forKey: "images.loadRemote") }
+    set { setEditingPreference(newValue, key: "images.loadRemote") }
+  }
+
+  private func setEditingPreference(_ value: Bool, key: String) {
+    objectWillChange.send()
+    defaults.set(value, forKey: key)
+    NotificationCenter.default.post(name: Self.editingDidChange, object: self)
+  }
+
+  func editingScript() throws -> String {
+    let data = try JSONSerialization.data(withJSONObject: ["brackets": pairBrackets, "markdown": pairMarkdown, "remoteImages": loadRemoteImages])
+    guard let json = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
+    return "window.inkpot.setEditingPreferences(\(json))"
+  }
+
+  var documentImageFolder: Bool {
+    get { defaults.bool(forKey: "images.documentFolder") }
+    set { objectWillChange.send(); defaults.set(newValue, forKey: "images.documentFolder") }
+  }
+
+  func imageFolder(beside url: URL) -> String {
+    guard documentImageFolder else { return imageFolder }
+    let name = Self.validImageFolder(String(url.deletingPathExtension().lastPathComponent.prefix(48))) ?? "文档"
+    return name + ".assets"
   }
 
   /// 输入时检查拼写：WebKit 进程内全局生效并自行保存，通过任一编辑器的标准动作切换；没有打开的编辑器时直接写入偏好。
@@ -159,12 +198,21 @@ struct GeneralSettingsView: View {
         }
       }
       Section {
-        TextField("图片保存文件夹", text: $settings.imageFolderInput)
-          .multilineTextAlignment(.trailing)
+        Picker("素材目录", selection: $settings.documentImageFolder) {
+          Text("共享文件夹").tag(false)
+          Text("文档名.assets").tag(true)
+        }
+        if !settings.documentImageFolder {
+          TextField("图片保存文件夹", text: $settings.imageFolderInput)
+            .multilineTextAlignment(.trailing)
+        }
+        Toggle("加载远程图片（HTTPS）", isOn: $settings.loadRemoteImages)
       } header: { Text("图片") } footer: {
-        Caption(AppSettings.validImageFolder(settings.imageFolderInput) == nil
+        Caption(settings.documentImageFolder ? "新插入的图片保存到文档同级的“文档名.assets”；不会迁移原有图片。"
+          : AppSettings.validImageFolder(settings.imageFolderInput) == nil
           ? "名称无效，将使用 \(AppSettings.defaultImageFolder)。不能为空、以点开头或包含 / : 等字符。"
           : "插入或粘贴的图片保存在文档同级的“\(settings.imageFolder)”文件夹中。")
+        Caption("远程图片默认不加载；开启后会向图片所在网站发出请求，不发送 Cookie。不支持远程 SVG。")
       }
     }
     .formStyle(.grouped)
@@ -188,6 +236,8 @@ struct EditingSettingsView: View {
         .fixedSize()
       }
       Section("写作辅助") {
+        Toggle("自动配对括号与引号", isOn: $settings.pairBrackets)
+        Toggle("自动配对 Markdown 字符", isOn: $settings.pairMarkdown)
         Toggle("输入时检查拼写", isOn: $settings.spellChecking)
         Toggle(isOn: $settings.focusMode) {
           Text("专注模式")

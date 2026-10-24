@@ -70,6 +70,41 @@ final class SettingsTests: XCTestCase {
     XCTAssertTrue(AppSettings(defaults: defaults).restorePreviousSession)
   }
 
+  func testPairingAndImagePreferencesPersistWithSafeDefaults() {
+    let settings = AppSettings(defaults: defaults)
+    XCTAssertTrue(settings.pairBrackets)
+    XCTAssertTrue(settings.pairMarkdown)
+    XCTAssertFalse(settings.loadRemoteImages)
+    settings.pairBrackets = false
+    settings.pairMarkdown = false
+    settings.loadRemoteImages = true
+    let reloaded = AppSettings(defaults: defaults)
+    XCTAssertFalse(reloaded.pairBrackets)
+    XCTAssertFalse(reloaded.pairMarkdown)
+    XCTAssertTrue(reloaded.loadRemoteImages)
+    let url = root.appendingPathComponent("中文笔记.md")
+    XCTAssertEqual(settings.imageFolder(beside: url), "assets")
+    settings.documentImageFolder = true
+    XCTAssertEqual(settings.imageFolder(beside: url), "中文笔记.assets")
+    XCTAssertEqual(settings.imageFolder(beside: root.appendingPathComponent(".hidden.md")), "文档.assets")
+  }
+
+  func testExplicitPlainPasteAndMarkdownCopyPreserveSourceAndUndo() async throws {
+    let original = "**中文**\r\n尾\n"
+    let (document, editor, _) = try await document(original)
+    defer { document.close() }
+    _ = try await editor.evaluateScript("window.inkpot.selectMatch(1, 0, 6); null")
+    let copied = try await editor.evaluateScript("window.inkpot.selectedMarkdown()") as? String
+    XCTAssertEqual(copied, "**中文**")
+    _ = try await editor.evaluateScript("window.inkpot.pastePlainText('# 原样 **粘贴**'); null")
+    let pasted = try await editor.snapshot()
+    XCTAssertEqual(pasted.text, "# 原样 **粘贴**\r\n尾\n")
+    editor.undo(nil)
+    try await waitUntil { editor.latestRevision > pasted.revision }
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
+  }
+
   func testDisplayModeSettingsShareMenuPreferencesAndNotifications() {
     let settings = AppSettings(defaults: defaults)
     let modes = DisplayModes(defaults: defaults)

@@ -7,8 +7,13 @@ enum DragDrop {
   private static let documentExtensions: Set<String> = ["md", "markdown", "txt"]
   private static let imageExtensions: Set<String> = ["png", "jpg", "jpeg", "gif", "webp", "tiff", "tif", "heic"]
 
+  static func isFolder(_ url: URL) -> Bool {
+    guard url.isFileURL, let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey, .isSymbolicLinkKey]) else { return false }
+    return values.isDirectory == true && values.isPackage != true && values.isSymbolicLink != true
+  }
+
   static func accepts(_ urls: [URL]) -> Bool {
-    urls.contains { documentExtensions.contains($0.pathExtension.lowercased()) || imageExtensions.contains($0.pathExtension.lowercased()) }
+    urls.contains { isFolder($0) || documentExtensions.contains($0.pathExtension.lowercased()) || imageExtensions.contains($0.pathExtension.lowercased()) }
   }
 
   static func perform(urls: [URL], in webView: WKWebView) {
@@ -16,6 +21,10 @@ enum DragDrop {
     let documents = urls.filter { documentExtensions.contains($0.pathExtension.lowercased()) }
     let images = urls.filter { imageExtensions.contains($0.pathExtension.lowercased()) }
     if let controller = webView.window?.contentViewController as? DocumentViewController {
+      if let folder = urls.first(where: { isFolder($0) }) {
+        controller.files.openFolder(folder)
+        if !controller.filesVisible { controller.toggleContent(files: true) }
+      }
       for url in documents { controller.openFile(url) }
     }
     guard !images.isEmpty else { return }
@@ -35,7 +44,7 @@ enum DragDrop {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
           let data = try Data(contentsOf: url)
-          let image = try await Task.detached { [folder = AppSettings.shared.imageFolder] in try LocalImages.store(data, beside: base, folderName: folder) }.value
+          let image = try await Task.detached { [folder = AppSettings.shared.imageFolder(beside: base)] in try LocalImages.store(data, beside: base, folderName: folder) }.value
           try await document.editor?.insertImage(image.path)
         } catch {
           if (error as NSError).code != NSUserCancelledError { document.presentError(error) }

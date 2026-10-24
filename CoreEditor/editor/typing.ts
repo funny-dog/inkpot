@@ -1,4 +1,4 @@
-import { EditorSelection, Transaction } from '@codemirror/state';
+import { Compartment, EditorSelection, Facet, Transaction } from '@codemirror/state';
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
 import { isolateHistory } from '@codemirror/commands';
@@ -58,10 +58,17 @@ export const typingBindings: KeyBinding[] = [
 ];
 
 const pairs: Readonly<Partial<Record<string, string>>> = { '(': ')', '[': ']', '"': '"', '`': '`', '*': '*' };
+export type PairingPreferences = { brackets: boolean; markdown: boolean };
+export const pairingPreferences = Facet.define<PairingPreferences, PairingPreferences>({
+  combine: values => values.at(-1) ?? { brackets: true, markdown: true },
+});
+export const pairingCompartment = new Compartment();
 
 export const autoPairs = EditorView.inputHandler.of((view, from, to, text, insert) => {
   const { state } = view;
   const selection = state.selection.main;
+  const enabled = state.facet(pairingPreferences);
+  if (['*', '`'].includes(text) ? !enabled.markdown : !enabled.brackets) return false;
   if (view.compositionStarted || state.readOnly || !state.facet(EditorView.editable)
     || text.length !== 1 || state.selection.ranges.length !== 1
     || from !== selection.from || to !== selection.to || insert().annotation(Transaction.userEvent) !== 'input.type') return false;
