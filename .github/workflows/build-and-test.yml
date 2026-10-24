@@ -37,6 +37,9 @@ jobs:
           bash scripts/tests/release-checks.sh
           swift scripts/measure-perf.swift --self-test
 
+      - name: Check website download routing
+        run: node --test website/test/*.test.js
+
       - name: Build and test CoreEditor
         working-directory: CoreEditor
         run: |

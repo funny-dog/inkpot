@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inkpot · 为 macOS 打造的轻量 Markdown 编辑器</title>
+  <meta name="description" content="Inkpot 是一款轻盈的 macOS Markdown 编辑器：实时预览、文件树与全文搜索、公式与图表、专注与打字机模式，一切开箱即用。开源免费，基于 MarkEdit。" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Inkpot · 让写作回到写作本身" />
+  <meta property="og:description" content="轻盈的 macOS Markdown 编辑器：实时预览、文件树、公式图表、专注模式，开箱即用。开源免费。" />
+  <meta property="og:image" content="/icon-1024.png" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="ink-glow ink-glow--a" aria-hidden="true"></div>
+  <div class="ink-glow ink-glow--b" aria-hidden="true"></div>
+
+  <!-- 顶部导航 -->
+  <header class="nav" id="top">
+    <div class="nav__inner">
+      <a class="nav__brand" href="#top" aria-label="Inkpot 首页">
+        <img class="nav__logo" src="/favicon.png" alt="" width="30" height="30" />
+        <span class="nav__name">Inkpot</span>
+      </a>
+      <nav class="nav__links" aria-label="页面导航">
+        <a href="#features">特性</a>
+        <a href="#performance">性能</a>
+        <a href="#download">下载</a>
+        <a href="https://github.com/funny-dog/inkpot" target="_blank" rel="noopener" class="nav__github">
+          <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>
+          GitHub
+        </a>
+      </nav>
+      <a class="btn btn--small btn--primary nav__cta" href="https://github.com/funny-dog/inkpot/releases/latest">下载</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 首屏 -->
+    <section class="hero">
+      <p class="hero__badge"><span class="hero__badge-dot" aria-hidden="true"></span>开源免费 · 基于 MarkEdit · macOS 15+</p>
+      <h1 class="hero__title">让写作，<br class="hero__br" />回到写作本身。</h1>
+      <p class="hero__subtitle">
+        Inkpot 是一款轻盈的 macOS Markdown 编辑器：实时预览、文件树、公式与图表、
+        专注模式，一切开箱即用，不喧宾夺主。
+      </p>
+      <div class="hero__actions">
+        <a class="btn btn--primary btn--lg" href="https://github.com/funny-dog/inkpot/releases/latest">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+          下载 for macOS
+        </a>
+        <a class="btn btn--ghost btn--lg" href="https://github.com/funny-dog/inkpot" target="_blank" rel="noopener">查看源码</a>
+      </div>
+      <p class="hero__meta">
+        <span class="js-version-wrap">最新版本 <strong class="js-version" data-field="version">—</strong></span>
+        <span class="hero__meta-sep js-version-sep" aria-hidden="true">·</span>
+        <span>免费</span>
+        <span class="hero__meta-sep" aria-hidden="true">·</span>
+        <span>MIT 开源</span>
+        <span class="hero__meta-sep" aria-hidden="true">·</span>
+        <span>文档不上传云端</span>
+      </p>
+
+      <!-- 编辑器窗口模型 -->
+      <div class="window" role="img" aria-label="Inkpot 编辑器界面示意：左侧文件树，右侧实时预览的 Markdown 文档">
+        <div class="window__titlebar">
+          <span class="window__lights"><i></i><i></i><i></i></span>
+          <span class="window__title">墨水瓶使用笔记.md</span>
+          <span class="window__mode">实时</span>
+        </div>
+        <div class="window__body">
+          <aside class="window__sidebar" aria-hidden="true">
+            <p class="tree__folder"><span class="tree__icon">▾</span>写作</p>
+            <p class="tree__file tree__file--active">墨水瓶使用笔记.md</p>
+            <p class="tree__file">发布计划.md</p>
+            <p class="tree__file">草稿集.md</p>
+            <p class="tree__folder"><span class="tree__icon">▸</span>素材</p>
+            <p class="tree__file tree__file--dim">logo-sketch.png</p>
+          </aside>
+          <div class="window__doc">
+            <h2 class="doc__h1">墨水瓶使用笔记</h2>
+            <p class="doc__p">在 <strong>Inkpot</strong> 里写作，就像从 <em>墨水瓶</em> 里提笔：<kbd>⇧⌘M</kbd> 随时在源码与实时模式间切换。</p>
+            <ul class="doc__list">
+              <li><span class="doc__check" aria-hidden="true"></span>实时预览，写完即所见</li>
+              <li><span class="doc__check" aria-hidden="true"></span>文件树与文件夹全文搜索</li>
+              <li><span class="doc__check" aria-hidden="true"></span>公式 <span class="doc__math"><em>E</em> = <em>mc</em><sup>2</sup></span> 与 Mermaid 图表</li>
+            </ul>
+            <pre class="doc__code"><span class="tok-kw">func</span> <span class="tok-fn">greet</span>() {
+    <span class="tok-fn">print</span>(<span class="tok-str">"你好，Inkpot"</span>)
+}</pre>
+            <blockquote class="doc__quote">专注模式（<kbd>F8</kbd>）会淡化其余段落，让眼里只剩这一句。</blockquote>
+          </div>
+        </div>
+        <div class="window__statusbar">
+          <span>实时模式</span><span aria-hidden="true">·</span><span>128 字</span><span aria-hidden="true">·</span><span>12 行</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 特性 -->
+    <section class="section" id="features">
+      <p class="section__kicker">特性</p>
+      <h2 class="section__title">该有的都有，<br class="section__br" />不该打扰的一样没有。</h2>
+      <div class="bento">
+        <article class="card card--wide">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+          </div>
+          <h3 class="card__title">实时预览</h3>
+          <p class="card__desc">标题、列表、引用写完即呈现；粗体与行内代码在光标进入时才展开标记。<kbd>⇧⌘M</kbd> 一键切换源码模式，文本、选区与撤销历史原样保留。</p>
+          <div class="card__demo" aria-hidden="true">
+            <span class="card__demo-src"># 墨落成文**记录此刻**</span>
+            <span class="card__demo-arrow">→</span>
+            <span class="card__demo-out">墨落成文 <strong>记录此刻</strong></span>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h.01M4 12h.01M4 18h.01M9 6h11M9 12h11M9 18h11"/></svg>
+          </div>
+          <h3 class="card__title">文件树与全文搜索</h3>
+          <p class="card__desc">侧栏浏览整个项目，<kbd>⇧⌘F</kbd> 递归搜索所有文本文件，点击结果精准定位并保持高亮。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg>
+          </div>
+          <h3 class="card__title">专注与打字机模式</h3>
+          <p class="card__desc"><kbd>F8</kbd> 淡出杂念，只留当前段落；<kbd>F9</kbd> 让光标始终居于屏幕中央。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16"/></svg>
+          </div>
+          <h3 class="card__title">表格就地编辑</h3>
+          <p class="card__desc">管道表格直接渲染，单元格点击即改，Tab 导航、增删行列与对齐控制一应俱全。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4 1.5 12 5 20M19 4l3.5 8L19 20M13 4l-2 16"/></svg>
+          </div>
+          <h3 class="card__title">公式与图表</h3>
+          <p class="card__desc">KaTeX 公式与 Mermaid 图表离线渲染，导出 PDF / HTML 时原样嵌入。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M13 5l-2.5 14"/></svg>
+          </div>
+          <h3 class="card__title">代码高亮</h3>
+          <p class="card__desc">30+ 常用语言离线着色，语言标识一键点击修改，明暗主题自适应。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L7 20"/></svg>
+          </div>
+          <h3 class="card__title">本地图片</h3>
+          <p class="card__desc">截图直接粘贴，自动存入文档同级 <code>assets/</code> 并写好相对路径，中文与空格路径无忧。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v10"/><path d="m8 9 4 4 4-4"/><path d="M5 21h14a1 1 0 0 0 1-1v-4H4v4a1 1 0 0 0 1 1Z"/></svg>
+          </div>
+          <h3 class="card__title">导出与打印</h3>
+          <p class="card__desc">分页或连续长页 PDF、自包含 HTML，公式图表完整保留；系统打印面板随时待命。</p>
+        </article>
+        <article class="card">
+          <div class="card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6Z"/><path d="m9 12 2 2 4-4"/></svg>
+          </div>
+          <h3 class="card__title">文档安全</h3>
+          <p class="card__desc">UTF-8 与混合行尾保真、外部修改保护、崩溃恢复草稿；你的文字只留在你的电脑里。</p>
+        </article>
+      </div>
+    </section>
+
+    <!-- 性能 -->
+    <section class="section section--tight" id="performance">
+      <p class="section__kicker">性能</p>
+      <h2 class="section__title">七十万字的长文，<br class="section__br" />依然落笔如飞。</h2>
+      <div class="stats">
+        <div class="stat">
+          <p class="stat__num">10.8<span class="stat__unit">ms</span></p>
+          <p class="stat__label">1MB 文档按键延迟中位数</p>
+          <p class="stat__note">优化前 48.3ms</p>
+        </div>
+        <div class="stat">
+          <p class="stat__num">0.2<span class="stat__unit">ms</span></p>
+          <p class="stat__label">1MB 文档移动光标中位数</p>
+          <p class="stat__note">优化前 40.4ms</p>
+        </div>
+        <div class="stat">
+          <p class="stat__num">77<span class="stat__unit">万字符</span></p>
+          <p class="stat__label">中英混排基准文档体量</p>
+          <p class="stat__note">无界面环境实测</p>
+        </div>
+      </div>
+      <div class="strip">
+        <span>本地优先</span><span aria-hidden="true">·</span>
+        <span>中文输入法深度适配</span><span aria-hidden="true">·</span>
+        <span>中日韩按字统计</span><span aria-hidden="true">·</span>
+        <span>原生 AppKit 窗口与标签页</span>
+      </div>
+    </section>
+
+    <!-- 下载 -->
+    <section class="section" id="download">
+      <div class="dl">
+        <img class="dl__logo" src="/apple-touch-icon.png" alt="" width="64" height="64" />
+        <h2 class="dl__title">提笔，落墨。</h2>
+        <p class="dl__desc">免费下载 Inkpot，支持 macOS 15 及以上版本（Apple Silicon 与 Intel）。</p>
+        <a class="btn btn--light btn--lg" href="https://github.com/funny-dog/inkpot/releases/latest">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/></svg>
+          下载 for macOS
+        </a>
+        <div class="dl__brew">
+          <code>brew install --cask funny-dog/tap/inkpot</code>
+          <button class="dl__copy" type="button" aria-label="复制 Homebrew 安装命令">复制</button>
+        </div>
+        <p class="dl__meta">
+          <span class="js-version" data-field="version">—</span>
+          <span class="dl__meta-sep" aria-hidden="true">·</span>
+          <span><span class="js-published" data-field="published">—</span> 发布</span>
+          <span class="dl__meta-sep" aria-hidden="true">·</span>
+          <span>DMG 约 <span class="js-size" data-field="size">—</span></span>
+        </p>
+        <a class="dl__alt" href="https://github.com/funny-dog/inkpot/releases" target="_blank" rel="noopener">查看全部历史版本 →</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <div class="footer__brand">
+        <p class="footer__name">Inkpot</p>
+        <p class="footer__tagline">为日常中文与 Markdown 写作打造的轻量编辑器。</p>
+      </div>
+      <nav class="footer__col" aria-label="相关链接">
+        <p class="footer__head">项目</p>
+        <a href="https://github.com/funny-dog/inkpot" target="_blank" rel="noopener">GitHub 源码</a>
+        <a href="https://github.com/funny-dog/inkpot/releases" target="_blank" rel="noopener">发布版本</a>
+        <a href="https://github.com/funny-dog/inkpot/issues" target="_blank" rel="noopener">问题反馈</a>
+      </nav>
+      <div class="footer__col">
+        <p class="footer__head">致谢</p>
+        <a href="https://github.com/MarkEdit-app/MarkEdit" target="_blank" rel="noopener">MarkEdit（MIT）</a>
+        <a href="https://codemirror.net/" target="_blank" rel="noopener">CodeMirror 6</a>
+        <a href="https://katex.org/" target="_blank" rel="noopener">KaTeX · Mermaid</a>
+      </div>
+    </div>
+    <div class="footer__legal">
+      <span>© 2026 Inkpot · MIT License</span>
+      <span>保留 MarkEdit 的版权与许可</span>
+    </div>
+  </footer>
+
+  <script src="/main.js"></script>
+</body>
+</html>

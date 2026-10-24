@@ -1,0 +1,28 @@
+{
+  // Inkpot 官站：Cloudflare Workers 静态资源 + 下载跳转
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "inkpot",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "inkpot.erhuerhu.dpdns.org",
+      "zone_name": "erhuerhu.dpdns.org",
+      "custom_domain": true
+    }
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./public",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  "vars": {
+    "GITHUB_REPO": "funny-dog/inkpot"
+  },
+  "observability": {
+    "enabled": true
+  }
+}
