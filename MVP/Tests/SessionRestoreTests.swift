@@ -161,4 +161,20 @@ final class SessionRestoreTests: XCTestCase {
     XCTAssertEqual(container.files.root?.entry.url, directory.standardizedFileURL)
     XCTAssertTrue(container.filesVisible)
   }
+
+  func testStartupPreferenceSkipsRestoreWithoutDeletingSessionAndRespectsOpenedFiles() throws {
+    let tab = SessionState.Tab(file: SessionLocation(try file("上次.md")), folder: nil, sidebarCollapsed: true, showingFiles: false, sidebarWidth: 260)
+    let state = SessionState(windows: [.init(frame: "", tabs: [tab], selectedTab: 0)])
+    DocumentSession.save(state, defaults: defaults)
+    let settings = AppSettings(defaults: defaults)
+    XCTAssertEqual(DocumentSession.loadForLaunch(restoringPreviousSession: settings.restorePreviousSession, hasOpenDocuments: false, defaults: defaults), state)
+    XCTAssertNil(DocumentSession.loadForLaunch(restoringPreviousSession: settings.restorePreviousSession, hasOpenDocuments: true, defaults: defaults))
+    settings.restorePreviousSession = false
+    XCTAssertNil(DocumentSession.loadForLaunch(restoringPreviousSession: settings.restorePreviousSession, hasOpenDocuments: false, defaults: defaults))
+    XCTAssertEqual(DocumentSession.load(defaults: defaults), state)
+    settings.restorePreviousSession = true
+    XCTAssertEqual(DocumentSession.loadForLaunch(restoringPreviousSession: settings.restorePreviousSession, hasOpenDocuments: false, defaults: defaults), state)
+    defaults.removePersistentDomain(forName: suite)
+    XCTAssertNil(DocumentSession.loadForLaunch(restoringPreviousSession: true, hasOpenDocuments: false, defaults: defaults))
+  }
 }

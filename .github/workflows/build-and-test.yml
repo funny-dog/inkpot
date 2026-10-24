@@ -17,21 +17,32 @@ concurrency:
 
 jobs:
   inkpot:
-    runs-on: xcode-27
-    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: [self-hosted, macOS, ARM64, inkpot]
+    timeout-minutes: 30
+    if: github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository)
     env:
-      DEVELOPER_DIR: /Applications/Xcode_27.0.app/Contents/Developer
+      DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v5
         with:
           node-version: '22.x'
+
+      - name: Check release guards and measurement sampling
+        run: |
+          bash -n scripts/build.sh scripts/release.sh scripts/tests/release-checks.sh
+          bash scripts/tests/release-checks.sh
+          swift scripts/measure-perf.swift --self-test
 
       - name: Build and test CoreEditor
         working-directory: CoreEditor
         run: |
           node .yarn/releases/yarn-4.18.0.cjs install --immutable
+          node .yarn/releases/yarn-4.18.0.cjs notices
+          git diff --exit-code -- ../MVP/Resources/ThirdPartyNotices.md
           node .yarn/releases/yarn-4.18.0.cjs build
           node .yarn/releases/yarn-4.18.0.cjs test --runInBand
 
@@ -52,3 +63,12 @@ jobs:
       - name: Test Inkpot
         run: |
           xcodebuild test -project MVP/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/MVP CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Check Release build and resources
+        run: |
+          xcodebuild build -project MVP/Inkpot.xcodeproj -scheme Inkpot -configuration Release -destination 'platform=macOS' -derivedDataPath build/Release CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          resources=build/Release/Build/Products/Release/Inkpot.app/Contents/Resources
+          for file in index.html ThirdPartyNotices.md math/katex.mjs math/mermaid.mjs math/katex.min.css math/lang-javascript.mjs; do
+            test -s "$resources/$file"
+          done
+          test -d "$resources/math/fonts"

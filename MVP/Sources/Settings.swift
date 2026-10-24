@@ -22,16 +22,33 @@ final class AppSettings: ObservableObject {
   static let shared = AppSettings()
   nonisolated static let defaultImageFolder = "assets"
   private let defaults: UserDefaults
+  private lazy var displayModes = DisplayModes(defaults: defaults)
   private var observers: [NSObjectProtocol] = []
 
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
-    // 字体面板与“编辑 → 拼写和语法”菜单也会改这些偏好，设置窗口打开时同步刷新。
-    for (name, object) in [(EditorFonts.didChange, nil), (UserDefaults.didChangeNotification, defaults as AnyObject?)] {
+    // 字体面板与菜单也会改这些偏好，设置窗口打开时同步刷新。
+    for (name, object) in [(EditorFonts.didChange, nil), (DisplayModes.didChange, nil), (UserDefaults.didChangeNotification, defaults as AnyObject?)] {
       observers.append(NotificationCenter.default.addObserver(forName: name, object: object, queue: .main) { [weak self] _ in
-        MainActor.assumeIsolated { self?.objectWillChange.send() }
+        Task { @MainActor in self?.objectWillChange.send() }
       })
     }
+  }
+
+  /// 保持原有启动行为；从访达打开指定文件时始终优先打开该文件。
+  var restorePreviousSession: Bool {
+    get { defaults.object(forKey: "startup.restorePreviousSession") as? Bool ?? true }
+    set { objectWillChange.send(); defaults.set(newValue, forKey: "startup.restorePreviousSession") }
+  }
+
+  var focusMode: Bool {
+    get { displayModes.focusEnabled }
+    set { objectWillChange.send(); displayModes.set(focus: newValue) }
+  }
+
+  var typewriterMode: Bool {
+    get { displayModes.typewriterEnabled }
+    set { objectWillChange.send(); displayModes.set(typewriter: newValue) }
   }
 
   /// 打开文档时默认进入源码模式；默认实时模式。
@@ -96,6 +113,15 @@ struct SettingsView: View {
 
   var body: some View {
     Form {
+      Section("启动") {
+        Picker("启动时", selection: $settings.restorePreviousSession) {
+          Text("恢复上次的文件和窗口").tag(true)
+          Text("新建空白文档").tag(false)
+        }
+        Text("下次启动生效。从访达打开文件时优先打开指定文件；未保存草稿仍会提示恢复。")
+          .font(.caption)
+          .foregroundStyle(.secondary)
+      }
       Section("字体") {
         LabeledContent("正文") {
           Text(settings.fontDescription(code: false)).foregroundStyle(.secondary)
@@ -113,6 +139,14 @@ struct SettingsView: View {
           Text("源码模式").tag(true)
         }
         Toggle("输入时检查拼写", isOn: $settings.spellChecking)
+        Toggle(isOn: $settings.focusMode) {
+          Text("专注模式")
+          Text("突出当前编辑的段落或内容块。")
+        }
+        Toggle(isOn: $settings.typewriterMode) {
+          Text("打字机模式")
+          Text("编辑时让当前行保持在窗口中部。")
+        }
         Toggle(isOn: $settings.autosave) {
           Text("编辑后自动保存")
           Text("仅对已保存过的文档生效，停止输入约 2 秒后保存；关闭时仍有本地恢复草稿。")
@@ -136,8 +170,7 @@ struct SettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: 480)
-    .fixedSize(horizontal: false, vertical: true)
+    .frame(width: 480, height: 620)
   }
 }
 

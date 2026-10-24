@@ -159,6 +159,11 @@ enum DocumentSession {
     return try? JSONDecoder().decode(SessionState.self, from: data)
   }
 
+  static func loadForLaunch(restoringPreviousSession: Bool, hasOpenDocuments: Bool, defaults: UserDefaults = .standard) -> SessionState? {
+    guard restoringPreviousSession, !hasOpenDocuments else { return nil }
+    return load(defaults: defaults)
+  }
+
   static func save(_ state: SessionState, defaults: UserDefaults = .standard) {
     defaults.set(try? JSONEncoder().encode(state), forKey: key)
   }

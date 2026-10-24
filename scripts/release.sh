@@ -66,14 +66,41 @@ $(git status --short)"
 }
 
 check_ci_state() {
-  command -v gh >/dev/null 2>&1 || { echo "提示：未安装 gh，跳过 CI 状态检查"; return 0; }
-  local conclusion
-  conclusion="$(gh run list --branch main --workflow build-and-test.yml --limit 1 --json conclusion -q '.[0].conclusion' 2>/dev/null || true)"
-  case "$conclusion" in
-    success) echo "CI 状态：main 最新一次运行成功" ;;
-    "") echo "提示：读不到 CI 运行记录，跳过检查" ;;
-    *) echo "警告：main 最新一次 CI 结果是 ${conclusion}，确认无误再继续" >&2 ;;
-  esac
+  command -v gh >/dev/null 2>&1 || fail "未安装 gh (GitHub CLI)，无法校验 CI 状态"
+  local head_sha gh_err gh_out run_sha run_status run_conclusion run_event err_file
+  head_sha="$(git rev-parse HEAD)"
+
+  err_file="$(mktemp)"
+  if ! gh_out="$(gh run list --branch main --workflow build-and-test.yml --limit 1 --json headSha,status,conclusion,event -q '.[0] | select(. != null) | "\(.headSha) \(.status) \(.conclusion) \(.event)"' 2>"$err_file")"; then
+    gh_err="$(cat "$err_file")"
+    rm -f "$err_file"
+    fail "获取 CI 运行状态失败（gh 执行出错）：${gh_err:-$gh_out}"
+  fi
+  rm -f "$err_file"
+
+  if [ -z "$gh_out" ]; then
+    fail "未找到 main 分支上 build-and-test.yml 的 CI 运行记录"
+  fi
+
+  read -r run_sha run_status run_conclusion run_event <<< "$gh_out"
+
+  if [ "$run_sha" != "$head_sha" ]; then
+    fail "CI 校验失败：最新 CI 提交 (${run_sha:0:7}) 与待发布 main HEAD (${head_sha:0:7}) 不一致"
+  fi
+
+  if [ "$run_event" != "push" ]; then
+    fail "CI 校验失败：最新 CI 触发事件为 ${run_event}，必须为 push 事件"
+  fi
+
+  if [ "$run_status" != "completed" ]; then
+    fail "CI 校验失败：最新 CI 尚未完成（当前状态：${run_status}）"
+  fi
+
+  if [ "$run_conclusion" != "success" ]; then
+    fail "CI 校验失败：最新 CI 运行未成功（结果：${run_conclusion}）"
+  fi
+
+  echo "CI 状态：main HEAD (${head_sha:0:7}) 的 build-and-test.yml push 运行成功"
 }
 
 check_new_version() {
@@ -110,71 +137,78 @@ verify_assets() {
   echo "发布资产校验：dmg / dmg.sha256 / zip / zip.sha256 齐备，校验和匹配"
 }
 
-MODE="release"
-VERSION_ARG=""
-PUBLISH=0
-for arg in "$@"; do
-  case "$arg" in
-    --check) MODE="check" ;;
-    --publish) PUBLISH=1 ;;
-    -*) fail "未知参数：$arg" ;;
-    *) VERSION_ARG="$arg" ;;
-  esac
-done
+main() {
+  local MODE="release"
+  local VERSION_ARG=""
+  local PUBLISH=0
+  for arg in "$@"; do
+    case "$arg" in
+      --check) MODE="check" ;;
+      --publish) PUBLISH=1 ;;
+      -*) fail "未知参数：$arg" ;;
+      *) VERSION_ARG="$arg" ;;
+    esac
+  done
 
-echo "=== 发版前校验 ==="
-check_git_state
-check_versions_consistent
-check_ci_state
+  echo "=== 发版前校验 ==="
+  check_git_state
+  check_versions_consistent
+  check_ci_state
 
-if [ "$MODE" = "check" ]; then
-  echo "校验完成（未改动任何文件）"
-  exit 0
-fi
+  if [ "$MODE" = "check" ]; then
+    echo "校验完成（未改动任何文件）"
+    exit 0
+  fi
 
-[ -n "$VERSION_ARG" ] || fail "缺少版本号。用法：scripts/release.sh x.y.z [--publish]"
-check_new_version "$VERSION_ARG"
+  [ -n "$VERSION_ARG" ] || fail "缺少版本号。用法：scripts/release.sh x.y.z [--publish]"
+  check_new_version "$VERSION_ARG"
 
-echo "=== 更新版本号 ==="
-bump_version "$VERSION_ARG"
+  echo "=== 更新版本号 ==="
+  bump_version "$VERSION_ARG"
 
-# 本仓库没有 ci.sh：按 AGENTS.md 在推送前自行执行与改动相关的本地检查
-# （SwiftLint、CoreEditor 测试等）；推送后 build-and-test.yml 会跑完整构建与测试。
+  # 本仓库没有 ci.sh：按 AGENTS.md 在推送前自行执行与改动相关的本地检查
+  # （SwiftLint、CoreEditor 测试等）；推送后 build-and-test.yml 会跑完整构建与测试。
 
-echo "=== 提交并打 tag ==="
-git add "${PLISTS[@]}"
-git commit -m "chore: 发布 v${VERSION_ARG}（构建号 $(current_build)）"
-git tag -a "v$VERSION_ARG" -m "v$VERSION_ARG"
+  echo "=== 提交并打 tag ==="
+  git add "${PLISTS[@]}"
+  git commit -m "chore: 发布 v${VERSION_ARG}（构建号 $(current_build)）"
+  git tag -a "v$VERSION_ARG" -m "v$VERSION_ARG"
 
-echo "=== 构建发布件（RELEASE=1）==="
-RELEASE=1 bash scripts/build.sh
-verify_assets "$VERSION_ARG"
+  echo "=== 构建发布件（RELEASE=1）==="
+  RELEASE=1 bash scripts/build.sh
+  verify_assets "$VERSION_ARG"
 
-echo ""
-echo "已就绪：v$VERSION_ARG (build $(current_build)) 的提交、tag 与发布件都已生成，尚未推送。"
+  echo ""
+  echo "已就绪：v$VERSION_ARG (build $(current_build)) 的提交、tag 与发布件都已生成，尚未推送。"
 
-if [ "$PUBLISH" = "1" ]; then
-  echo "=== 推送并创建 draft Release ==="
-  git push origin main
-  git push origin "v$VERSION_ARG"
-  NOTES_FILE="$(mktemp)"
-  PREV_TAG="$(git describe --tags --abbrev=0 "v$VERSION_ARG^" 2>/dev/null || true)"
-  if [ -n "$PREV_TAG" ]; then RANGE="$PREV_TAG..v$VERSION_ARG"; else RANGE="v$VERSION_ARG"; fi
-  {
-    echo "## 变更"
-    echo ""
-    git log --pretty='- %s' "$RANGE"
-  } > "$NOTES_FILE"
-  gh release create "v$VERSION_ARG" --draft --title "v$VERSION_ARG" --notes-file "$NOTES_FILE" \
-    "Inkpot.dmg" "Inkpot.dmg.sha256" \
-    "Inkpot-v$VERSION_ARG.zip" "Inkpot-v$VERSION_ARG.zip.sha256"
-  rm -f "$NOTES_FILE"
-  echo "draft Release v$VERSION_ARG 已创建，补完更新说明后在 GitHub 上点 Publish。"
-else
-  echo "下一步（确认无误后手动执行）："
-  echo "  git push origin main"
-  echo "  git push origin v$VERSION_ARG"
-  echo "  gh release create v$VERSION_ARG --draft --title v$VERSION_ARG \\"
-  echo "    Inkpot.dmg Inkpot.dmg.sha256 \\"
-  echo "    Inkpot-v$VERSION_ARG.zip Inkpot-v$VERSION_ARG.zip.sha256"
+  if [ "$PUBLISH" = "1" ]; then
+    echo "=== 推送并创建 draft Release ==="
+    git push origin main
+    git push origin "v$VERSION_ARG"
+    local NOTES_FILE PREV_TAG RANGE
+    NOTES_FILE="$(mktemp)"
+    PREV_TAG="$(git describe --tags --abbrev=0 "v$VERSION_ARG^" 2>/dev/null || true)"
+    if [ -n "$PREV_TAG" ]; then RANGE="$PREV_TAG..v$VERSION_ARG"; else RANGE="v$VERSION_ARG"; fi
+    {
+      echo "## 变更"
+      echo ""
+      git log --pretty='- %s' "$RANGE"
+    } > "$NOTES_FILE"
+    gh release create "v$VERSION_ARG" --draft --title "v$VERSION_ARG" --notes-file "$NOTES_FILE" \
+      "Inkpot.dmg" "Inkpot.dmg.sha256" \
+      "Inkpot-v$VERSION_ARG.zip" "Inkpot-v$VERSION_ARG.zip.sha256"
+    rm -f "$NOTES_FILE"
+    echo "draft Release v$VERSION_ARG 已创建，补完更新说明后在 GitHub 上点 Publish。"
+  else
+    echo "下一步（确认无误后手动执行）："
+    echo "  git push origin main"
+    echo "  git push origin v$VERSION_ARG"
+    echo "  gh release create v$VERSION_ARG --draft --title v$VERSION_ARG \\"
+    echo "    Inkpot.dmg Inkpot.dmg.sha256 \\"
+    echo "    Inkpot-v$VERSION_ARG.zip Inkpot-v$VERSION_ARG.zip.sha256"
+  fi
+}
+
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
 fi

@@ -4,6 +4,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   private var isTerminating = false
   // 启动恢复窗口完成前不让系统另开未命名文档；之后点按程序坞图标等仍按系统默认新建。
   private var launchFinished = false
+  private var noticesWindow: ThirdPartyNoticesWindowController?
 
   private var textInput: NSTextView? { NSApp.keyWindow?.firstResponder as? NSTextView }
 
@@ -15,7 +16,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
     if [#selector(exportPDF(_:)), #selector(exportHTML(_:)), #selector(printMarkdown(_:))].contains(menuItem.action) { return editor?.isReady == true }
-    if menuItem.action == #selector(showAbout(_:)) || menuItem.action == #selector(showSettings(_:)) { return true }
+    if [#selector(showAbout(_:)), #selector(showSettings(_:)), #selector(showThirdPartyNotices(_:))].contains(menuItem.action) { return true }
     if menuItem.action == #selector(restoreDrafts(_:)) { return true }
     if menuItem.action == #selector(openFolder(_:)) { return true }
     if menuItem.representedObject is String {
@@ -87,10 +88,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   @objc func showAbout(_ sender: Any?) {
     // 保留上游及主要依赖的许可声明。
     let credits = NSAttributedString(
-      string: "基于 MarkEdit 的编辑器内核分叉开发（MIT 许可）。\n使用 CodeMirror、Lezer、KaTeX、Mermaid 与 Turndown（均为 MIT 许可）。",
+      string: "基于 MarkEdit 的编辑器内核分叉开发（MIT 许可）。\n使用 CodeMirror、Lezer、KaTeX、Mermaid 与 Turndown；完整声明见 Inkpot 菜单中的“第三方许可…”。",
       attributes: [.font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize), .foregroundColor: NSColor.secondaryLabelColor]
     )
     NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
+  }
+
+  @MainActor
+  @objc func showThirdPartyNotices(_ sender: Any?) {
+    do {
+      if noticesWindow == nil { noticesWindow = try ThirdPartyNoticesWindowController() }
+      noticesWindow?.showWindow(sender)
+      noticesWindow?.window?.makeKeyAndOrderFront(sender)
+    } catch {
+      NSApp.presentError(error)
+    }
   }
 
   @objc func restoreDrafts(_ sender: Any?) { recoverDrafts(automatic: false) }
@@ -132,8 +144,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   func applicationDidFinishLaunching(_ notification: Notification) {
     NSApp.activate(ignoringOtherApps: true)
     Task { @MainActor in
-      // 从访达直接打开文件启动时不恢复上次的窗口；否则恢复退出前的窗口、标签与文件夹。
-      if NSDocumentController.shared.documents.isEmpty, let session = DocumentSession.load() {
+      // 启动偏好只控制会话恢复；从访达打开的指定文件与未保存草稿不受影响。
+      if let session = DocumentSession.loadForLaunch(
+        restoringPreviousSession: AppSettings.shared.restorePreviousSession,
+        hasOpenDocuments: !NSDocumentController.shared.documents.isEmpty
+      ) {
         let missing = await DocumentSession.restore(session)
         if !missing.isEmpty {
           let alert = NSAlert()

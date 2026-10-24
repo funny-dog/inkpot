@@ -266,6 +266,8 @@ lines.push('- 许可文本按内容去重（忽略版权行、许可标题与空
 lines.push('- 版权声明提取自各包许可文件；未能提取时以包名代替。');
 lines.push('- 包名带 `\\*` 表示 `package.json` 中声明的直接依赖，其余为传递依赖；同名包若有多个版本（如 katex），按版本分别列出。');
 lines.push('');
+lines.push('## Inkpot 与 MarkEdit 许可', '');
+lines.push(readFileSync(join(repoDir, 'LICENSE'), 'utf8').trim(), '');
 lines.push(
   `共收录 ${packages.length} 个包（直接依赖 ${directCount} 个、传递依赖 ${packages.length - directCount} 个），许可文本去重后共 ${groups.length} 组。`,
   '');

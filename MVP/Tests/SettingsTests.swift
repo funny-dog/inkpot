@@ -47,6 +47,9 @@ final class SettingsTests: XCTestCase {
 
   func testDefaultsAndImageFolderValidation() {
     let settings = AppSettings(defaults: defaults)
+    XCTAssertTrue(settings.restorePreviousSession)
+    XCTAssertFalse(settings.focusMode)
+    XCTAssertFalse(settings.typewriterMode)
     XCTAssertFalse(settings.defaultSourceMode)
     XCTAssertEqual(settings.appearanceMode, .system)
     XCTAssertFalse(settings.autosave)
@@ -57,6 +60,32 @@ final class SettingsTests: XCTestCase {
     XCTAssertEqual(settings.imageFolder, "assets")
     settings.imageFolderInput = "图片 素材"
     XCTAssertEqual(AppSettings(defaults: defaults).imageFolder, "图片 素材")
+  }
+
+  func testStartupPreferencePersistsAndCanBeReenabled() {
+    let settings = AppSettings(defaults: defaults)
+    settings.restorePreviousSession = false
+    XCTAssertFalse(AppSettings(defaults: defaults).restorePreviousSession)
+    settings.restorePreviousSession = true
+    XCTAssertTrue(AppSettings(defaults: defaults).restorePreviousSession)
+  }
+
+  func testDisplayModeSettingsShareMenuPreferencesAndNotifications() {
+    let settings = AppSettings(defaults: defaults)
+    let modes = DisplayModes(defaults: defaults)
+    let notified = expectation(forNotification: DisplayModes.didChange, object: nil)
+    settings.focusMode = true
+    wait(for: [notified], timeout: 1)
+    XCTAssertTrue(modes.focusEnabled)
+    XCTAssertFalse(modes.typewriterEnabled)
+    settings.typewriterMode = true
+    XCTAssertTrue(modes.typewriterEnabled)
+    XCTAssertTrue(AppSettings(defaults: defaults).focusMode)
+    XCTAssertTrue(AppSettings(defaults: defaults).typewriterMode)
+    modes.toggleFocusMode(nil)
+    modes.toggleTypewriterMode(nil)
+    XCTAssertFalse(settings.focusMode)
+    XCTAssertFalse(settings.typewriterMode)
   }
 
   func testImagesStoreInConfiguredFolderWithEscapedMarkdownPath() throws {
@@ -133,7 +162,7 @@ final class SettingsTests: XCTestCase {
     XCTAssertFalse(disabled.suspended)
   }
 
-  func testSettingsMenuItemAndWindow() throws {
+  func testSettingsMenuItemAndWindow() async throws {
     let delegate = AppDelegate()
     let menu = MainMenu.make(delegate: delegate)
     let item = try XCTUnwrap(menu.items[0].submenu?.items.first { $0.title == "设置…" })
@@ -145,6 +174,10 @@ final class SettingsTests: XCTestCase {
     let window = try XCTUnwrap(SettingsWindowController.shared.window)
     XCTAssertTrue(window.isVisible)
     XCTAssertEqual(window.title, "设置")
+    try await waitUntil { window.contentView?.frame.size == NSSize(width: 480, height: 620) }
+    XCTAssertEqual(window.contentView?.frame.width, 480)
+    XCTAssertEqual(window.contentView?.frame.height, 620)
+    XCTAssertLessThanOrEqual(window.frame.height, try XCTUnwrap(window.screen ?? NSScreen.main).visibleFrame.height)
     window.close()
   }
 }

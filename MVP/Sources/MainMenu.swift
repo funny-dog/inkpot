@@ -7,7 +7,7 @@ enum MainMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
       ("Inkpot", [
-        ("关于 Inkpot", "showAbout:", ""), ("", "", ""), ("设置…", "showSettings:", ","), ("", "", ""),
+        ("关于 Inkpot", "showAbout:", ""), ("第三方许可…", "showThirdPartyNotices:", ""), ("", "", ""), ("设置…", "showSettings:", ","), ("", "", ""),
         ("隐藏 Inkpot", "hide:", "h"), ("隐藏其他", "hideOtherApplications:", "h"), ("全部显示", "unhideAllApplications:", ""),
         ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
       ]),
@@ -67,7 +67,7 @@ enum MainMenu {
         }
         let entry = NSMenuItem(title: label, action: NSSelectorFromString(action), keyEquivalent: key.lowercased())
         entry.keyEquivalentModifierMask = key != key.lowercased() || ["orderedList", "bulletList", "taskList", "blockquote"].contains(action) ? [.command, .shift] : [.command]
-        if ["insertImage:", "exportPDF:", "exportHTML:", "printMarkdown:", "showAbout:"].contains(action) { entry.target = delegate }
+        if ["insertImage:", "exportPDF:", "exportHTML:", "printMarkdown:", "showAbout:", "showThirdPartyNotices:"].contains(action) { entry.target = delegate }
         if action == "hideOtherApplications:" { entry.keyEquivalentModifierMask = [.command, .option] }
         if action == "newWindowForTab:" { entry.keyEquivalentModifierMask = [.command, .option] }
         if action == "selectNextTab:" { entry.keyEquivalentModifierMask = [.control] }

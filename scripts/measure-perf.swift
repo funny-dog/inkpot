@@ -17,7 +17,7 @@
 // - 会话安全（AGENTS.md）：退出应用走正常 AppleScript quit（保留系统未保存提示），20 秒没退出
 //   （多半是有未保存文档弹了保存框）立即中止，绝不强制终止；内存测量会临时清空会话恢复记录
 //   （先整体备份 com.erhu.inkpot 域，测完原样写回），用户原有的窗口与标签不受影响。
-// - 临时文档放在 /tmp/inkpot-perf-docs/，测完删除。
+// - 临时文档与偏好备份放在独立临时目录；还原失败时保留目录供手动恢复。
 
 import AppKit
 import CoreGraphics
@@ -52,7 +52,23 @@ struct Options {
 }
 
 let options = Options(Array(CommandLine.arguments.dropFirst()))
+guard options.coldRuns > 0, options.docs > 0 else {
+    fputs("--runs 与 --docs 必须大于 0。\n", stderr)
+    exit(1)
+}
 var report: [String] = []
+
+func memoryStages(_ count: Int) -> [Int] {
+    Array(Set([0, 1, min(4, count), count])).sorted()
+}
+
+if CommandLine.arguments.contains("--self-test") {
+    assert(memoryStages(8) == [0, 1, 4, 8])
+    assert(memoryStages(1) == [0, 1])
+    assert(memoryStages(2) == [0, 1, 2])
+    print("性能采样档位自检通过。")
+    exit(0)
+}
 
 func emit(_ line: String) {
     print(line)
@@ -91,23 +107,25 @@ func waitUntilRunning(timeout: TimeInterval = 15) -> Bool {
     let deadline = Date().addingTimeInterval(timeout)
     while Date() < deadline {
         if isRunning() { return true }
-        Thread.sleep(forTimeInterval: 0.05)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
     }
     return false
 }
 
 /// 正常退出应用；返回 false 表示超时（可能弹了未保存提示），调用方必须中止而不是强杀。
 func quitApp(timeout: TimeInterval = 20) -> Bool {
-    guard runningApp() != nil else { return true }
-    guard let script = NSAppleScript(source: "tell application id \"\(bundleID)\" to quit") else { return false }
-    var error: NSDictionary?
-    _ = script.executeAndReturnError(&error)
+    guard let app = runningApp() else { return true }
     let deadline = Date().addingTimeInterval(timeout)
-    while Date() < deadline {
-        if runningApp() == nil { return true }
-        Thread.sleep(forTimeInterval: 0.2)
+    while !app.isFinishedLaunching, !app.isTerminated, Date() < deadline {
+        RunLoop.current.run(until: Date().addingTimeInterval(0.05))
     }
-    return runningApp() == nil
+    if app.isTerminated { return true }
+    guard app.isFinishedLaunching, app.terminate() else { return false }
+    while Date() < deadline {
+        if app.isTerminated { return true }
+        RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+    }
+    return app.isTerminated
 }
 
 func runApple(_ source: String) -> Bool {
@@ -131,7 +149,7 @@ func waitWindowsStable(timeout: TimeInterval = 15) -> Int {
             unchanged = 0
             last = count
         }
-        Thread.sleep(forTimeInterval: 0.3)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.3))
     }
     return max(last, 0)
 }
@@ -161,7 +179,7 @@ func waitFirstWindow(since t0: DispatchTime, timeout: TimeInterval = 30) -> Doub
         if windowCount() > 0 {
             return Double(DispatchTime.now().uptimeNanoseconds - t0.uptimeNanoseconds) / 1_000_000
         }
-        Thread.sleep(forTimeInterval: 0.01)
+        RunLoop.current.run(until: Date().addingTimeInterval(0.01))
     }
     return nil
 }
@@ -232,16 +250,20 @@ func formatted(_ snap: MemorySnapshot) -> String {
 
 // MARK: - 会话备份与还原（内存测量用）
 
-let stashURL = URL(fileURLWithPath: "/tmp/inkpot-perf-session.plist")
+let tempDirectory = FileManager.default.temporaryDirectory.appendingPathComponent("inkpot-perf-\(UUID().uuidString)")
+let stashURL = tempDirectory.appendingPathComponent("session.plist")
 
 func stashDefaults() -> Bool {
+    do {
+        try FileManager.default.createDirectory(at: tempDirectory, withIntermediateDirectories: true)
+    } catch { return false }
     guard sh("defaults export \(defaultsDomain) '\(stashURL.path)'") != nil else { return false }
     return FileManager.default.fileExists(atPath: stashURL.path)
 }
 
-func restoreDefaults() {
-    _ = sh("defaults import \(defaultsDomain) '\(stashURL.path)'")
-    try? FileManager.default.removeItem(at: stashURL)
+func restoreDefaults() -> Bool {
+    guard sh("defaults import \(defaultsDomain) '\(stashURL.path)'") != nil else { return false }
+    return true
 }
 
 func clearSessionKey() {
@@ -251,7 +273,7 @@ func clearSessionKey() {
 // MARK: - 临时文档
 
 func makeTempDocs(_ count: Int) -> [URL] {
-    let dir = URL(fileURLWithPath: "/tmp/inkpot-perf-docs")
+    let dir = tempDirectory.appendingPathComponent("docs")
     try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
     let sample = """
     # inkpot-perf-PLACEHOLDER
@@ -313,7 +335,7 @@ func measureColdStart(runs: Int) -> Bool {
         }
     }
     let sorted = samples.sorted()
-    let median = sorted[sorted.count / 2]
+    let median = sorted.count % 2 == 0 ? (sorted[sorted.count / 2 - 1] + sorted[sorted.count / 2]) / 2 : sorted[sorted.count / 2]
     emit("- **冷启动中位数：\(String(format: "%.0f", median))ms**（\(runs) 轮，最快 \(String(format: "%.0f", sorted.first!))ms，最慢 \(String(format: "%.0f", sorted.last!))ms）")
     return true
 }
@@ -331,10 +353,13 @@ func measureMemory(docCount: Int) -> Bool {
         return false
     }
     defer {
-        restoreDefaults()
-        try? FileManager.default.removeItem(at: URL(fileURLWithPath: "/tmp/inkpot-perf-docs"))
-        // 恢复用户原会话后把应用带回来
-        if !isRunning() { _ = sh("open -a \(appName)") }
+        // 测试实例退出后再导回偏好，防止它退出时把临时会话写回。
+        if quitApp(), restoreDefaults() {
+            try? FileManager.default.removeItem(at: tempDirectory)
+            _ = sh("open -a \(appName)")
+        } else {
+            emit("- **会话还原未完成，备份与临时文档已保留：\(tempDirectory.path)。请正常退出 Inkpot 后，用 defaults import \(defaultsDomain) '\(stashURL.path)' 还原。**")
+        }
     }
     clearSessionKey()
     _ = sh("open -a \(appName)")
@@ -345,7 +370,7 @@ func measureMemory(docCount: Int) -> Bool {
     Thread.sleep(forTimeInterval: 3.0)
     _ = waitWindowsStable(timeout: 5)
 
-    let stages: [Int] = [0] + stride(from: 1, through: docCount, by: max(docCount / 3, 1)).map { $0 }
+    let stages = memoryStages(docCount)
     var totals: [Double] = []
     var opened = 0
     var files: [URL] = []
@@ -385,7 +410,7 @@ func environmentLines() {
     if let infoPlist = sh("/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' /Applications/\(appName).app/Contents/Info.plist") {
         version = infoPlist.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    if let codesign = sh("codesign -dv /Applications/\(appName).app 2>&1") {
+    if let codesign = sh("codesign -dv --verbose=4 /Applications/\(appName).app 2>&1") {
         let hasRuntime = codesign.contains("runtime")
         let authority = codesign.range(of: #"Authority=(.*)"#, options: .regularExpression).map { String(codesign[$0]) } ?? "ad-hoc"
         sign = "\(hasRuntime ? "hardened runtime" : "无 hardened runtime") / \(authority)"
@@ -425,6 +450,11 @@ default:
 }
 
 if let out = options.out {
-    try? report.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
+    do {
+        try report.joined(separator: "\n").write(toFile: out, atomically: true, encoding: .utf8)
+    } catch {
+        fputs("结果写入失败：\(error.localizedDescription)\n", stderr)
+        exit(1)
+    }
     print("\n（结果已另存：\(out)）")
 }

@@ -28,6 +28,10 @@ final class BasicsTests: XCTestCase {
     let window = menu.items[5].submenu
 
     XCTAssertEqual(try item(app, "关于 Inkpot").action, NSSelectorFromString("showAbout:"))
+    let notices = try item(app, "第三方许可…")
+    XCTAssertEqual(notices.action, NSSelectorFromString("showThirdPartyNotices:"))
+    XCTAssertIdentical(notices.target, delegate)
+    XCTAssertTrue(delegate.validateMenuItem(notices))
     let hide = try item(app, "隐藏 Inkpot")
     XCTAssertEqual(hide.action, NSSelectorFromString("hide:"))
     XCTAssertEqual(hide.keyEquivalent, "h")
@@ -63,6 +67,24 @@ final class BasicsTests: XCTestCase {
       "moveTabToNewWindow:", "mergeAllWindows:", "arrangeInFront:",
     ])
     XCTAssertIdentical(NSApp.windowsMenu, window)
+  }
+
+  func testThirdPartyNoticesLoadsBundledTextInReadOnlyWindow() throws {
+    _ = NSApplication.shared
+    let controller = try ThirdPartyNoticesWindowController()
+    let scroll = try XCTUnwrap(controller.window?.contentView as? NSScrollView)
+    let text = try XCTUnwrap(scroll.documentView as? NSTextView)
+    XCTAssertFalse(text.isEditable)
+    XCTAssertTrue(text.isSelectable)
+    XCTAssertTrue(text.usesFindBar)
+    XCTAssertTrue(text.string.contains("@codemirror/view"))
+    XCTAssertTrue(text.string.contains("Copyright (c) 2023 MarkEdit.app"))
+    XCTAssertTrue(text.string.contains("EPL-2.0"))
+    XCTAssertTrue(text.string.contains("Apache License"))
+  }
+
+  func testThirdPartyNoticesReportsMissingResource() {
+    XCTAssertThrowsError(try ThirdPartyNoticesWindowController(bundle: Bundle(for: NSObject.self)))
   }
 
   func testRecentMenuDisambiguatesNamesOpensAndClears() throws {
