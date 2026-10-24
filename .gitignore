@@ -14,14 +14,7 @@ Local.xcconfig
 /Inkpot*.sha256
 
 ## Local workspace notes and credentials
-/AGENTS.md
-/CLAUDE.md
-/GEMINI.md
-/.codex/
-/.claude/
-/.agents/
 /docs/
-/docs/superpowers/
 /.env
 /.env.*
 !/.env.example
