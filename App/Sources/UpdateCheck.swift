@@ -1,14 +1,26 @@
 import AppKit
 
-/// 只检查正式版本；下载和覆盖安装由用户在发布页完成。
+/// 只查询正式版本；手动检查与可选自动下载共用此入口。
 struct UpdateRelease: Decodable {
   let tagName: String
   let draft: Bool
   let prerelease: Bool
+  let assets: [Asset]?
+
+  struct Asset: Decodable {
+    let name: String
+    let size: Int
+    let browserDownloadURL: URL
+
+    enum CodingKeys: String, CodingKey {
+      case name, size
+      case browserDownloadURL = "browser_download_url"
+    }
+  }
 
   enum CodingKeys: String, CodingKey {
     case tagName = "tag_name"
-    case draft, prerelease
+    case draft, prerelease, assets
   }
 
   static let latestURL = URL(string: "https://github.com/funny-dog/inkpot/releases/latest")
@@ -25,6 +37,10 @@ struct UpdateRelease: Decodable {
   }
 
   static func newerVersion(data: Data, status: Int, current: String) throws -> String? {
+    try newerRelease(data: data, status: status, current: current)?.tagName
+  }
+
+  static func newerRelease(data: Data, status: Int, current: String) throws -> Self? {
     switch status {
     case 200: break
     case 404: throw UpdateError.unavailable
@@ -35,22 +51,30 @@ struct UpdateRelease: Decodable {
     guard !release.draft, !release.prerelease else { throw UpdateError.invalidRelease }
     let latest = try version(release.tagName)
     let installed = try version(current)
-    return installed.lexicographicallyPrecedes(latest) ? release.tagName : nil
+    return installed.lexicographicallyPrecedes(latest) ? release : nil
   }
 
   static func check(current: String) async throws -> String? {
+    let session = makeSession()
+    defer { session.finishTasksAndInvalidate() }
+    return try await fetch(current: current, session: session)?.tagName
+  }
+
+  static func makeSession() -> URLSession {
+    let configuration = URLSessionConfiguration.ephemeral
+    configuration.httpCookieStorage = nil
+    configuration.urlCredentialStorage = nil
+    return URLSession(configuration: configuration)
+  }
+
+  static func fetch(current: String, session: URLSession) async throws -> Self? {
     guard let url = URL(string: "https://api.github.com/repos/funny-dog/inkpot/releases/latest") else { throw URLError(.badURL) }
     var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 15)
     request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
     request.setValue("Inkpot/\(current)", forHTTPHeaderField: "User-Agent")
-    let configuration = URLSessionConfiguration.ephemeral
-    configuration.httpCookieStorage = nil
-    configuration.urlCredentialStorage = nil
-    let session = URLSession(configuration: configuration)
-    defer { session.finishTasksAndInvalidate() }
     let (data, response) = try await session.data(for: request)
     guard let response = response as? HTTPURLResponse else { throw URLError(.badServerResponse) }
-    return try newerVersion(data: data, status: response.statusCode, current: current)
+    return try newerRelease(data: data, status: response.statusCode, current: current)
   }
 }
 

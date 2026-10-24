@@ -63,45 +63,6 @@
     });
   }
 
-  // 复制 Homebrew 安装命令
-  var brewCopy = document.querySelector(".dl__copy");
-  if (brewCopy) {
-    var resetCopy = function () {
-      setTimeout(function () {
-        brewCopy.textContent = "复制";
-        brewCopy.classList.remove("is-copied");
-      }, 1600);
-    };
-    var markCopied = function () {
-      brewCopy.textContent = "已复制";
-      brewCopy.classList.add("is-copied");
-      resetCopy();
-    };
-    var fallbackCopy = function () {
-      var textarea = document.createElement("textarea");
-      textarea.value = brewCopy.parentElement.querySelector("code").textContent;
-      textarea.setAttribute("readonly", "");
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      try {
-        if (document.execCommand("copy")) { markCopied(); } else { textarea.setSelectionRange(0, textarea.value.length); }
-      } catch (err) {
-        textarea.setSelectionRange(0, textarea.value.length);
-      }
-      document.body.removeChild(textarea);
-    };
-    brewCopy.addEventListener("click", function () {
-      var command = brewCopy.parentElement.querySelector("code").textContent;
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(command).then(markCopied, fallbackCopy);
-      } else {
-        fallbackCopy();
-      }
-    });
-  }
-
   fetch("/api/release", { headers: { Accept: "application/json" } })
     .then(function (resp) { return resp.ok ? resp.json() : null; })
     .then(function (data) { if (data && data.tag_name) applyRelease(data); else hideVersionMeta(); })

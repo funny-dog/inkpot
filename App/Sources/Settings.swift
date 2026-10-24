@@ -312,10 +312,18 @@ struct GeneralSettingsView: View {
 
 /// 关于：版本信息与第三方许可。
 struct AboutSettingsView: View {
+  @ObservedObject private var updates = AutomaticUpdates.shared
+
   var body: some View {
     Form {
       Section(L10n.text("关于")) {
         LabeledContent(L10n.text("版本"), value: ThirdPartyNotices.version)
+        Toggle(L10n.text("自动检查更新并下载"), isOn: $updates.enabled)
+        Caption(L10n.text("开启时立即检查，之后每天最多检查一次。安装包通过 SHA-256 校验后保存在应用缓存中；请正常退出并处理未保存文档后手动覆盖安装。"))
+        if !updates.status.isEmpty { Caption(updates.status) }
+        if updates.downloadedURL != nil {
+          Button(L10n.text("在 Finder 中显示安装包")) { updates.revealDownload() }
+        }
         LabeledContent(L10n.text("第三方许可")) {
           Button(L10n.text("查看…")) { ThirdPartyNotices.show() }
         }
@@ -411,10 +419,8 @@ struct AppearanceSettingsView: View {
         Caption(L10n.text("也可使用 显示 → 实际大小 ⌘0／放大 ⌘+／缩小 ⌘−，所有窗口同步。"))
       }
       Section {
-        FontRow(title: L10n.text("正文"), defaultTitle: L10n.text("系统默认"), families: EditorFonts.bodyFamilies,
-                family: $settings.bodyFontFamily, size: $settings.bodyFontSize)
-        FontRow(title: L10n.text("代码"), defaultTitle: L10n.text("默认（Menlo）"), families: EditorFonts.codeFamilies,
-                family: $settings.codeFontFamily, size: $settings.codeFontSize)
+        FontRow(title: L10n.text("正文"), defaultTitle: L10n.text("系统默认"), families: EditorFonts.bodyFamilies, family: $settings.bodyFontFamily, size: $settings.bodyFontSize)
+        FontRow(title: L10n.text("代码"), defaultTitle: L10n.text("默认（Menlo）"), families: EditorFonts.codeFamilies, family: $settings.codeFontFamily, size: $settings.codeFontSize)
         VStack(alignment: .leading, spacing: 6) {
           Text(L10n.text("落笔成文，墨在纸上。")).font(Font(EditorFonts.shared.font(code: false)))
           Text("let ink = \"Inkpot\"").font(Font(EditorFonts.shared.font(code: true))).foregroundStyle(.secondary)

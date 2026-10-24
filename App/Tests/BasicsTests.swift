@@ -82,7 +82,9 @@ final class BasicsTests: XCTestCase {
     XCTAssertEqual(display?.items.contains { $0.isHidden && $0.keyEquivalent == "=" && $0.allowsKeyEquivalentWhenHidden }, true)
     XCTAssertEqual(try item(file, "重命名…").action, NSSelectorFromString("renameFile:"))
     let dock = try XCTUnwrap(delegate.applicationDockMenu(NSApp))
-    XCTAssertEqual(dock.items.map(\.title), [L10n.text("新建"), L10n.text("打开…")])
+    XCTAssertEqual(dock.items.map(\.title), [L10n.text("新建"), L10n.text("打开…"), L10n.text("打开文件夹…")])
+    XCTAssertEqual(dock.items.last?.action, #selector(AppDelegate.openFolder(_:)))
+    XCTAssertIdentical(dock.items.last?.target, delegate)
     // 没有当前编辑器（其他应用在前台）时程序坞菜单也必须可用。
     XCTAssertTrue(dock.items.allSatisfy { delegate.validateMenuItem($0) })
 

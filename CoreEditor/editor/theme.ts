@@ -35,9 +35,6 @@ const darkTheme = EditorView.theme({
   '&.cm-inkpot-dark .cm-inkpot-search-nav button': { color: '#dfe1e5' },
   '&.cm-inkpot-dark .cm-inkpot-search-nav button + button': { borderLeftColor: 'rgba(255, 255, 255, 0.12)' },
   '&.cm-inkpot-dark .cm-inkpot-search [role=status]': { color: '#9a9da4' },
-  // welcome.ts 空文档快捷键提示。
-  '&.cm-inkpot-dark .cm-inkpot-welcome dt': { backgroundColor: '#33353a', color: '#c8cbd2' },
-  '&.cm-inkpot-dark .cm-inkpot-welcome dd': { color: '#9a9da4' },
   '&.cm-inkpot-dark .cm-searchMatch': { backgroundColor: 'rgba(255, 212, 0, 0.25)' },
   '&.cm-inkpot-dark .cm-searchMatch-selected': { backgroundColor: 'rgba(255, 171, 64, 0.45)' },
   // writing.ts 源码高亮配色的深色版由 darkHighlightStyle 提供，此处不重复。

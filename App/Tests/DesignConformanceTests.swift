@@ -57,17 +57,13 @@ final class DesignConformanceTests: XCTestCase {
     XCTAssertEqual(number(layout["padTop"]), 44)
     XCTAssertEqual(number(layout["padLeft"]), 48)
 
-    // 空文档：占位文字与底部快捷键提示条（距底 56px，四项）。
+    // 新建空文档只保留写作占位文字，隐藏快捷键提示与侧栏。
     let empty = try await json(editor, """
-      const hints = document.querySelector('.cm-inkpot-welcome');
-      const editorBox = document.querySelector('.cm-editor').getBoundingClientRect();
-      return { placeholder: document.querySelector('.cm-placeholder')?.textContent ?? '', shown: getComputedStyle(hints).display !== 'none',
-        bottom: editorBox.bottom - hints.getBoundingClientRect().bottom, keys: [...hints.querySelectorAll('dt')].map(node => node.textContent) };
+      return { placeholder: document.querySelector('.cm-placeholder')?.textContent ?? '', hints: document.querySelector('.cm-inkpot-welcome') !== null };
       """)
     XCTAssertEqual(empty["placeholder"] as? String, L10n.language == "en" ? "Start writing…" : "开始写作…")
-    XCTAssertEqual(empty["shown"] as? Bool, true)
-    XCTAssertEqual(number(empty["bottom"]), 56, accuracy: 1)
-    XCTAssertEqual(empty["keys"] as? [String], ["⌘O", "⌥⌘O", "⇧⌘M", "⌘,"])
+    XCTAssertEqual(empty["hints"] as? Bool, false)
+    XCTAssertTrue(controller.sidebarState.collapsed)
 
     // 查找栏：输入框在左、“完成”贴右，选项与箭头组在中间，高度与圆角按稿。
     editor.performCommand("find")
@@ -105,6 +101,7 @@ final class DesignConformanceTests: XCTestCase {
     defer { document.close() }
     let window = try XCTUnwrap(document.windowControllers.first?.window)
     let controller = try XCTUnwrap(window.contentViewController as? DocumentViewController)
+    controller.toggleContent(files: false)
     controller.view.layoutSubtreeIfNeeded()
     let sidebar = try XCTUnwrap(controller.splitViewItems.first?.viewController as? SidebarViewController)
     let tabs = sidebar.tabs.convert(sidebar.tabs.bounds, to: nil)

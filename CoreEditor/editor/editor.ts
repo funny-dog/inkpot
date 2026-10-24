@@ -20,7 +20,6 @@ import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 import { applyFonts, EditorFonts } from './fonts';
 import { richPaste } from './paste';
-import { welcomeHints } from './welcome';
 import { searchPanelTheme } from './search';
 import { pairingCompartment, pairingPreferences, PairingPreferences } from './typing';
 import { indentBindings, indentCompartment, indentWidth } from './indent';
@@ -123,7 +122,6 @@ window.inkpot = {
           EditorView.contentAttributes.of({ 'aria-label': t('Markdown 文本编辑器'), spellcheck: 'true' }),
           spellingExclusions,
           placeholder(t('开始写作…')),
-          welcomeHints,
           EditorView.updateListener.of(update => {
             if (update.docChanged) {
               revision++;
@@ -138,6 +136,7 @@ window.inkpot = {
             // 正文限制在约 45 个汉字宽并居中；em 随正文/代码字号缩放，窄窗口时退回铺满。
             '.cm-content': { padding: '44px 48px', minHeight: '100%', maxWidth: 'calc(45em + 96px)', margin: '0 auto' },
             '&.cm-focused': { outline: 'none' },
+            '.cm-placeholder': { color: '#a1a1a6' },
             '.cm-panels': { backgroundColor: '#f7f7f8', color: '#1d1d1f' },
             '.cm-panels.cm-panels-top': { borderBottom: '1px solid rgba(0, 0, 0, 0.09)' },
             ...searchPanelTheme,

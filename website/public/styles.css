@@ -635,40 +635,6 @@ kbd {
 
 .dl__desc { color: rgba(242, 240, 234, 0.75); margin-bottom: 30px; }
 
-.dl__brew {
-  display: flex;
-  width: fit-content;
-  align-items: center;
-  gap: 12px;
-  margin: 18px auto 0;
-  padding: 11px 18px;
-  border-radius: 12px;
-  background: rgba(242, 240, 234, 0.1);
-  border: 1px solid rgba(242, 240, 234, 0.2);
-}
-
-.dl__brew code {
-  font-family: var(--mono);
-  font-size: 13.5px;
-  color: #f2f0ea;
-}
-
-.dl__copy {
-  font-family: var(--sans);
-  font-size: 12.5px;
-  color: rgba(242, 240, 234, 0.85);
-  background: transparent;
-  border: 1px solid rgba(242, 240, 234, 0.35);
-  border-radius: 8px;
-  padding: 3px 10px;
-  cursor: pointer;
-  transition: color 0.2s ease, border-color 0.2s ease;
-}
-
-.dl__copy:hover { color: #fff; border-color: rgba(242, 240, 234, 0.6); }
-
-.dl__copy.is-copied { color: #fff; border-color: #fff; }
-
 .dl__meta {
   margin-top: 20px;
   font-size: 13.5px;

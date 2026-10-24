@@ -8,10 +8,13 @@ enum DocumentTabs {
     if let folder = (parent.contentViewController as? DocumentViewController)?.files.root?.entry.url,
        let container = window.contentViewController as? DocumentViewController {
       container.files.openFolder(folder)
-      if (parent.contentViewController as? DocumentViewController)?.filesVisible == true { container.toggleContent(files: true) }
+      if document.fileURL != nil, (parent.contentViewController as? DocumentViewController)?.filesVisible == true { container.toggleContent(files: true) }
     }
     parent.addTabbedWindow(window, ordered: .above)
     parent.tabGroup?.selectedWindow = window
+    if document.fileURL == nil, let container = window.contentViewController as? DocumentViewController {
+      container.applySidebarState(collapsed: true, showingFiles: false, width: 240)
+    }
   }
 
   static func open(

@@ -48,6 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   }
 
   @objc func openFolder(_ sender: Any?) {
+    NSApp.activate(ignoringOtherApps: true)
     if NSApp.keyWindow?.contentViewController as? DocumentViewController == nil {
       NSDocumentController.shared.newDocument(nil)
     }
@@ -107,10 +108,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     UpdateChecker.shared.check()
   }
 
-  /// 程序坞右键菜单：新建与打开，与文件菜单行为一致。
+  /// 程序坞右键菜单：新建、打开文件与文件夹，与文件菜单行为一致。
   func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
     let menu = NSMenu()
-    for (title, action) in [("新建", #selector(newDocument(_:))), ("打开…", #selector(openFromDock(_:)))] {
+    for (title, action) in [("新建", #selector(newDocument(_:))), ("打开…", #selector(openFromDock(_:))), ("打开文件夹…", #selector(openFolder(_:)))] {
       let item = NSMenuItem(title: L10n.text(title), action: action, keyEquivalent: "")
       item.target = self
       menu.addItem(item)
@@ -181,6 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
       }
       launchFinished = true
       recoverDrafts(automatic: true)
+      AutomaticUpdates.shared.start()
     }
   }
 

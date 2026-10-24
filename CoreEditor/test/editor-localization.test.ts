@@ -4,7 +4,6 @@ import { EditorView } from '@codemirror/view';
 import { openSearchPanel } from '@codemirror/search';
 import { writingExtensions } from '../editor/writing';
 import { liveEditing } from '../editor/live';
-import { welcomeHints } from '../editor/welcome';
 import { editorLanguage, setEditorLanguage, t } from '../editor/localization';
 import { documentHTML } from '../editor/export';
 import { tableCommands } from '../editor/table';
@@ -17,7 +16,7 @@ afterEach(() => {
 
 function editor(text: string) {
   const view = new EditorView({ parent: document.body, state: EditorState.create({
-    doc: text, extensions: [...writingExtensions, ...liveEditing, welcomeHints],
+    doc: text, extensions: [...writingExtensions, ...liveEditing],
   }) });
   views.push(view);
   return view;
@@ -27,11 +26,9 @@ describe('编辑器双语界面', () => {
   test.each([
     ['zh-Hans', '开始写作…', '查找文本', '完成', 'Markdown 表格', '第 1 行，第 1 列'],
     ['en', 'Start writing…', 'Find', 'Done', 'Markdown table', 'Row 1, column 1'],
-  ])('%s 的查找栏、快捷键和表格无障碍文案', (language, placeholder, find, done, table, cell) => {
+  ])('%s 的查找栏和表格无障碍文案', (language, placeholder, find, done, table, cell) => {
     setEditorLanguage(language);
     expect(t('开始写作…')).toBe(placeholder);
-    const empty = editor('');
-    expect(empty.dom.querySelector('.cm-inkpot-welcome dd')?.textContent).toBe(language === 'en' ? 'Open File' : '打开文件');
     const text = '\n\n| 标题 | English |\n| --- | --- |\n| 中文 | unchanged |\n\n';
     const view = editor(text);
     expect(view.dom.querySelector('table')?.getAttribute('aria-label')).toBe(table);

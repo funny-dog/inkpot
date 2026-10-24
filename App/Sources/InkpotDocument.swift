@@ -69,6 +69,7 @@ final class InkpotDocument: NSDocument {
     window.collectionBehavior.insert(.fullScreenPrimary)
     let controller = DocumentViewController(editor: makeEditor())
     controller.view.setFrameSize(window.contentLayoutRect.size)
+    if fileURL == nil { controller.applySidebarState(collapsed: true, showingFiles: false, width: 240) }
     window.contentViewController = controller
     window.toolbar = controller.makeToolbar()
     window.toolbarStyle = .unified

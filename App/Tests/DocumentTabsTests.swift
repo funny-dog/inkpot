@@ -31,10 +31,27 @@ final class DocumentTabsTests: XCTestCase {
     XCTAssertIdentical(next.windowController?.document, second)
     let inherited = try XCTUnwrap(next.contentViewController as? DocumentViewController)
     XCTAssertEqual(inherited.files.root?.entry.url, root.standardizedFileURL)
-    XCTAssertTrue(inherited.filesVisible)
+    XCTAssertTrue(inherited.sidebarState.collapsed)
     XCTAssertEqual(parent.windowController?.responds(to: #selector(NSResponder.newWindowForTab(_:))), true)
     second.close()
     XCTAssertTrue(NSDocumentController.shared.documents.contains { $0 === first })
+  }
+
+  func testAdoptingFolderKeepsNewSidebarCollapsedAndSavedFileSidebarVisible() throws {
+    let (first, parent) = try document()
+    let (second, next) = try document()
+    defer { first.close(); second.close() }
+    let container = try XCTUnwrap(parent.contentViewController as? DocumentViewController)
+    container.files.openFolder(FileManager.default.temporaryDirectory)
+    container.toggleContent(files: true)
+    parent.addTabbedWindow(next, ordered: .above)
+    DocumentFolders.adopt(second)
+    let inherited = try XCTUnwrap(next.contentViewController as? DocumentViewController)
+    XCTAssertNotNil(inherited.files.root)
+    XCTAssertTrue(inherited.sidebarState.collapsed)
+    second.fileURL = FileManager.default.temporaryDirectory.appendingPathComponent("笔记.md")
+    DocumentTabs.attach(second, to: parent)
+    XCTAssertTrue(inherited.filesVisible)
   }
 
   func testOpeningExistingTabDoesNotMoveItAndReadFailureLeavesCurrentDocument() async throws {

@@ -61,7 +61,7 @@ enum DocumentFolders {
       if !controller.filesVisible { controller.toggleContent(files: true) }
     } else if let sibling, let folder = sibling.files.root?.entry.url {
       controller.files.openFolder(folder)
-      if sibling.filesVisible, !controller.filesVisible { controller.toggleContent(files: true) }
+      if document.fileURL != nil, sibling.filesVisible, !controller.filesVisible { controller.toggleContent(files: true) }
     }
   }
 }

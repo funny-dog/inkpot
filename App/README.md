@@ -4,7 +4,7 @@
 
 ## 功能概览
 
-界面支持简体中文与英文，默认跟随 macOS 应用语言；可在系统设置 → 通用 → 语言与地区 → 应用程序中单独选择 Inkpot 的语言，正常退出并重新打开后生效。界面语言不修改 Markdown 内容或输入法；开发约定见 [本地化说明](../docs/localization.md)。
+界面支持简体中文与英文，默认跟随 macOS 应用语言；可在系统设置 → 通用 → 语言与地区 → 应用程序中单独选择 Inkpot 的语言，正常退出并重新打开后生效。界面语言不修改 Markdown 内容或输入法。
 
 Inkpot 核心功能覆盖日常写作、富格式呈现与文档管理：
 
@@ -225,7 +225,9 @@ xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot \
 - `scripts/release.sh`：自动化发布前检查、版本号递增与发布校验。
 - `scripts/setup-signing.sh`：本地自签名证书配置工具。
 
-下载入口固定为 [GitHub 最新正式版本](https://github.com/funny-dog/inkpot/releases/latest)。应用仅在点击“检查更新…”时查询版本，不自动下载或替换安装；升级前正常退出并处理未保存文档，再校验安装包、覆盖 `/Applications/Inkpot.app`。仓库私有或暂无正式 Release 时会提示无法查询。发布操作与人工门槛见 [发布步骤](../docs/publishing.md)。
+下载入口固定为 [GitHub 最新正式版本](https://github.com/funny-dog/inkpot/releases/latest)。设置 → 关于中的“自动检查更新并下载”默认开启，可取消勾选并记住选择；开启时立即检查，之后在启动时及应用持续运行期间每天最多检查一次。自动下载正式 Release 的 `Inkpot.dmg` 与校验文件，校验通过后保存在 `~/Library/Caches/com.erhu.inkpot/Updates/<版本>/Inkpot.dmg`，可从关于页在 Finder 中显示；未通过校验的下载不会替换缓存中的安装包。关闭选项会取消正在进行的自动下载。
+
+应用不自动安装或替换自身；升级前正常退出并处理未保存文档，再手动覆盖 `/Applications/Inkpot.app`。Homebrew 安装暂未提供。菜单“检查更新…”仍可手动查询并前往 `latest` 下载页；仓库私有、暂无正式 Release 或网络失败时，自动检查只在关于页显示状态，不弹窗打断写作。
 
 ## 版权与许可
 

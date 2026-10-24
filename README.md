@@ -15,15 +15,7 @@ Inkpot 是面向 macOS 的轻量 Markdown 编辑器。基于 MarkEdit 的成熟�
 
 ## 下载与安装
 
-**Homebrew**（随首次正式发布启用）：
-
-```bash
-brew install --cask funny-dog/tap/inkpot
-```
-
-Cask 安装 GitHub 正式 Release 并校验 SHA-256；应用为自签名、未经 Apple 公证，安装后会移除本应用的隔离属性，免去首次打开的手动放行。更新交给 Homebrew 管理：`brew update && brew upgrade --cask inkpot`（应用内「检查更新…」只跳转发布页，不安装更新；曾手动覆盖安装时执行一次升级命令即可对齐版本记录）。卸载与 zap 清理见 [tap 仓库说明](https://github.com/funny-dog/homebrew-tap)。
-
-**DMG／ZIP**：从 [GitHub 最新正式版本](https://github.com/funny-dog/inkpot/releases/latest) 下载，校验 `.sha256` 后安装；仓库私有时需有访问权限的账号。自签名安装首次打开若被拦截，到「系统设置 → 隐私与安全性」点「仍要打开」。升级前正常退出并处理未保存文档，校验安装包后手动覆盖安装。
+**DMG／ZIP**：从 [GitHub 最新正式版本](https://github.com/funny-dog/inkpot/releases/latest) 下载，校验 `.sha256` 后安装；仓库私有时需有访问权限的账号。自签名安装首次打开若被拦截，到「系统设置 → 隐私与安全性」点「仍要打开」。升级前正常退出并处理未保存文档，校验安装包后手动覆盖安装。应用可自动下载更新包，但不自动安装；Homebrew 安装暂未提供。
 
 ## 构建与验证
 

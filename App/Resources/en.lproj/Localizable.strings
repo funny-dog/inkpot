@@ -280,3 +280,12 @@
 "默认（Menlo）" = "Default (Menlo)";
 "%ld 点" = "%ld pt";
 "%@字号" = "%@ Size";
+"自动检查更新并下载" = "Automatically check for and download updates";
+"开启时立即检查，之后每天最多检查一次。安装包通过 SHA-256 校验后保存在应用缓存中；请正常退出并处理未保存文档后手动覆盖安装。" = "Check immediately when enabled, then at most once a day. Downloads are verified with SHA-256 and saved in the app cache. Quit normally and save any unsaved documents before installing manually.";
+"在 Finder 中显示安装包" = "Show Installer in Finder";
+"此版本缺少有效的 DMG 安装包或 SHA-256 校验文件，请前往下载页手动获取。" = "This release is missing a valid DMG or SHA-256 checksum file. Please download it manually from the releases page.";
+"安装包校验失败，未保留此次下载。请稍后重试或前往下载页。" = "The download failed verification and was discarded. Try again later or visit the download page.";
+"新版本 %@ 已下载" = "Update %@ downloaded";
+"正在检查更新…" = "Checking for updates…";
+"正在下载新版本 %@…" = "Downloading update %@…";
+"自动更新失败：%@" = "Automatic update failed: %@";
