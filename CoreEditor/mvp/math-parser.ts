@@ -3,7 +3,7 @@
 
 import { StreamLanguage } from '@codemirror/language';
 import { stexMath } from '@codemirror/legacy-modes/mode/stex';
-import { Input, NodeProp, ParseWrapper, Tree, TreeFragment, parseMixed } from '@lezer/common';
+import { Input, NestedParse, NodeProp, ParseWrapper, SyntaxNodeRef, Tree, TreeFragment, parseMixed } from '@lezer/common';
 import { tags, Tag } from '@lezer/highlight';
 import { BlockContext, Element, Line, MarkdownConfig, MarkdownParser } from '@lezer/markdown';
 
@@ -30,78 +30,92 @@ class MathInput implements Input {
   read(from: number, to: number) { return this.input.read(from, to); }
 }
 
-const parseTeX = parseMixed(node => {
-  if (node.name !== blockMathTagName) {
-    return null;
-  }
+// 代码块等其他嵌套语言并入同一次 parseMixed 遍历：每多一个包装，大文档每次增量解析就要多走一遍整棵树。
+export type BlockNest = (node: SyntaxNodeRef, input: Input) => NestedParse | null;
 
-  const overlay = node.node.getChildren(blockMathContentTagName).map(({ from, to }) => ({ from, to }));
-  return overlay.length ? { parser: texLanguage.parser, overlay } : null;
-});
+function nestTeX(otherNests: readonly BlockNest[]) {
+  return parseMixed((node, input) => {
+    if (node.name !== blockMathTagName) {
+      for (const nest of otherNests) {
+        const nested = nest(node, input);
+        if (nested !== null) {
+          return nested;
+        }
+      }
+      return null;
+    }
 
-const wrapMath: ParseWrapper = (inner, input, fragments, ranges) => {
-  if (input instanceof MathInput && input.ranges === ranges) {
-    return inner;
-  }
+    const overlay = node.node.getChildren(blockMathContentTagName).map(({ from, to }) => ({ from, to }));
+    return overlay.length ? { parser: texLanguage.parser, overlay } : null;
+  });
+}
 
-  const state: MathParseState = { rejected: new Set(), firstStart: Infinity, restart: undefined };
-  const retryInput = new MathInput(input, ranges);
-  let parse = inner;
-  let initialized = false;
+const wrapMathWith = (otherNests: readonly BlockNest[]): ParseWrapper => {
+  const parseTeX = nestTeX(otherNests);
+  return (inner, input, fragments, ranges) => {
+    if (input instanceof MathInput && input.ranges === ranges) {
+      return inner;
+    }
 
-  return parseTeX({
-    advance() {
-      const previous = activeParse;
-      activeParse = state;
-      try {
-        if (!initialized) {
-          initialized = true;
-          const reusable = fragments.flatMap(fragment => {
-            const dependency = fragment.tree.prop(firstMathStart);
-            if (dependency === undefined) {
-              return [fragment];
+    const state: MathParseState = { rejected: new Set(), firstStart: Infinity, restart: undefined };
+    const retryInput = new MathInput(input, ranges);
+    let parse = inner;
+    let initialized = false;
+
+    return parseTeX({
+      advance() {
+        const previous = activeParse;
+        activeParse = state;
+        try {
+          if (!initialized) {
+            initialized = true;
+            const reusable = fragments.flatMap(fragment => {
+              const dependency = fragment.tree.prop(firstMathStart);
+              if (dependency === undefined) {
+                return [fragment];
+              }
+
+              const to = Math.min(fragment.to, dependency.start - fragment.offset);
+              return to > fragment.from
+                ? [new TreeFragment(fragment.from, to, fragment.tree, fragment.offset, fragment.openStart, true)]
+                : [];
+            });
+
+            const dependency = fragments.map(fragment => fragment.tree.prop(firstMathStart)).find(value => value !== undefined);
+            if (dependency) {
+              const stoppedAt = parse.stoppedAt;
+              parse = dependency.parser.createParse(retryInput, reusable, ranges);
+              if (stoppedAt !== null) {
+                parse.stopAt(stoppedAt);
+              }
             }
+          }
 
-            const to = Math.min(fragment.to, dependency.start - fragment.offset);
-            return to > fragment.from
-              ? [new TreeFragment(fragment.from, to, fragment.tree, fragment.offset, fragment.openStart, true)]
-              : [];
-          });
-
-          const dependency = fragments.map(fragment => fragment.tree.prop(firstMathStart)).find(value => value !== undefined);
-          if (dependency) {
+          const tree = parse.advance();
+          if (tree && state.restart) {
             const stoppedAt = parse.stoppedAt;
-            parse = dependency.parser.createParse(retryInput, reusable, ranges);
+            parse = state.restart.createParse(retryInput, [], ranges);
+            state.restart = undefined;
             if (stoppedAt !== null) {
               parse.stopAt(stoppedAt);
             }
-          }
-        }
 
-        const tree = parse.advance();
-        if (tree && state.restart) {
-          const stoppedAt = parse.stoppedAt;
-          parse = state.restart.createParse(retryInput, [], ranges);
-          state.restart = undefined;
-          if (stoppedAt !== null) {
-            parse.stopAt(stoppedAt);
+            return null;
           }
 
-          return null;
+          return tree && state.parser && Number.isFinite(state.firstStart)
+            ? new Tree(tree.type, tree.children, tree.positions, tree.length,
+              [...tree.propValues, [firstMathStart, { start: state.firstStart - ranges[0].from, parser: state.parser }]])
+            : tree;
+        } finally {
+          activeParse = previous;
         }
-
-        return tree && state.parser && Number.isFinite(state.firstStart)
-          ? new Tree(tree.type, tree.children, tree.positions, tree.length,
-            [...tree.propValues, [firstMathStart, { start: state.firstStart - ranges[0].from, parser: state.parser }]])
-          : tree;
-      } finally {
-        activeParse = previous;
-      }
-    },
-    get parsedPos() { return parse.parsedPos; },
-    get stoppedAt() { return parse.stoppedAt; },
-    stopAt(pos) { parse.stopAt(pos); },
-  }, input, fragments, ranges);
+      },
+      get parsedPos() { return parse.parsedPos; },
+      get stoppedAt() { return parse.stoppedAt; },
+      stopAt(pos) { parse.stopAt(pos); },
+    }, input, fragments, ranges);
+  };
 };
 
 function startsMath(cx: BlockContext, line: Line) {
@@ -134,7 +148,7 @@ function closingDelimiter(text: string, from: number) {
 /**
  * Markdown block math with required closing delimiters.
  */
-export const markdownMathExtension: MarkdownConfig = {
+const markdownMathBase: MarkdownConfig = {
   defineNodes: [
     { name: blockMathTagName, block: true, style: mathTag },
     { name: blockMathContentTagName },
@@ -198,5 +212,11 @@ export const markdownMathExtension: MarkdownConfig = {
     },
     endLeaf: startsMath,
   }],
-  wrap: wrapMath,
 };
+
+/** 块级公式，并把其他块级嵌套语言（如代码块着色）并入同一次混合解析。 */
+export function markdownMathWith(...otherNests: BlockNest[]): MarkdownConfig {
+  return { ...markdownMathBase, wrap: wrapMathWith(otherNests) };
+}
+
+export const markdownMathExtension = markdownMathWith();

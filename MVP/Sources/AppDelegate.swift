@@ -2,6 +2,8 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   private var isTerminating = false
+  // 启动恢复窗口完成前不让系统另开未命名文档；之后点按程序坞图标等仍按系统默认新建。
+  private var launchFinished = false
 
   private var textInput: NSTextView? { NSApp.keyWindow?.firstResponder as? NSTextView }
 
@@ -13,7 +15,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
     if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
     if [#selector(exportPDF(_:)), #selector(exportHTML(_:)), #selector(printMarkdown(_:))].contains(menuItem.action) { return editor?.isReady == true }
-    if menuItem.action == #selector(showAbout(_:)) { return true }
+    if menuItem.action == #selector(showAbout(_:)) || menuItem.action == #selector(showSettings(_:)) { return true }
     if menuItem.action == #selector(restoreDrafts(_:)) { return true }
     if menuItem.action == #selector(openFolder(_:)) { return true }
     if menuItem.representedObject is String {
@@ -51,6 +53,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     (NSApp.keyWindow?.contentViewController as? DocumentViewController)?.openFolder(sender)
   }
 
+  /// 打开最近的文件夹：在当前窗口的文件树中打开，没有文档窗口时先新建。
+  func openFolder(at url: URL) {
+    if NSApp.keyWindow?.contentViewController as? DocumentViewController == nil {
+      NSDocumentController.shared.newDocument(nil)
+    }
+    guard let controller = NSApp.keyWindow?.contentViewController as? DocumentViewController
+      ?? NSDocumentController.shared.documents.last?.windowControllers.first?.window?.contentViewController as? DocumentViewController else { return }
+    controller.files.openFolder(url)
+    if !controller.filesVisible { controller.toggleContent(files: true) }
+  }
+
   @MainActor
   @objc func insertImage(_ sender: Any?) {
     (NSDocumentController.shared.currentDocument as? MVPDocument)?.images.choose()
@@ -81,6 +94,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   }
 
   @objc func restoreDrafts(_ sender: Any?) { recoverDrafts(automatic: false) }
+
+  // 设置窗口在第一次打开时才创建，不增加启动开销。
+  @MainActor
+  @objc func showSettings(_ sender: Any?) { SettingsWindowController.shared.showSettings(sender) }
 
   private func recoverDrafts(automatic: Bool) {
     do {
@@ -113,16 +130,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   }
 
   func applicationDidFinishLaunching(_ notification: Notification) {
-    if NSDocumentController.shared.documents.isEmpty {
-      NSDocumentController.shared.newDocument(nil)
-    }
     NSApp.activate(ignoringOtherApps: true)
-    recoverDrafts(automatic: true)
+    Task { @MainActor in
+      // 从访达直接打开文件启动时不恢复上次的窗口；否则恢复退出前的窗口、标签与文件夹。
+      if NSDocumentController.shared.documents.isEmpty, let session = DocumentSession.load() {
+        let missing = await DocumentSession.restore(session)
+        if !missing.isEmpty {
+          let alert = NSAlert()
+          alert.messageText = "部分文件或文件夹未能恢复"
+          alert.informativeText = "以下项目可能已被移走或删除：\n" + missing.joined(separator: "\n")
+          alert.runModal()
+        }
+      }
+      if NSDocumentController.shared.documents.isEmpty {
+        NSDocumentController.shared.newDocument(nil)
+      }
+      launchFinished = true
+      recoverDrafts(automatic: true)
+    }
   }
+
+  func applicationShouldOpenUntitledFile(_ sender: NSApplication) -> Bool { launchFinished }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
     guard !isTerminating else { return .terminateLater }
     isTerminating = true
+    // 关闭文档前记录窗口与标签；取消退出时下次退出会重新记录。
+    DocumentSession.save(DocumentSession.capture())
     Task { @MainActor in
       do {
         // 退出前也要等待 WebKit，避免最后一次输入尚未通知原生窗口就被关闭。

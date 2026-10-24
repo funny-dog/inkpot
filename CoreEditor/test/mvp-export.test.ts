@@ -95,4 +95,15 @@ describe('MVP 导出', () => {
     const empty = editor('正文没有标题');
     expect(await documentHTML(empty.view, 'html')).toContain('<title>正文没有标题</title>');
   });
+
+  test('代码着色在首次导出时加载语言并内联为颜色', async () => {
+    const { view } = editor('```swift\nlet 名称 = "值" // 注释\n```');
+    const html = await documentHTML(view, 'html');
+    const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
+    const keyword = doc.querySelector<HTMLElement>('.cm-mvp-token-keyword');
+    expect(keyword?.textContent).toBe('let');
+    expect(keyword?.style.color).toBe('rgb(166, 38, 164)');
+    expect(doc.querySelector<HTMLElement>('.cm-mvp-token-string')?.style.color).toBe('rgb(80, 161, 79)');
+    expect(doc.querySelector<HTMLElement>('.cm-mvp-token-comment')?.style.fontStyle).toBe('italic');
+  });
 });

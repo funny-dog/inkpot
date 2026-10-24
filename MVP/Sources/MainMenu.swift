@@ -7,13 +7,13 @@ enum MainMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
       ("Inkpot", [
-        ("关于 Inkpot", "showAbout:", ""), ("", "", ""),
+        ("关于 Inkpot", "showAbout:", ""), ("", "", ""), ("设置…", "showSettings:", ","), ("", "", ""),
         ("隐藏 Inkpot", "hide:", "h"), ("隐藏其他", "hideOtherApplications:", "h"), ("全部显示", "unhideAllApplications:", ""),
         ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
       ]),
       ("文件", [
         ("新建", "newDocument:", "n"), ("新建标签页", "newWindowForTab:", "n"), ("打开…", "openDocument:", "o"),
-        ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""),
+        ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""), ("打开最近的文件夹", "recentFoldersMenu", ""),
         ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
         ("另存为…", "saveDocumentAs:", "S"),
         ("导出为 PDF…", "exportPDF:", ""),
@@ -28,6 +28,7 @@ enum MainMenu {
         ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a"),
         ("", "", ""), ("查找与替换…", "find", "f"),
         ("查找下一个", "findNext", "g"), ("查找上一个", "findPrevious", "G"),
+        ("", "", ""), ("在文件夹中查找…", "findInFolder:", "F"),
         ("", "", ""), ("拼写和语法", "spellingMenu", ""),
       ]),
       ("格式", [
@@ -43,6 +44,7 @@ enum MainMenu {
       ]),
       ("显示", [
         ("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M"),
+        ("专注模式", "toggleFocusMode:", "F8"), ("打字机模式", "toggleTypewriterMode:", "F9"),
         ("", "", ""), ("正文字体与字号…", "showBodyFont:", "t"), ("代码字体与字号…", "showCodeFont:", ""),
         ("恢复默认字体", "resetFonts:", ""), ("", "", ""), ("进入全屏幕", "toggleFullScreen:", "f"),
       ]),
@@ -72,7 +74,14 @@ enum MainMenu {
         if action == "selectPreviousTab:" { entry.keyEquivalentModifierMask = [.control, .shift] }
         if action == "toggleFullScreen:" { entry.keyEquivalentModifierMask = [.command, .control] }
         if ["showBodyFont:", "showCodeFont:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
+        if ["toggleFocusMode:", "toggleTypewriterMode:"].contains(action) {
+          entry.target = DisplayModes.shared
+          let functionKey = action == "toggleFocusMode:" ? NSF8FunctionKey : NSF9FunctionKey
+          if let scalar = UnicodeScalar(functionKey) { entry.keyEquivalent = String(scalar) }
+          entry.keyEquivalentModifierMask = []
+        }
         if action == "restoreDrafts:" { entry.target = delegate }
+        if action == "showSettings:" { entry.target = delegate }
         if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
         if ["undo:", "redo:", "selectAll:"].contains(action) { entry.target = delegate }
         if !action.hasSuffix(":") {
@@ -80,11 +89,11 @@ enum MainMenu {
           entry.representedObject = action
           entry.target = delegate
         }
-        if action == "recentMenu" {
+        if action == "recentMenu" || action == "recentFoldersMenu" {
           entry.action = nil
           entry.representedObject = nil
           entry.target = nil
-          entry.submenu = RecentDocumentsMenu.shared.menu
+          entry.submenu = action == "recentMenu" ? RecentDocumentsMenu.shared.menu : RecentFoldersMenu.shared.menu
         }
         if action == "spellingMenu" {
           // 系统标准动作，由当前编辑器 WebView 响应并显示勾选状态；设置由 WebKit 保存。

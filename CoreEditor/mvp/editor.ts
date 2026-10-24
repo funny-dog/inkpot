@@ -14,6 +14,7 @@ import { documentStats, statsExtension } from './stats';
 import { spellingExclusions } from './spelling';
 import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
+import { applyDisplayModes, displayExtensions } from './focus';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 import { applyFonts, EditorFonts } from './fonts';
@@ -24,11 +25,13 @@ declare const window: {
     open: (text: string, generation?: number, dark?: boolean) => void;
     navigateHeading: (id: number) => void;
     navigateFragment: (fragment: string) => void;
+    selectMatch: (line: number, column: number, length: number) => void;
     insertImage: (path: string) => void;
     refreshImages: () => void;
     snapshot: () => { text: string; revision: number };
     command: (name: string) => void;
     setAppearance: (dark: boolean) => void;
+    setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
     setFonts: (fonts: EditorFonts) => void;
     exportHTML: (mode?: string) => Promise<string>;
   };
@@ -82,6 +85,7 @@ window.inkpotMVP = {
         doc: source.doc,
         extensions: [
           ...source.extensions,
+          ...displayExtensions(),
           statsExtension,
           ...writingExtensions,
           ...liveEditing,
@@ -151,6 +155,18 @@ window.inkpotMVP = {
     });
     if (target !== undefined) outline.navigate(view, target.id);
   },
+  // 文件夹搜索结果定位：行号从 1 开始，列与长度按行内的 UTF-16 偏移计。文件已在磁盘上变化时按当前内容就近定位。
+  selectMatch(line, column, length) {
+    if (view === undefined || line < 1 || line > view.state.doc.lines) return;
+    const target = view.state.doc.line(line);
+    const from = Math.min(target.to, target.from + column);
+    const head = Math.min(target.to, from + length);
+    view.dispatch({
+      selection: { anchor: from, head },
+      effects: EditorView.scrollIntoView(from, { y: 'center' }),
+    });
+    view.focus();
+  },
   insertImage(path) {
     if (view === undefined || isComposing(view) || view.state.readOnly) throw new Error('请先结束输入或等待编辑器就绪，再插入图片。');
     view.dispatch(view.state.update({ ...view.state.replaceSelection(`![图片](${path})`), annotations: isolateHistory.of('full'), userEvent: 'input.image', scrollIntoView: true }));
@@ -159,6 +175,7 @@ window.inkpotMVP = {
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
   setFonts(fonts) { if (view !== undefined) applyFonts(view, fonts); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
+  setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {
     if (view === undefined) throw new Error('编辑器尚未就绪。');
     return documentHTML(view, mode === 'pdf' ? 'pdf' : 'html');
