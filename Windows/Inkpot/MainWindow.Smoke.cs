@@ -17,8 +17,10 @@ public sealed partial class MainWindow
         {
             var initial = CreateDocument();
             await ActivateCurrentAsync();
+            AssertEditorVisible(initial, "首个文档");
             report["readyMilliseconds"] = initial.Editor!.ReadyMilliseconds;
             report["readyUnixMilliseconds"] = initial.Editor.ReadyUnixMilliseconds;
+            report["editorVisualSize"] = $"{initial.Editor.Control.ActualWidth:0}x{initial.Editor.Control.ActualHeight:0}";
             const string original = "# 标题\r\n中文\n尾";
             await initial.Editor.OpenAsync(original, Dark, L10n.Language);
             await initial.Editor.CommandAsync("heading2");
@@ -50,6 +52,7 @@ public sealed partial class MainWindow
                 Tabs.SelectedItem = document.Item;
                 await ActivateCurrentAsync();
                 await document.Editor!.CommandAsync("focus");
+                AssertEditorVisible(document, $"标签{documents.IndexOf(document) + 1}");
             }
             report["activatedTabs"] = documents.Count(document => document.Editor is not null);
             report["appWorkingSetBytes"] = Process.GetCurrentProcess().WorkingSet64;
@@ -70,5 +73,14 @@ public sealed partial class MainWindow
             // runner 在读取报告和采样子进程内存后关闭窗口，避免采样已经退出的进程。
             if (report["success"]?.GetValue<bool>() != true) { allowClose = true; Close(); }
         }
+    }
+
+    // 冒烟必须确认编辑器真的显示出来：逻辑通过但组合层不可见时，用户看到的就是空白窗口。
+    private static void AssertEditorVisible(DocumentTab document, string label)
+    {
+        var control = document.Editor?.Control ?? throw new IOException($"{label}没有编辑器。");
+        if (control.XamlRoot is null || !control.IsLoaded || control.ActualWidth < 100 || control.ActualHeight < 100)
+            throw new IOException(
+                $"{label}的编辑器未进入可视区域：XamlRoot={control.XamlRoot is not null} IsLoaded={control.IsLoaded} 尺寸={control.ActualWidth:0}x{control.ActualHeight:0}。");
     }
 }

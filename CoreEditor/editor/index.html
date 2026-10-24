@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' inkpot-asset:; style-src 'unsafe-inline' inkpot-asset:; font-src inkpot-asset:; img-src inkpot-image:; connect-src inkpot-image:">
+  <!-- Windows 宿主把编辑器目录映射为 editor.inkpot.local，需允许按需加载其中的脚本、样式与字体。 -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' inkpot-asset: https://editor.inkpot.local; style-src 'unsafe-inline' inkpot-asset: https://editor.inkpot.local; font-src inkpot-asset: https://editor.inkpot.local; img-src inkpot-image: https://images.inkpot.local; connect-src inkpot-image: https://images.inkpot.local">
   <title>Inkpot</title>
   <style>html,body{height:100%;margin:0;background:#fff;color:#1d1d1f}html.inkpot-dark{color-scheme:dark}html.inkpot-dark,html.inkpot-dark body{background:#1e1f22;color:#dfe1e5}</style>
 </head>

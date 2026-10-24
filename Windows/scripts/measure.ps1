@@ -27,6 +27,16 @@ try {
         $samples += [ordered]@{ processes = $entries; totalWorkingSetBytes = ($entries | Measure-Object workingSetBytes -Sum).Sum; totalPrivateBytes = ($entries | Measure-Object privateBytes -Sum).Sum }
         Start-Sleep -Seconds 1
     }
+    # 记录应用当时画面：冒烟逻辑通过但组合层未渲染时，截图能直接暴露空白窗口。
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    $screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    $bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    try {
+        $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+        $bitmap.Save((Join-Path (Resolve-Path $ResultsDirectory) 'window-screenshot.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+    } finally { $graphics.Dispose(); $bitmap.Dispose() }
     $bytes = (Get-ChildItem $AppDirectory -File -Recurse | Measure-Object Length -Sum).Sum
     $machine = Get-CimInstance Win32_ComputerSystem
     $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1
@@ -38,6 +48,7 @@ try {
         open1MiBMilliseconds = $raw.open1MiBMilliseconds
         documentCharacters = $raw.documentCharacters; documentUtf8Bytes = $raw.documentUtf8Bytes
         activatedTabs = $raw.activatedTabs; webViewsBeforeActivation = $raw.webViewsBeforeActivation
+        editorVisualSize = $raw.editorVisualSize
         memorySamples = $samples; publishedBytes = $bytes
         method = '一次新进程启动到 ready；打开 1 MiB UTF-8 Markdown 后取得完整快照；激活10标签后对应用及本环境全部WebView2进程采样3次。runner磁盘缓存未清理，启动数据不是硬件冷启动验收。'
     }
@@ -48,7 +59,7 @@ try {
 ## Windows MVP 验证
 
 - 实际启动、编辑/撤销、混合行尾往返、1 MiB 大文本消息：通过
-- 标签按需创建：激活前 $($raw.webViewsBeforeActivation) 个，全部激活后 $($raw.activatedTabs) 个
+- 标签按需创建：激活前 $($raw.webViewsBeforeActivation) 个，全部激活后 $($raw.activatedTabs) 个；编辑器可视尺寸 $($raw.editorVisualSize)
 - 新进程到 ready：$($measurements.startupProcessToReadyMilliseconds) ms
 - 1 MiB 文档打开及完整快照：$($raw.open1MiBMilliseconds) ms
 - 发布目录：$([Math]::Round($bytes / 1MB, 2)) MiB（包含 .NET，依赖共享 Windows App Runtime 和 WebView2）
