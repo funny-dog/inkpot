@@ -169,14 +169,14 @@ main() {
   # 本仓库没有 ci.sh：按 AGENTS.md 在推送前自行执行与改动相关的本地检查
   # （SwiftLint、CoreEditor 测试等）；推送后 build-and-test.yml 会跑完整构建与测试。
 
+  echo "=== 构建发布件（RELEASE=1）==="
+  RELEASE=1 bash scripts/build.sh
+  verify_assets "$VERSION_ARG"
+
   echo "=== 提交并打 tag ==="
   git add "${PLISTS[@]}"
   git commit -m "chore: 发布 v${VERSION_ARG}（构建号 $(current_build)）"
   git tag -a "v$VERSION_ARG" -m "v$VERSION_ARG"
-
-  echo "=== 构建发布件（RELEASE=1）==="
-  RELEASE=1 bash scripts/build.sh
-  verify_assets "$VERSION_ARG"
 
   echo ""
   echo "已就绪：v$VERSION_ARG (build $(current_build)) 的提交、tag 与发布件都已生成，尚未推送。"

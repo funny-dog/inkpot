@@ -34,6 +34,9 @@ case "$1" in
     # 严格离线，不访问远程
     exit 0
     ;;
+  add|commit|tag)
+    echo "$1" >> "$MOCK_RELEASE_STEPS"
+    ;;
   *)
     echo "测试禁止未声明的 git 操作" >&2
     exit 1
@@ -286,6 +289,38 @@ test_release_check_e2e_fail() {
   return 0
 }
 
+test_build_before_tag() {
+  local steps="$TMP_DIR/release-steps" status expected
+  for status in 0 1; do
+    : > "$steps"
+    if (
+      export PATH="$STUB_BIN:$PATH"
+      export MOCK_HEAD_SHA="$TARGET_SHA"
+      export MOCK_GH_OUTPUT="$TARGET_SHA completed success push"
+      export MOCK_RELEASE_STEPS="$steps" MOCK_BUILD_STATUS="$status"
+      # 独立进程保留 set -e，避免 if 条件中的子 shell 忽略构建失败。
+      /bin/bash -c '
+        source scripts/release.sh
+        bump_version() { :; }
+        verify_assets() { echo verify >> "$MOCK_RELEASE_STEPS"; }
+        bash() {
+          [ "$1" = "scripts/build.sh" ] || return 1
+          echo build >> "$MOCK_RELEASE_STEPS"
+          return "$MOCK_BUILD_STATUS"
+        }
+        main 999.0.0
+      ' >/dev/null 2>&1
+    ); then
+      [ "$status" = 0 ] || return 1
+      expected=$'build\nverify\nadd\ncommit\ntag'
+    else
+      [ "$status" = 1 ] || return 1
+      expected=build
+    fi
+    [ "$(cat "$steps")" = "$expected" ] || return 1
+  done
+}
+
 run_test "CI 成功通过（HEAD SHA / push / completed success）" test_ci_success
 run_test "CI 拦截旧 SHA（即使最新 run 成功）" test_ci_old_sha
 run_test "CI 拦截非 push 事件（如 workflow_dispatch）" test_ci_non_push
@@ -299,6 +334,7 @@ run_test "本地构建缺证书退回 ad-hoc 签名" test_build_local_adhoc_fall
 run_test "存在证书时成功选择指定证书" test_build_cert_found
 run_test "端到端 scripts/release.sh --check 成功只读通过" test_release_check_e2e_pass
 run_test "端到端 scripts/release.sh --check 在 CI 异常时拒绝发版" test_release_check_e2e_fail
+run_test "构建与校验成功后才提交打标签，构建失败不创建标签" test_build_before_tag
 
 echo "=========================================="
 echo "自检全部通过！共运行 $pass_count 个测试用例。"
