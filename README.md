@@ -11,7 +11,7 @@ Inkpot 是面向 macOS 的轻量 Markdown 编辑器。基于 MarkEdit 的成熟�
 - 代码块按语言着色、本地图片、表格、公式、Mermaid、富文本粘贴以及 HTML／PDF 导出。
 - UTF-8 与 BOM、混合行尾保护、关闭前保存确认、外部修改保护、本地恢复草稿与可选自动保存。
 
-使用范围与已知限制见 [功能说明](App/README.md)，后续开发路线见 [发布计划](docs/release-plan.md)。
+使用范围与已知限制见 [功能说明](App/README.md)。
 
 ## 下载与安装
 
