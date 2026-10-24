@@ -7,7 +7,7 @@ import { highlightTag } from './gfm';
 
 // 深色语法高亮：与 writing.ts 浅色版相同的 tag 集合，themeType 'dark' 使其只在深色主题激活时生效。
 const darkHighlightStyle = HighlightStyle.define([
-  { tag: tags.heading, color: '#7cb0e8', fontWeight: 'bold' },
+  { tag: tags.heading, fontWeight: 'bold' },
   { tag: tags.strong, fontWeight: 'bold' },
   { tag: tags.emphasis, fontStyle: 'italic' },
   { tag: tags.strikethrough, textDecoration: 'line-through' },
@@ -30,9 +30,11 @@ const darkTheme = EditorView.theme({
   // live.ts 预览元素。
   '&.cm-inkpot-dark .cm-inkpot-inline-code': { backgroundColor: '#33353a' },
   '&.cm-inkpot-dark .cm-inkpot-link': { color: '#7cb0e8' },
-  '&.cm-inkpot-dark .cm-inkpot-rule': { borderTop: '1px solid #3c4043' },
-  '&.cm-inkpot-dark .cm-inkpot-list-marker': { color: '#a8adb8' },
-  '&.cm-inkpot-dark .cm-inkpot-quote': { borderLeft: '3px solid #3c4043', color: '#a8adb8' },
+  '&.cm-inkpot-dark .cm-inkpot-rule': { borderTop: '1px solid #44464c' },
+  '&.cm-inkpot-dark .cm-inkpot-list-marker': { color: '#9a9da4' },
+  '&.cm-inkpot-dark .cm-inkpot-heading6': { color: '#9a9da4' },
+  '&.cm-inkpot-dark .cm-placeholder': { color: '#6b6e75' },
+  '&.cm-inkpot-dark .cm-inkpot-quote': { borderLeft: '3px solid #44464c', color: '#9a9da4' },
   // code.ts 代码块。
   '&.cm-inkpot-dark .cm-inkpot-code': { backgroundColor: '#2a2b2f', color: '#c8cbd2' },
   '&.cm-inkpot-dark .cm-inkpot-code-language': { color: '#a8adb8' },
@@ -48,7 +50,7 @@ const darkTheme = EditorView.theme({
   '&.cm-inkpot-dark .cm-inkpot-token-meta, &.cm-inkpot-dark .cm-inkpot-token-builtin': { color: '#56b6c2' },
   '&.cm-inkpot-dark .cm-inkpot-token-link': { color: '#61afef' },
   // table.ts 表格。
-  '&.cm-inkpot-dark .cm-inkpot-table th, &.cm-inkpot-dark .cm-inkpot-table td': { border: '1px solid #3c4043' },
+  '&.cm-inkpot-dark .cm-inkpot-table th, &.cm-inkpot-dark .cm-inkpot-table td': { border: '1px solid #44464c' },
   '&.cm-inkpot-dark .cm-inkpot-table th': { background: '#2a2b2f' },
   '&.cm-inkpot-dark .cm-inkpot-table-input:focus': { outline: '2px solid #7cb0e8' },
   '&.cm-inkpot-dark .cm-inkpot-table-hint': { color: '#a8adb8' },

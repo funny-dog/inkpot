@@ -310,13 +310,13 @@ export const tableEditing = [
   EditorView.theme({
     '.cm-inkpot-table': { overflowX: 'auto', margin: '12px 0' },
     '.cm-inkpot-table table': { borderCollapse: 'collapse', width: '100%', tableLayout: 'fixed' },
-    '.cm-inkpot-table th, .cm-inkpot-table td': { border: '1px solid #c6cbd1', padding: '0', position: 'relative', verticalAlign: 'top' },
+    '.cm-inkpot-table th, .cm-inkpot-table td': { border: '1px solid #d2d2d7', padding: '0', position: 'relative', verticalAlign: 'top' },
     '.cm-inkpot-table th': { background: '#f4f5f6' },
     '.cm-inkpot-table-preview': { padding: '8px 10px', minHeight: '1.6em', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' },
     '.cm-inkpot-table-input': { display: 'block', boxSizing: 'border-box', width: '100%', padding: '8px 10px', border: '0', background: 'transparent', color: 'inherit', font: 'inherit', textAlign: 'inherit', position: 'absolute', left: '0', top: '0', opacity: '0', pointerEvents: 'none', height: '0' },
-    '.cm-inkpot-table-input:focus': { position: 'static', opacity: '1', pointerEvents: 'auto', height: 'auto', outline: '2px solid #1769aa', outlineOffset: '-2px' },
+    '.cm-inkpot-table-input:focus': { position: 'static', opacity: '1', pointerEvents: 'auto', height: 'auto', outline: '2px solid #2b5a8c', outlineOffset: '-2px' },
     '.cm-inkpot-table td:focus-within .cm-inkpot-table-preview, .cm-inkpot-table th:focus-within .cm-inkpot-table-preview': { display: 'none' },
-    '.cm-inkpot-table-hint': { display: 'none', font: '12px system-ui', color: '#5f6368', padding: '5px 0' },
+    '.cm-inkpot-table-hint': { display: 'none', font: '12px system-ui', color: '#6e6e73', padding: '5px 0' },
     '.cm-inkpot-table:focus-within .cm-inkpot-table-hint': { display: 'block' },
   }),
 ];

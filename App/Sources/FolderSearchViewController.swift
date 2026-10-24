@@ -29,8 +29,12 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
 
   private let scrollView = NSScrollView()
   private let statusLabel = NSTextField(wrappingLabelWithString: "")
-  private let emptyLabel = NSTextField(wrappingLabelWithString: "先打开文件夹，再搜索其中的 Markdown 与文本文件")
-  private let openButton = NSButton(title: "打开文件夹…", target: nil, action: nil)
+  private lazy var emptyState = SidebarEmptyState(
+    symbol: "magnifyingglass",
+    title: "在文件夹中查找",
+    message: "先打开一个文件夹，再搜索其中所有 Markdown 与文本文件。",
+    button: NSButton(title: "打开文件夹…", target: self, action: #selector(chooseFolder(_:)))
+  )
   private var groups: [Group] = []
   private var searchTask: Task<Void, Never>?
   private var activeToken: SearchCancellation?
@@ -61,14 +65,6 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     statusLabel.font = .systemFont(ofSize: 11)
     statusLabel.textColor = .secondaryLabelColor
     statusLabel.setAccessibilityLabel("搜索状态")
-    emptyLabel.alignment = .center
-    emptyLabel.textColor = .secondaryLabelColor
-    openButton.target = self
-    openButton.action = #selector(chooseFolder(_:))
-    let empty = NSStackView(views: [emptyLabel, openButton])
-    empty.orientation = .vertical
-    empty.spacing = 12
-    empty.identifier = NSUserInterfaceItemIdentifier("searchEmpty")
     let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match"))
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
@@ -85,7 +81,7 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     scrollView.documentView = outlineView
     scrollView.hasVerticalScroller = true
     scrollView.drawsBackground = false
-    for child in [searchField, statusLabel, scrollView, empty] {
+    for child in [searchField, statusLabel, scrollView] {
       child.translatesAutoresizingMaskIntoConstraints = false
       view.addSubview(child)
     }
@@ -100,10 +96,8 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
       scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      empty.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 24),
-      empty.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-      empty.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
     ])
+    emptyState.pin(in: view, centeredOn: scrollView)
     reloadResults()
     updateStatus()
   }
@@ -175,8 +169,7 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
   private func updateStatus() {
     guard isViewLoaded else { return }
     let hasFolder = folderURL != nil
-    emptyLabel.isHidden = hasFolder
-    openButton.isHidden = hasFolder
+    emptyState.isHidden = hasFolder
     searchField.isEnabled = hasFolder
     scrollView.isHidden = !hasFolder
     statusLabel.stringValue = statusText

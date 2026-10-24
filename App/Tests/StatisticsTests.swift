@@ -37,7 +37,28 @@ final class StatisticsTests: XCTestCase {
     let container = EditorContainerViewController(editor: editor)
     container.loadView()
     XCTAssertEqual(container.statusText, "6 字 · 11 字符 · 4 行")
+    // 状态栏左侧跟随编辑器切换显示当前模式。
+    XCTAssertEqual(container.modeText, "实时模式")
+    editor.performCommand("toggleSourceMode")
+    try await waitUntil { editor.isSourceMode }
+    XCTAssertEqual(container.modeText, "源码模式")
+    editor.performCommand("toggleSourceMode")
+    try await waitUntil { !editor.isSourceMode }
+    XCTAssertEqual(container.modeText, "实时模式")
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(text.utf8))
+  }
+
+  func testDocumentToolbarOffersFocusAndSourceModes() throws {
+    let controller = DocumentViewController(editor: InkpotDocument().makeEditor())
+    let toolbar = controller.makeToolbar()
+    let defaults = controller.toolbarDefaultItemIdentifiers(toolbar)
+    XCTAssertEqual(defaults.first, .toggleSidebar)
+    XCTAssertTrue(defaults.contains(.sidebarTrackingSeparator))
+    let source = try XCTUnwrap(controller.toolbar(toolbar, itemForItemIdentifier: .inkpotSourceMode, willBeInsertedIntoToolbar: true))
+    XCTAssertEqual(source.action, #selector(DocumentViewController.toggleSourceMode(_:)))
+    let focus = try XCTUnwrap(controller.toolbar(toolbar, itemForItemIdentifier: .inkpotFocusMode, willBeInsertedIntoToolbar: true))
+    XCTAssertIdentical(focus.target, DisplayModes.shared)
+    XCTAssertEqual(focus.action, #selector(DisplayModes.toggleFocusMode(_:)))
   }
 }

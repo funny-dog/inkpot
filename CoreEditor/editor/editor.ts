@@ -1,5 +1,5 @@
 import { EditorState } from '@codemirror/state';
-import { Command, EditorView, keymap } from '@codemirror/view';
+import { Command, EditorView, keymap, placeholder } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, redo, redoDepth, selectAll, undo, undoDepth, isolateHistory } from '@codemirror/commands';
 import { sourceDocument } from './source';
 import { writingExtensions } from './writing';
@@ -112,6 +112,7 @@ window.inkpot = {
           // 拼写检查的开关由原生“输入时检查拼写”控制；自动纠正、首字母大写保持 CodeMirror 默认关闭，不改写原文。
           EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'true' }),
           spellingExclusions,
+          placeholder('开始写作…'),
           EditorView.updateListener.of(update => {
             if (update.docChanged) {
               revision++;
@@ -122,8 +123,9 @@ window.inkpot = {
           }),
           EditorView.theme({
             '&': { height: '100%' },
-            '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', lineHeight: '1.6' },
-            '.cm-content': { padding: '24px', minHeight: '100%' },
+            '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', lineHeight: '1.75' },
+            // 正文限制在约 45 个汉字宽并居中；em 随正文/代码字号缩放，窄窗口时退回铺满。
+            '.cm-content': { padding: '44px 48px', minHeight: '100%', maxWidth: 'calc(45em + 96px)', margin: '0 auto' },
             '&.cm-focused': { outline: 'none' },
             '.cm-panels': { backgroundColor: '#f7f7f7', color: '#202020' },
             '.cm-inkpot-search': { padding: '8px', font: '13px system-ui' },

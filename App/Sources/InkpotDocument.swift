@@ -55,8 +55,8 @@ final class InkpotDocument: NSDocument {
 
   override func makeWindowControllers() {
     let window = NSWindow(
-      contentRect: NSRect(x: 0, y: 0, width: 800, height: 600),
-      styleMask: [.titled, .closable, .miniaturizable, .resizable],
+      contentRect: NSRect(x: 0, y: 0, width: 1080, height: 720),
+      styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
       backing: .buffered,
       defer: false
     )
@@ -68,6 +68,9 @@ final class InkpotDocument: NSDocument {
     controller.view.setFrameSize(window.contentLayoutRect.size)
     window.contentViewController = controller
     window.toolbar = controller.makeToolbar()
+    window.toolbarStyle = .unified
+    // 侧栏、编辑器与状态栏之间可用 Tab 键切换焦点。
+    window.autorecalculatesKeyViewLoop = true
     window.center()
     addWindowController(DocumentWindowController(window: window))
   }

@@ -75,6 +75,7 @@ build_main() {
     "Contents/MacOS/Inkpot" \
     "Contents/Resources/index.html" \
     "Contents/Resources/ThirdPartyNotices.md" \
+    "Contents/Resources/AppIcon.icns" \
     "Contents/Resources/math/katex.mjs" \
     "Contents/Resources/math/mermaid.mjs" \
     "Contents/Resources/math/katex.min.css" \

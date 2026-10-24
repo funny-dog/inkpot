@@ -19,7 +19,12 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   private var canRedo = false
   private var searchInputFocused = false
   private var editorFocused = false
-  private var sourceMode = false
+  private var sourceMode = false {
+    didSet { if oldValue != sourceMode { onSourceModeChange?(sourceMode) } }
+  }
+  /// 状态栏显示用：编辑器在实时与源码模式之间切换时回调。
+  var onSourceModeChange: ((Bool) -> Void)?
+  var isSourceMode: Bool { sourceMode }
   private var tableActions: Set<String> = []
   private var tableCellFocused = false
   private var initialText: String

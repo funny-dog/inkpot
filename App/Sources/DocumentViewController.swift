@@ -17,7 +17,8 @@ final class SidebarViewController: NSViewController {
     tabs.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(tabs)
     NSLayoutConstraint.activate([
-      tabs.topAnchor.constraint(equalTo: view.topAnchor, constant: 8),
+      // 窗口内容延伸到标题栏下方，侧栏内容从安全区起排，避开红绿灯按钮。
+      tabs.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 6),
       tabs.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
       tabs.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
     ])
@@ -59,10 +60,12 @@ final class SidebarViewController: NSViewController {
   }
 }
 
-/// 编辑器区域容器：编辑器下方常驻字数统计状态条。
+/// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式，右侧显示字数统计。
 final class EditorContainerViewController: NSViewController {
   private let statusField = NSTextField(labelWithString: "")
+  private let modeField = NSTextField(labelWithString: "实时模式")
   var statusText: String { statusField.stringValue }
+  var modeText: String { modeField.stringValue }
   let editor: EditorViewController
 
   init(editor: EditorViewController) {
@@ -76,31 +79,54 @@ final class EditorContainerViewController: NSViewController {
   override func loadView() {
     view = NSView()
     addChild(editor)
-    editor.view.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(editor.view)
+    let bar = NSView()
+    let separator = NSBox()
+    separator.boxType = .separator
+    for field in [modeField, statusField] {
+      field.font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+      field.textColor = .secondaryLabelColor
+      field.cell?.wraps = false
+    }
     statusField.alignment = .right
-    statusField.font = .systemFont(ofSize: 11)
-    statusField.textColor = .secondaryLabelColor
     statusField.lineBreakMode = .byTruncatingHead
-    statusField.cell?.wraps = false
+    statusField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
     statusField.setAccessibilityLabel("字数统计")
-    statusField.translatesAutoresizingMaskIntoConstraints = false
-    view.addSubview(statusField)
+    modeField.setAccessibilityLabel("编辑模式")
+    for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (statusField, bar)] {
+      child.translatesAutoresizingMaskIntoConstraints = false
+      parent.addSubview(child)
+    }
     NSLayoutConstraint.activate([
-      editor.view.topAnchor.constraint(equalTo: view.topAnchor),
+      // 窗口内容延伸到工具栏下方，编辑器从安全区起排，滚动内容不被工具栏遮住。
+      editor.view.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
       editor.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       editor.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-      editor.view.bottomAnchor.constraint(equalTo: statusField.topAnchor),
-      statusField.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
-      statusField.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
-      statusField.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -4),
+      editor.view.bottomAnchor.constraint(equalTo: bar.topAnchor),
+      bar.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+      bar.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+      bar.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      bar.heightAnchor.constraint(equalToConstant: 26),
+      separator.topAnchor.constraint(equalTo: bar.topAnchor),
+      separator.leadingAnchor.constraint(equalTo: bar.leadingAnchor),
+      separator.trailingAnchor.constraint(equalTo: bar.trailingAnchor),
+      modeField.leadingAnchor.constraint(equalTo: bar.leadingAnchor, constant: 14),
+      modeField.centerYAnchor.constraint(equalTo: bar.centerYAnchor, constant: 0.5),
+      statusField.leadingAnchor.constraint(greaterThanOrEqualTo: modeField.trailingAnchor, constant: 12),
+      statusField.trailingAnchor.constraint(equalTo: bar.trailingAnchor, constant: -14),
+      statusField.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
     ])
-    editor.onStats = { [weak self] words, characters, lines in
-      self?.statusField.stringValue = "\(words) 字 · \(characters) 字符 · \(lines) 行"
-    }
-    if let stats = editor.latestStats {
-      statusField.stringValue = "\(stats.words) 字 · \(stats.characters) 字符 · \(stats.lines) 行"
-    }
+    editor.onStats = { [weak self] words, characters, lines in self?.showStats(words, characters, lines) }
+    if let stats = editor.latestStats { showStats(stats.words, stats.characters, stats.lines) }
+    editor.onSourceModeChange = { [weak self] source in self?.showMode(source) }
+    showMode(editor.isSourceMode)
+  }
+
+  private func showStats(_ words: Int, _ characters: Int, _ lines: Int) {
+    statusField.stringValue = "\(words.formatted()) 字 · \(characters.formatted()) 字符 · \(lines.formatted()) 行"
+  }
+
+  private func showMode(_ source: Bool) {
+    modeField.stringValue = source ? "源码模式" : "实时模式"
   }
 }
 
@@ -222,18 +248,50 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     let toolbar = NSToolbar(identifier: "document")
     toolbar.delegate = self
     toolbar.displayMode = .iconOnly
+    toolbar.allowsUserCustomization = true
     return toolbar
   }
 
-  func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { [.toggleSidebar] }
-  func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] { [.toggleSidebar] }
+  func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+    [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, .space, .inkpotFocusMode, .inkpotSourceMode]
+  }
+
+  func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+    [.toggleSidebar, .sidebarTrackingSeparator, .flexibleSpace, .inkpotFocusMode, .inkpotSourceMode]
+  }
+
   func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier, willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
     let item = NSToolbarItem(itemIdentifier: itemIdentifier)
-    item.label = "侧栏"
-    item.toolTip = "显示或隐藏文件树和标题大纲"
-    item.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "侧栏")
-    item.target = self
-    item.action = #selector(toggleSidebar(_:))
+    switch itemIdentifier {
+    case .toggleSidebar:
+      item.label = "侧栏"
+      item.toolTip = "显示或隐藏文件树和标题大纲"
+      item.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "侧栏")
+      item.target = self
+      item.action = #selector(toggleSidebar(_:))
+    case .inkpotFocusMode:
+      item.label = "专注模式"
+      item.toolTip = "专注模式（F8）：淡化当前段落以外的内容"
+      item.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "专注模式")
+      item.target = DisplayModes.shared
+      item.action = #selector(DisplayModes.toggleFocusMode(_:))
+    case .inkpotSourceMode:
+      item.label = "源码模式"
+      item.toolTip = "源码模式（⇧⌘M）：在 Markdown 源码与实时预览之间切换"
+      item.image = NSImage(systemSymbolName: "chevron.left.forwardslash.chevron.right", accessibilityDescription: "源码模式")
+      item.target = self
+      item.action = #selector(toggleSourceMode(_:))
+    default:
+      return nil
+    }
+    item.isBordered = true
     return item
   }
+
+  @objc func toggleSourceMode(_ sender: Any?) { editor.performCommand("toggleSourceMode") }
+}
+
+extension NSToolbarItem.Identifier {
+  static let inkpotFocusMode = NSToolbarItem.Identifier("com.erhu.inkpot.focusMode")
+  static let inkpotSourceMode = NSToolbarItem.Identifier("com.erhu.inkpot.sourceMode")
 }

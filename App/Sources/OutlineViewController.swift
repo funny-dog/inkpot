@@ -20,7 +20,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
   var onNavigate: ((Int) -> Void)?
   let outlineView = NSOutlineView()
   private let scrollView = NSScrollView()
-  private let emptyLabel = NSTextField(labelWithString: "暂无标题")
+  private let emptyState = SidebarEmptyState(symbol: "list.bullet.indent", title: "还没有标题", message: "以 # 开头的行会作为标题列在这里，点击即可跳转。")
   private var active: Int?
   private var roots: [Item] = []
   private var items: [Int: Item] = [:]
@@ -28,9 +28,6 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
 
   override func loadView() {
     view = NSView()
-    let title = NSTextField(labelWithString: "标题大纲")
-    title.font = .boldSystemFont(ofSize: 13)
-    emptyLabel.textColor = .secondaryLabelColor
     let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("heading"))
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
@@ -48,20 +45,15 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     scrollView.documentView = outlineView
     scrollView.hasVerticalScroller = true
     scrollView.drawsBackground = false
-    for child in [title, scrollView, emptyLabel] {
-      child.translatesAutoresizingMaskIntoConstraints = false
-      view.addSubview(child)
-    }
+    scrollView.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(scrollView)
     NSLayoutConstraint.activate([
-      title.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 16),
-      title.topAnchor.constraint(equalTo: view.topAnchor, constant: 12),
-      scrollView.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
+      scrollView.topAnchor.constraint(equalTo: view.topAnchor, constant: 4),
       scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
       scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
       scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-      emptyLabel.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-      emptyLabel.topAnchor.constraint(equalTo: scrollView.topAnchor, constant: 24),
     ])
+    emptyState.pin(in: view, centeredOn: scrollView)
   }
 
   func update(_ headings: [DocumentHeading]?, active: Int?) {
@@ -88,7 +80,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     headings = []
     update([], active: nil)
     outlineView.reloadData()
-    emptyLabel.isHidden = false
+    emptyState.isHidden = false
   }
 
   private func rebuild(_ headings: [DocumentHeading]) {
@@ -122,7 +114,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     }
     scrollView.contentView.scroll(to: origin)
     scrollView.reflectScrolledClipView(scrollView.contentView)
-    emptyLabel.isHidden = !headings.isEmpty
+    emptyState.isHidden = !headings.isEmpty
   }
 
   @objc private func navigate(_ sender: Any?) {
@@ -150,7 +142,8 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     label.stringValue = item.heading.title
     label.toolTip = "H\(item.heading.level) · \(item.heading.title)"
     label.lineBreakMode = .byTruncatingTail
-    label.font = .systemFont(ofSize: 13)
+    label.font = .systemFont(ofSize: 13, weight: item.heading.level == 1 ? .semibold : .regular)
+    label.textColor = item.heading.level >= 3 ? .secondaryLabelColor : .labelColor
     label.setAccessibilityLabel("\(item.heading.level)级标题，\(item.heading.title)")
     return label
   }
