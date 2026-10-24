@@ -63,7 +63,10 @@ public static class DocumentStorage
             }
             // 同卷原子替换并写穿；不先删除目标文件，替换失败时原文件仍在。
             if (!MoveFileEx(tempPath, fullPath, 0x1 | 0x8))
-                throw new IOException("无法原子保存文件。", new Win32Exception(Marshal.GetLastWin32Error()));
+            {
+                var error = new Win32Exception(Marshal.GetLastWin32Error());
+                throw new IOException(error.Message, error);
+            }
             // 使用本次实际写入的基线，避免把替换后发生的外部修改认作自己的内容。
             return saved;
         }

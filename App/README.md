@@ -189,7 +189,7 @@ Inkpot 核心功能覆盖日常写作、富格式呈现与文档管理：
 
 ### 编辑器宿主协议
 
-`CoreEditor/editor/bridge.ts` 集中定义网页发往宿主的 `HostMessage` 联合类型及宿主调用的 `InkpotAPI`。网页通过 `postToHost` 发送原始对象，优先使用 WebKit 的 `document` 消息通道，其次使用 WebView2 的 `chrome.webview.postMessage`。除启动时的 `ready` 外，消息均带有宿主传入的文档 `generation`；宿主应丢弃过期消息，并按 `revision` 更新编辑状态。
+`CoreEditor/editor/bridge.ts` 集中定义网页发往宿主的 `HostMessage` 联合类型、宿主调用的 `InkpotAPI` 及 WebView2 结构化入站请求 `HostRequest`。网页通过 `postToHost` 发送原始对象，优先使用 WebKit 的 `document` 消息通道，其次使用 WebView2 的 `chrome.webview.postMessage`。文档状态、大纲、链接、图片及文件快捷键消息携带宿主传入的 `generation`，宿主应丢弃过期消息，并按 `revision` 更新编辑状态；WebView2 请求响应通过 `requestId` 关联，失败返回错误，不能继续保存旧文本。
 
 宿主可在首次 `window.inkpot.open()` 前调用 `window.inkpot.configure({ assetBase, imageBase })`，将离线资源与图片入口设为绝对目录 URL（以 `/` 结尾，不带凭据、查询参数或片段）。例如 Windows 可使用 `assetBase: 'https://editor.inkpot.local/math/'`。`imageBase` 后拼接编码后的完整图片路径与 `document`、`revision` 查询参数，读取权限仍由宿主控制。未传的配置保留现值，默认分别为 `inkpot-asset://math/` 与 `inkpot-image://local/`，macOS 调用方式保持不变。资源按需加载并缓存，加载后不切换目录。
 

@@ -121,7 +121,7 @@ public sealed partial class MainWindow : Window
         Command(format, "OrderedList", "orderedList", VirtualKey.Number7);
         Command(format, "BulletList", "bulletList", VirtualKey.Number8);
         Command(format, "TaskList", "taskList", VirtualKey.Number9, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
-        Command(format, "Quote", "blockquote", VirtualKey.OemPeriod, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        Command(format, "Quote", "blockquote", VirtualKey.NumberPeriod, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "CodeBlock", "codeBlock", VirtualKey.C, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "Rule", "horizontalRule", VirtualKey.H, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "SourceMode", "toggleSourceMode", VirtualKey.M, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
@@ -278,7 +278,7 @@ public sealed partial class MainWindow : Window
         try { await action(); }
         catch (Exception error)
         {
-            if (error is WebView2RuntimeNotFoundException)
+            if (error is WebView2RuntimeMissingException)
             {
                 var answer = await DialogAsync(L10n.Text("RuntimeMissing"), L10n.Text("RuntimeHelp"), L10n.Text("Download"));
                 if (answer == ContentDialogResult.Primary) await Launcher.LaunchUriAsync(new Uri("https://developer.microsoft.com/microsoft-edge/webview2/"));

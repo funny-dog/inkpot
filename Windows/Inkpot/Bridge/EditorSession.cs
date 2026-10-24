@@ -24,9 +24,13 @@ internal sealed class EditorSession : IDisposable
 
     internal static Task<CoreWebView2Environment> CreateEnvironmentAsync()
     {
-        CoreWebView2Environment.GetAvailableBrowserVersionString();
-        return CoreWebView2Environment.CreateAsync(userDataFolder: Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Inkpot", "WebView2"));
+        try { CoreWebView2Environment.GetAvailableBrowserVersionString(); }
+        catch (Exception error) { throw new WebView2RuntimeMissingException(error); }
+        return CoreWebView2Environment.CreateWithOptionsAsync(
+            browserExecutableFolder: null,
+            userDataFolder: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Inkpot", "WebView2"),
+            options: null);
     }
 
     internal async Task InitializeAsync(Task<CoreWebView2Environment> environment, bool dark)
@@ -43,6 +47,9 @@ internal sealed class EditorSession : IDisposable
         await Control.EnsureCoreWebView2Async(await environment);
         var core = Control.CoreWebView2;
         core.SetVirtualHostNameToFolderMapping("editor.inkpot.local", Path.Combine(AppContext.BaseDirectory, "Editor"), CoreWebView2HostResourceAccessKind.DenyCors);
+        // 第一期不读取图片，在本机返回失败，避免把文档路径发到网络。
+        core.AddWebResourceRequestedFilter("https://images.inkpot.local/*", CoreWebView2WebResourceContext.All);
+        core.WebResourceRequested += (_, args) => args.Response = core.Environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain");
         core.Settings.AreDevToolsEnabled = false;
         core.Settings.IsStatusBarEnabled = false;
         core.Settings.AreBrowserAcceleratorKeysEnabled = false;
