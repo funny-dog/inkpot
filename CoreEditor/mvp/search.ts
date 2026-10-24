@@ -5,7 +5,7 @@ import { isolateHistory } from '@codemirror/commands';
 function navigate(view: EditorView, forward: boolean) {
   const found = (forward ? findNext : findPrevious)(view);
   const status = view.dom.querySelector('.cm-mvp-search [role=status]');
-  if (status !== null) status.textContent = found ? '' : '未找到匹配项';
+  if (status !== null) status.textContent = !getSearchQuery(view.state).valid && getSearchQuery(view.state).regexp ? '正则表达式无效' : found ? '' : '未找到匹配项';
   return found;
 }
 
@@ -41,15 +41,32 @@ function createPanel(view: EditorView) {
     field.addEventListener('input', event => { if (!(event as InputEvent).isComposing) commit(); });
     field.addEventListener('compositionend', () => commit());
   }
+  const options = document.createElement('div');
+  const toggles = (['caseSensitive', 'wholeWord', 'regexp'] as const).map((name, index) => {
+    const label = document.createElement('label');
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.name = name;
+    input.checked = query[name];
+    input.addEventListener('change', () => commit());
+    label.append(input, ['区分大小写', '整词', '正则'][index]);
+    options.append(label);
+    return input;
+  });
+  const [caseSensitive, wholeWord, regexp] = toggles;
   const status = document.createElement('span');
   status.setAttribute('role', 'status');
   function commit() {
-    view.dispatch({ effects: setSearchQuery.of(new SearchQuery({ search: find.value, replace: replace.value, literal: true })) });
-    status.textContent = '';
+    const current = new SearchQuery({ search: find.value, replace: replace.value, literal: true,
+      caseSensitive: caseSensitive.checked, wholeWord: wholeWord.checked, regexp: regexp.checked });
+    view.dispatch({ effects: setSearchQuery.of(current) });
+    find.setAttribute('aria-invalid', String(current.regexp && !current.valid && current.search !== ''));
+    status.textContent = current.regexp && !current.valid && current.search !== '' ? '正则表达式无效' : '';
   }
   function run(command: typeof findNext, field = find) {
     if (view.composing) return;
     commit();
+    if (!getSearchQuery(view.state).valid) return;
     const replacing = command === replaceNext || command === replaceAll;
     // 每次替换独立撤销，不与相邻输入或其他替换合并。
     if (replacing) view.dispatch({ annotations: isolateHistory.of('full') });
@@ -71,7 +88,7 @@ function createPanel(view: EditorView) {
   first.append(find, button('上一个', 'previous', () => run(searchCommands.findPrevious)), button('下一个', 'next', () => run(searchCommands.findNext)),
     button('关闭', 'close', () => closeSearchPanel(view)));
   second.append(replace, button('替换', 'replace', () => run(replaceNext, replace)), button('全部替换', 'replaceAll', () => run(replaceAll, replace)), status);
-  dom.append(first, second);
+  dom.append(first, options, second);
   dom.addEventListener('keydown', event => {
     if (event.isComposing || event.keyCode === 229) return;
     if (event.key === 'Enter') {
@@ -91,6 +108,7 @@ function createPanel(view: EditorView) {
       const current = getSearchQuery(view.state);
       if (find.value !== current.search) find.value = current.search;
       if (replace.value !== current.replace) replace.value = current.replace;
+      for (const toggle of toggles) toggle.checked = current[toggle.name as 'caseSensitive' | 'wholeWord' | 'regexp'];
     },
   };
 }

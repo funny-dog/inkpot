@@ -32,6 +32,8 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
   }
 
   var onOpen: ((URL) -> Void)?
+  var onOpenInTab: ((URL) -> Void)?
+  private var changeObserver: NSObjectProtocol?
   let outlineView = NSOutlineView()
   private(set) var root: Item?
   private let folderLabel = NSTextField(labelWithString: "未打开文件夹")
@@ -43,7 +45,10 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
   private var scopedURL: URL?
   private var generation = 0
 
-  deinit { scopedURL?.stopAccessingSecurityScopedResource() }
+  deinit {
+    scopedURL?.stopAccessingSecurityScopedResource()
+    if let changeObserver { NotificationCenter.default.removeObserver(changeObserver) }
+  }
 
   override func loadView() {
     view = NSView()
@@ -70,6 +75,12 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     outlineView.target = self
     outlineView.action = #selector(activate(_:))
     outlineView.doubleAction = #selector(activate(_:))
+    let menu = NSMenu()
+    menu.delegate = self
+    outlineView.menu = menu
+    changeObserver = NotificationCenter.default.addObserver(forName: .inkpotFileTreeChanged, object: nil, queue: .main) { [weak self] notification in
+      MainActor.assumeIsolated { self?.reloadAfterChange(notification) }
+    }
     scrollView.documentView = outlineView
     scrollView.hasVerticalScroller = true
     scrollView.drawsBackground = false
@@ -94,6 +105,20 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
       empty.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
       empty.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
     ])
+  }
+
+  private func reloadAfterChange(_ notification: Notification) {
+    guard let root else { return }
+    let source = notification.userInfo?["source"] as? URL
+    let target = notification.userInfo?["target"] as? URL
+    func moved(_ url: URL) -> URL {
+      guard let source, let target else { return url }
+      return FileTreeActions.relocated(url, from: source, to: target) ?? url
+    }
+    let remembered = Set(expanded.map(moved))
+    if let currentFile { self.currentFile = moved(currentFile) }
+    openFolder(moved(root.entry.url))
+    expanded = remembered
   }
 
   @objc func chooseFolder(_ sender: Any?) {
@@ -233,7 +258,9 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
       revealingCurrent = false
     }
   }
+}
 
+extension FileTreeViewController {
   func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
     let parent = (item as? Item) ?? root
     if let parent { load(parent) }

@@ -1,3 +1,4 @@
+import { EditorSelection, Transaction } from '@codemirror/state';
 import { deleteMarkupBackward, insertNewlineContinueMarkupCommand } from '@codemirror/lang-markdown';
 import { syntaxTree } from '@codemirror/language';
 import { isolateHistory } from '@codemirror/commands';
@@ -55,3 +56,32 @@ export const typingBindings: KeyBinding[] = [
   { key: 'Enter', run: view => editMarkup(view, true) },
   { key: 'Backspace', run: view => editMarkup(view, false) },
 ];
+
+const pairs: Readonly<Partial<Record<string, string>>> = { '(': ')', '[': ']', '"': '"', '`': '`', '*': '*' };
+
+export const autoPairs = EditorView.inputHandler.of((view, from, to, text, insert) => {
+  const { state } = view;
+  const selection = state.selection.main;
+  if (view.compositionStarted || state.readOnly || !state.facet(EditorView.editable)
+    || text.length !== 1 || state.selection.ranges.length !== 1
+    || from !== selection.from || to !== selection.to || insert().annotation(Transaction.userEvent) !== 'input.type') return false;
+  const before = state.sliceDoc(state.doc.lineAt(from).from, from);
+  if ((/\\+$/.exec(before)?.[0].length ?? 0) % 2 !== 0) return false;
+  const next = state.sliceDoc(to, to + 1);
+  if (selection.empty && [')', ']', '"', '`', '*'].includes(text) && next === text) {
+    // 连续星号和反引号仍可扩展为粗体或围栏；正文后的闭合符直接越过。
+    if (!['*', '`'].includes(text) || !/(?:^|\s)(?:\*+|`+)$/.test(before)) {
+      view.dispatch({ selection: { anchor: to + 1 }, userEvent: 'select' });
+      return true;
+    }
+  }
+  const close = pairs[text];
+  if (close === undefined || (selection.empty && /[\p{L}\p{N}_]/u.test(next))) return false;
+  view.dispatch(state.update({
+    changes: selection.empty ? { from, insert: text + close }
+      : [{ from, insert: text }, { from: to, insert: close }],
+    selection: EditorSelection.single(selection.anchor + 1, selection.head + 1),
+    userEvent: 'input.type', scrollIntoView: true,
+  }));
+  return true;
+});

@@ -41,13 +41,13 @@ final class DocumentFileSwitch {
     return next
   }
 
-  private static func load(_ url: URL) async throws -> (MVPDocument, Bool) {
+  static func load(_ url: URL) async throws -> (MVPDocument, Bool) {
     let (document, alreadyOpen) = try await NSDocumentController.shared.openDocument(withContentsOf: url, display: false)
     guard let document = document as? MVPDocument else { throw CocoaError(.fileReadUnsupportedScheme) }
     return (document, alreadyOpen)
   }
 
-  private static func confirm(_ document: MVPDocument) async -> Bool {
+  static func confirm(_ document: MVPDocument) async -> Bool {
     let request = DocumentCloseRequest()
     return await request.confirm(document)
   }

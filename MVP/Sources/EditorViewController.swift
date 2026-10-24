@@ -160,7 +160,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     if menuItem.action == #selector(redo(_:)) { return isReady && (canRedo || searchInputFocused) }
     if let command = menuItem.representedObject as? String {
       if command == "insertTable" || command.hasPrefix("table") { return isReady && tableActions.contains(command) && editorFocused }
-      if tableCellFocused && (command.hasPrefix("heading") || ["orderedList", "bulletList"].contains(command)) { return false }
+      if tableCellFocused && (command.hasPrefix("heading") || ["orderedList", "bulletList", "taskList", "blockquote", "codeBlock", "horizontalRule"].contains(command)) { return false }
     }
     if let command = menuItem.representedObject as? String, !["find", "findNext", "findPrevious"].contains(command) {
       return isReady && editorFocused

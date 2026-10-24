@@ -149,10 +149,15 @@ export function codeDecorations(node: SyntaxNode, view: EditorView, revealSearch
 
 function codeEnter(view: EditorView) {
   const code = currentCode(view);
+  const selection = view.state.selection.main;
+  const line = view.state.doc.lineAt(selection.head);
+  const pairedFence = /^ {0,3}(`{3,})[^`]*$/.exec(view.state.sliceDoc(line.from, selection.head));
+  if (selection.empty && pairedFence !== null && (code === undefined || (code.first.number === line.number && code.last === undefined))
+    && view.state.sliceDoc(selection.head, line.to) === pairedFence[1]) {
+    return edit(view, selection.head, line.to, '\n\n' + pairedFence[1], selection.head + 1);
+  }
   if (code === undefined) return false;
   const { state } = view;
-  const selection = state.selection.main;
-  const line = state.doc.lineAt(selection.head);
   if (line.number === code.first.number) {
     if (code.last !== undefined && selection.from >= code.first.from && selection.to <= code.first.to) return enterBody(view, code);
     if (!selection.empty) return false;

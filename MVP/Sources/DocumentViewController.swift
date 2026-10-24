@@ -122,6 +122,12 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     editor.onOutlineReset = { [weak self] in self?.outline.reset() }
     outline.update(editor.headings, active: editor.activeHeading)
     files.onOpen = { [weak self] url in self?.openFile(url) }
+    files.onOpenInTab = { [weak self] url in
+      guard let self, let window = view.window else { return }
+      Task { @MainActor in
+        do { try await DocumentTabs.open(url, in: window).showWindows() } catch { self.presentError(error) }
+      }
+    }
   }
 
   override func viewDidAppear() {

@@ -15,11 +15,12 @@ enum DocumentExport {
     return html
   }
 
-  static func pdfData(_ document: MVPDocument) async throws -> Data {
+  /// 在离屏 WebView 中按给定宽度排版导出 HTML，等待资源加载后把高度撑满全文；PDF 导出与打印共用。
+  static func renderedWebView(_ document: MVPDocument, width: CGFloat) async throws -> WKWebView {
     let html = try await documentHTML(document, pdfMode: true)
     let configuration = WKWebViewConfiguration()
     configuration.setURLSchemeHandler(MathAssetHandler(), forURLScheme: "inkpot-asset")
-    let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 794, height: 800), configuration: configuration)
+    let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: width, height: 800), configuration: configuration)
     // 相对路径的本地图片按文档所在目录解析。
     try await webView.loadHTMLString(html, baseURL: document.fileURL?.deletingLastPathComponent())
     let loaded = { try await webView.evaluateJavaScript("document.readyState === 'complete'") as? Bool == true }
@@ -29,7 +30,12 @@ enum DocumentExport {
     }
     try await Task.sleep(for: .milliseconds(300))
     let height = (try await webView.evaluateJavaScript("Math.ceil(Math.max(document.documentElement.scrollHeight, document.body.scrollHeight))") as? Double) ?? 800
-    webView.frame = NSRect(x: 0, y: 0, width: 794, height: max(height, 100))
+    webView.frame = NSRect(x: 0, y: 0, width: width, height: max(height, 100))
+    return webView
+  }
+
+  static func pdfData(_ document: MVPDocument) async throws -> Data {
+    let webView = try await renderedWebView(document, width: 794)
     let pdfConfiguration = WKPDFConfiguration()
     pdfConfiguration.rect = .null
     return try await withCheckedThrowingContinuation { continuation in

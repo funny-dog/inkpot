@@ -11,6 +11,7 @@ import { refreshImages, setImageDocument } from './image';
 import { tableCommands, canTableCommand, syncTableSelection } from './table';
 import { mathCommands } from './math';
 import { documentStats, statsExtension } from './stats';
+import { spellingExclusions } from './spelling';
 import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { isComposing } from './mode';
@@ -104,7 +105,9 @@ window.inkpotMVP = {
           history(),
           keymap.of([...historyKeymap, ...defaultKeymap]),
           EditorView.lineWrapping,
-          EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'false' }),
+          // 拼写检查的开关由原生“输入时检查拼写”控制；自动纠正、首字母大写保持 CodeMirror 默认关闭，不改写原文。
+          EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'true' }),
+          spellingExclusions,
           EditorView.updateListener.of(update => {
             if (update.docChanged) {
               revision++;
@@ -122,7 +125,8 @@ window.inkpotMVP = {
             '.cm-mvp-search': { padding: '8px', font: '13px system-ui' },
             '.cm-mvp-search > div': { display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center' },
             '.cm-mvp-search > div + div': { marginTop: '6px' },
-            '.cm-mvp-search input': { font: 'inherit', flex: '1 1 140px', minWidth: '0', maxWidth: '360px', padding: '4px' },
+            '.cm-mvp-search input:not([type=checkbox])': { font: 'inherit', flex: '1 1 140px', minWidth: '0', maxWidth: '360px', padding: '4px' },
+            '.cm-mvp-search label': { display: 'inline-flex', gap: '4px', alignItems: 'center' },
             '.cm-mvp-search button': { font: 'inherit', padding: '4px 8px' },
           }),
         ],
@@ -174,7 +178,7 @@ window.inkpotMVP = {
       return;
     }
     if (formatCommands[name] !== undefined && (!view.contentDOM.contains(input)
-      || (input?.matches('.cm-mvp-table-input') === true && !['bold', 'italic'].includes(name)))) return;
+      || (input?.matches('.cm-mvp-table-input') === true && !['bold', 'italic', 'strikethrough', 'inlineCode', 'link'].includes(name)))) return;
     commands[name]?.(view);
   },
 };

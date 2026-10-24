@@ -58,13 +58,16 @@ final class MVPDocument: NSDocument {
       backing: .buffered,
       defer: false
     )
+    window.tabbingIdentifier = "com.erhu.inkpot.document"
+    window.tabbingMode = .automatic
     window.minSize = NSSize(width: 360, height: 240)
+    window.collectionBehavior.insert(.fullScreenPrimary)
     let controller = DocumentViewController(editor: makeEditor())
     controller.view.setFrameSize(window.contentLayoutRect.size)
     window.contentViewController = controller
     window.toolbar = controller.makeToolbar()
     window.center()
-    addWindowController(NSWindowController(window: window))
+    addWindowController(DocumentWindowController(window: window))
   }
 
   override func read(from data: Data, ofType typeName: String) throws {

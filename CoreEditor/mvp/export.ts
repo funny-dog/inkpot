@@ -25,6 +25,12 @@ blockquote, .cm-mvp-quote { border-left: 3px solid #c6cbd1; color: #5f6368; padd
 .cm-mvp-mermaid { display: block; text-align: center; overflow-x: auto; padding: 12px 0; white-space: normal; }
 .cm-mvp-mermaid svg { max-width: 100%; height: auto; }
 .cm-mvp-mermaid-error { white-space: pre-wrap; text-align: left; }
+@media print {
+  body { max-width: none; padding: 0; }
+  .cm-line, tr, img, .cm-mvp-image, .cm-mvp-math-block, .cm-mvp-mermaid, .cm-mvp-toc { break-inside: avoid; }
+  .cm-mvp-heading1, .cm-mvp-heading2, .cm-mvp-heading3, .cm-mvp-heading4, .cm-mvp-heading5, .cm-mvp-heading6, .cm-mvp-code-header { break-after: avoid; }
+  thead { display: table-header-group; }
+}
 `;
 
 /** 导出用的独立 HTML 文档：基于实时视图序列化，配色固定浅色，不依赖编辑器运行时。 */

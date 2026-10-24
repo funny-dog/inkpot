@@ -88,6 +88,17 @@ describe('MVP 代码块', () => {
     expect(undoDepth(view.state)).toBe(0);
   });
 
+  test.each(['```', '```js', '````lang'])('自动配对后的 %s 回车仍创建代码块', opening => {
+    const fence = /^`+/.exec(opening)?.[0] ?? '';
+    const paired = opening + fence;
+    const { view, read, press } = editor(paired, opening.length);
+    press('Enter');
+    expect(read()).toBe(`${opening}\n\n${fence}`);
+    expect(view.state.selection.main.head).toBe(opening.length + 1);
+    undo(view);
+    expect(read()).toBe(paired);
+  });
+
   test.each(['```', '```js', '````lang', '~~~python'])('输入 %s 回车创建可编辑代码块，后续文字保持在围栏之外', opening => {
     const { view, read, press } = editor(opening + '\n尾', opening.length);
     const fence = /^(`+|~+)/.exec(opening)?.[0] ?? '';

@@ -6,7 +6,7 @@ import { EditorState } from '@codemirror/state';
 import { keymap } from '@codemirror/view';
 import { formatCommands } from './format';
 import { documentSearch, searchBindings } from './search';
-import { typingBindings } from './typing';
+import { autoPairs, typingBindings } from './typing';
 import { footnoteExtension, highlightExtension, highlightTag } from './gfm';
 import { inlineMathExtension, markdownMathExtension } from './math';
 
@@ -23,6 +23,7 @@ export const writingExtensions = [
     { tag: [tags.list, tags.quote, tags.meta], color: '#5f6368' },
   ], { themeType: 'light' })),
   documentSearch,
+  autoPairs,
   EditorState.phrases.of({
     'current match': '当前匹配项',
     'on line': '所在行',
@@ -34,6 +35,13 @@ export const writingExtensions = [
     ...typingBindings,
     { key: 'Mod-b', run: formatCommands.bold },
     { key: 'Mod-i', run: formatCommands.italic },
+    { key: 'Mod-Shift-x', run: formatCommands.strikethrough },
+    { key: 'Mod-e', run: formatCommands.inlineCode },
+    { key: 'Mod-k', run: formatCommands.link },
+    { key: 'Mod-Shift-.', run: formatCommands.blockquote },
+    { key: 'Mod-Shift-9', run: formatCommands.taskList },
+    { key: 'Mod-Shift-c', run: formatCommands.codeBlock },
+    { key: 'Mod-Shift-h', run: formatCommands.horizontalRule },
     ...[1, 2, 3, 4, 5, 6].map(level => ({ key: `Mod-${level}`, run: formatCommands[`heading${level}`] })),
     { key: 'Mod-Shift-7', run: formatCommands.orderedList },
     { key: 'Mod-Shift-8', run: formatCommands.bulletList },
