@@ -13,17 +13,17 @@ enum EditorContextMenu {
     for item in spelling { menu.addItem(item) }
     if !spelling.isEmpty { menu.addItem(.separator()) }
     for (title, action) in [("剪切", #selector(NSText.cut(_:))), ("拷贝", #selector(NSText.copy(_:))), ("粘贴", #selector(NSText.paste(_:)))] {
-      menu.addItem(NSMenuItem(title: title, action: action, keyEquivalent: ""))
+      menu.addItem(NSMenuItem(title: L10n.text(title), action: action, keyEquivalent: ""))
     }
-    menu.addItem(submenu("复制 / 粘贴为…", ["copyMarkdown", "pastePlainText"], from: mainMenu))
+    menu.addItem(submenu(L10n.text("复制 / 粘贴为…"), ["copyMarkdown", "pastePlainText"], from: mainMenu))
     menu.addItem(.separator())
     let paragraph = [
       "heading1", "heading2", "heading3", "heading4", "heading5", "heading6", "",
       "orderedList", "bulletList", "taskList", "", "blockquote", "codeBlock", "insertMathBlock",
     ]
-    menu.addItem(submenu("段落", paragraph, from: mainMenu))
-    menu.addItem(submenu("格式", ["bold", "italic", "strikethrough", "inlineCode", "link"], from: mainMenu))
-    menu.addItem(submenu("插入", ["insertImage:", "insertTable", "horizontalRule"], from: mainMenu))
+    menu.addItem(submenu(L10n.text("段落"), paragraph, from: mainMenu))
+    menu.addItem(submenu(L10n.text("格式"), ["bold", "italic", "strikethrough", "inlineCode", "link"], from: mainMenu))
+    menu.addItem(submenu(L10n.text("插入"), ["insertImage:", "insertTable", "horizontalRule"], from: mainMenu))
   }
 
   /// 空字符串表示分隔线；找不到的命令跳过，避免菜单结构变化时出现无响应的项。

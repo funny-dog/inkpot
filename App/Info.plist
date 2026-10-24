@@ -11,7 +11,7 @@
   <key>CFBundleVersion</key><string>1</string>
   <key>LSMinimumSystemVersion</key><string>$(MACOSX_DEPLOYMENT_TARGET)</string>
   <key>NSPrincipalClass</key><string>NSApplication</string>
-  <key>CFBundleDevelopmentRegion</key><string>zh_CN</string>
+  <key>CFBundleDevelopmentRegion</key><string>en</string>
   <key>NSHumanReadableCopyright</key><string>Copyright © 2026 Inkpot contributors</string>
   <key>CFBundleDocumentTypes</key>
   <array>

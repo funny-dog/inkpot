@@ -29,7 +29,7 @@ final class AppSettings: ObservableObject {
 
   init(defaults: UserDefaults = .standard) {
     self.defaults = defaults
-    // 字体面板与菜单也会改这些偏好，设置窗口打开时同步刷新。
+    // 菜单也会改这些偏好，设置窗口打开时同步刷新。
     for (name, object) in [(EditorFonts.didChange, nil), (DisplayModes.didChange, nil), (EditorZoom.didChange, nil), (UserDefaults.didChangeNotification, defaults as AnyObject?)] {
       observers.append(NotificationCenter.default.addObserver(forName: name, object: object, queue: .main) { [weak self] _ in
         Task { @MainActor in self?.objectWillChange.send() }
@@ -155,7 +155,7 @@ final class AppSettings: ObservableObject {
       guard let customImageFolder else { return imageFolder }
       return Self.relativePath(from: url.deletingLastPathComponent(), to: customImageFolder)
     }
-    let name = Self.validImageFolder(String(url.deletingPathExtension().lastPathComponent.prefix(48))) ?? "文档"
+    let name = Self.validImageFolder(String(url.deletingPathExtension().lastPathComponent.prefix(48))) ?? L10n.text("文档")
     return name + ".assets"
   }
 
@@ -197,21 +197,37 @@ final class AppSettings: ObservableObject {
     return trimmed
   }
 
-  func fontDescription(code: Bool) -> String {
-    let font = EditorFonts.shared.font(code: code)
-    return "\(font.displayName ?? font.fontName) \(Int(font.pointSize.rounded())) 点"
+  var bodyFontFamily: String? {
+    get { EditorFonts.shared.family(code: false) }
+    set { EditorFonts.shared.setFamily(newValue, code: false) }
+  }
+
+  var codeFontFamily: String? {
+    get { EditorFonts.shared.family(code: true) }
+    set { EditorFonts.shared.setFamily(newValue, code: true) }
+  }
+
+  var bodyFontSize: Double {
+    get { EditorFonts.shared.font(code: false).pointSize.rounded() }
+    set { EditorFonts.shared.setSize(newValue, code: false) }
+  }
+
+  var codeFontSize: Double {
+    get { EditorFonts.shared.font(code: true).pointSize.rounded() }
+    set { EditorFonts.shared.setSize(newValue, code: true) }
   }
 }
 
-/// 设置分类：与窗口工具栏的三个图标一一对应。
+/// 设置分类：与窗口工具栏的图标一一对应。
 enum SettingsPane: String, CaseIterable {
-  case general, editing, appearance
+  case general, editing, appearance, about
 
   var title: String {
     switch self {
-    case .general: "通用"
-    case .editing: "编辑"
-    case .appearance: "外观"
+    case .general: L10n.text("通用")
+    case .editing: L10n.text("编辑")
+    case .appearance: L10n.text("外观")
+    case .about: L10n.text("关于")
     }
   }
 
@@ -220,6 +236,7 @@ enum SettingsPane: String, CaseIterable {
     case .general: "gearshape"
     case .editing: "square.and.pencil"
     case .appearance: "circle.lefthalf.filled"
+    case .about: "info.circle"
     }
   }
 }
@@ -240,57 +257,67 @@ struct GeneralSettingsView: View {
   var body: some View {
     Form {
       Section {
-        Picker("启动时", selection: $settings.restorePreviousSession) {
-          Text("恢复上次的文件和窗口").tag(true)
-          Text("新建空白文档").tag(false)
+        Picker(L10n.text("启动时"), selection: $settings.restorePreviousSession) {
+          Text(L10n.text("恢复上次的文件和窗口")).tag(true)
+          Text(L10n.text("新建空白文档")).tag(false)
         }
-      } header: { Text("启动") } footer: {
-        Caption("下次启动生效。从访达打开文件时优先打开指定文件；未保存草稿仍会提示恢复。")
+      } header: { Text(L10n.text("启动")) } footer: {
+        Caption(L10n.text("下次启动生效。从访达打开文件时优先打开指定文件；未保存草稿仍会提示恢复。"))
       }
       Section {
-        Picker("文件树", selection: $settings.fileTreeShowsAllFiles) {
-          Text("支持的文件（Markdown 和纯文本）").tag(false)
-          Text("所有文件").tag(true)
+        Picker(L10n.text("文件树"), selection: $settings.fileTreeShowsAllFiles) {
+          Text(L10n.text("支持的文件（Markdown 和纯文本）")).tag(false)
+          Text(L10n.text("所有文件")).tag(true)
         }
-        Toggle("显示隐藏的文件夹／文件", isOn: $settings.fileTreeShowsHidden)
-      } header: { Text("文件树") } footer: {
-        Caption("Markdown 和纯文本在 Inkpot 中打开，其他文件使用系统默认应用打开。")
+        Toggle(L10n.text("显示隐藏的文件夹／文件"), isOn: $settings.fileTreeShowsHidden)
+      } header: { Text(L10n.text("文件树")) } footer: {
+        Caption(L10n.text("Markdown 和纯文本在 Inkpot 中打开，其他文件使用系统默认应用打开。"))
       }
-      Section("保存") {
+      Section(L10n.text("保存")) {
         Toggle(isOn: $settings.autosave) {
-          Text("编辑后自动保存")
-          Text("仅对已保存过的文档生效，停止输入约 2 秒后保存。")
+          Text(L10n.text("编辑后自动保存"))
+          Text(L10n.text("仅对已保存过的文档生效，停止输入约 2 秒后保存。"))
         }
       }
       Section {
-        Picker("素材目录", selection: $settings.documentImageFolder) {
-          Text("共享文件夹").tag(false)
-          Text("文档名.assets").tag(true)
+        Picker(L10n.text("素材目录"), selection: $settings.documentImageFolder) {
+          Text(L10n.text("共享文件夹")).tag(false)
+          Text(L10n.text("文档名.assets")).tag(true)
         }
         if !settings.documentImageFolder {
-          LabeledContent("图片保存文件夹") {
-            Text(settings.customImageFolder.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? "文档同级的 \(settings.imageFolder)")
+          LabeledContent(L10n.text("图片保存文件夹")) {
+            Text(settings.customImageFolder.map { ($0.path as NSString).abbreviatingWithTildeInPath } ?? L10n.text("文档同级的 %@", settings.imageFolder))
               .foregroundStyle(.secondary)
               .lineLimit(1)
               .truncationMode(.middle)
-            Button("选择…") { chooseImageFolder() }
+            Button(L10n.text("选择…")) { chooseImageFolder() }
             if settings.customImageFolder != nil {
-              Button("恢复默认") { settings.customImageFolder = nil }
+              Button(L10n.text("恢复默认")) { settings.customImageFolder = nil }
             }
           }
         }
-        Toggle("加载远程图片（HTTPS）", isOn: $settings.loadRemoteImages)
-      } header: { Text("图片") } footer: {
-        Caption(settings.documentImageFolder ? "新插入的图片保存到文档同级的“文档名.assets”；不会迁移原有图片。"
+        Toggle(L10n.text("加载远程图片（HTTPS）"), isOn: $settings.loadRemoteImages)
+      } header: { Text(L10n.text("图片")) } footer: {
+        Caption(settings.documentImageFolder ? L10n.text("新插入的图片保存到文档同级的“文档名.assets”；不会迁移原有图片。")
           : settings.customImageFolder == nil
-          ? "插入或粘贴的图片保存在文档同级的“\(settings.imageFolder)”文件夹中。"
-          : "插入或粘贴的图片保存到所选文件夹，文档中写入相对路径。")
-        Caption("远程图片默认不加载；开启后会向图片所在网站发出请求，不发送 Cookie。不支持远程 SVG。")
+          ? L10n.text("插入或粘贴的图片保存在文档同级的“%@”文件夹中。", settings.imageFolder)
+          : L10n.text("插入或粘贴的图片保存到所选文件夹，文档中写入相对路径。"))
+        Caption(L10n.text("远程图片默认不加载；开启后会向图片所在网站发出请求，不发送 Cookie。不支持远程 SVG。"))
       }
-      Section("关于") {
-        LabeledContent("版本", value: ThirdPartyNotices.version)
-        LabeledContent("第三方许可") {
-          Button("查看…") { ThirdPartyNotices.show() }
+    }
+    .formStyle(.grouped)
+    .frame(width: SettingsWindowController.contentWidth, height: SettingsWindowController.contentHeight)
+  }
+}
+
+/// 关于：版本信息与第三方许可。
+struct AboutSettingsView: View {
+  var body: some View {
+    Form {
+      Section(L10n.text("关于")) {
+        LabeledContent(L10n.text("版本"), value: ThirdPartyNotices.version)
+        LabeledContent(L10n.text("第三方许可")) {
+          Button(L10n.text("查看…")) { ThirdPartyNotices.show() }
         }
       }
     }
@@ -307,8 +334,8 @@ extension GeneralSettingsView {
     panel.canChooseFiles = false
     panel.canCreateDirectories = true
     panel.allowsMultipleSelection = false
-    panel.prompt = "选择"
-    panel.message = "选择插入或粘贴图片时保存的文件夹"
+    panel.prompt = L10n.text("选择")
+    panel.message = L10n.text("选择插入或粘贴图片时保存的文件夹")
     panel.directoryURL = settings.customImageFolder
     if panel.runModal() == .OK, let url = panel.url { settings.customImageFolder = url }
   }
@@ -320,33 +347,33 @@ struct EditingSettingsView: View {
 
   var body: some View {
     Form {
-      Section("打开文档") {
-        Picker("默认模式", selection: $settings.defaultSourceMode) {
-          Text("实时模式").tag(false)
-          Text("源码模式").tag(true)
+      Section(L10n.text("打开文档")) {
+        Picker(L10n.text("默认模式"), selection: $settings.defaultSourceMode) {
+          Text(L10n.text("实时模式")).tag(false)
+          Text(L10n.text("源码模式")).tag(true)
         }
         .pickerStyle(.segmented)
         .fixedSize()
       }
       Section {
-        Picker("缩进宽度", selection: $settings.indentWidth) {
-          Text("2 个空格").tag(2)
-          Text("4 个空格").tag(4)
+        Picker(L10n.text("缩进宽度"), selection: $settings.indentWidth) {
+          Text(L10n.text("2 个空格")).tag(2)
+          Text(L10n.text("4 个空格")).tag(4)
         }
-      } header: { Text("缩进") } footer: {
-        Caption("Tab 缩进、⇧Tab 取消缩进；列表项按层级整行缩进。")
+      } header: { Text(L10n.text("缩进")) } footer: {
+        Caption(L10n.text("Tab 缩进、⇧Tab 取消缩进；列表项按层级整行缩进。"))
       }
-      Section("写作辅助") {
-        Toggle("自动配对括号与引号", isOn: $settings.pairBrackets)
-        Toggle("自动配对 Markdown 字符", isOn: $settings.pairMarkdown)
-        Toggle("输入时检查拼写", isOn: $settings.spellChecking)
+      Section(L10n.text("写作辅助")) {
+        Toggle(L10n.text("自动配对括号与引号"), isOn: $settings.pairBrackets)
+        Toggle(L10n.text("自动配对 Markdown 字符"), isOn: $settings.pairMarkdown)
+        Toggle(L10n.text("输入时检查拼写"), isOn: $settings.spellChecking)
         Toggle(isOn: $settings.focusMode) {
-          Text("专注模式")
-          Text("突出当前编辑的段落或内容块。（F8）")
+          Text(L10n.text("专注模式"))
+          Text(L10n.text("突出当前编辑的段落或内容块。（F8）"))
         }
         Toggle(isOn: $settings.typewriterMode) {
-          Text("打字机模式")
-          Text("编辑时让当前行保持在窗口中部。（F9）")
+          Text(L10n.text("打字机模式"))
+          Text(L10n.text("编辑时让当前行保持在窗口中部。（F9）"))
         }
       }
     }
@@ -361,7 +388,7 @@ struct AppearanceSettingsView: View {
 
   var body: some View {
     Form {
-      Section("外观") {
+      Section(L10n.text("外观")) {
         HStack(spacing: 12) {
           ForEach(AppearanceMode.allCases, id: \.self) { mode in
             AppearanceSwatch(mode: mode, selected: settings.appearanceMode == mode) { settings.appearanceMode = mode }
@@ -369,44 +396,71 @@ struct AppearanceSettingsView: View {
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("外观")
+        .accessibilityLabel(L10n.text("外观"))
       }
       Section {
         HStack {
-          Picker("缩放", selection: $settings.zoomLevel) {
+          Picker(L10n.text("缩放"), selection: $settings.zoomLevel) {
             ForEach(EditorZoom.levels, id: \.self) { level in Text("\(Int((level * 100).rounded()))%").tag(level) }
           }
-          Button("重置") { settings.zoomLevel = 1 }
+          Button(L10n.text("重置")) { settings.zoomLevel = 1 }
             .disabled(settings.zoomLevel == 1)
         }
-        Toggle("按住 Command 时使用鼠标滚轮缩放", isOn: $settings.zoomWithCommandScroll)
-      } header: { Text("缩放") } footer: {
-        Caption("也可使用 显示 → 实际大小 ⌘0／放大 ⌘+／缩小 ⌘−，所有窗口同步。")
+        Toggle(L10n.text("按住 Command 时使用鼠标滚轮缩放"), isOn: $settings.zoomWithCommandScroll)
+      } header: { Text(L10n.text("缩放")) } footer: {
+        Caption(L10n.text("也可使用 显示 → 实际大小 ⌘0／放大 ⌘+／缩小 ⌘−，所有窗口同步。"))
       }
       Section {
-        LabeledContent("正文") {
-          Text(settings.fontDescription(code: false)).foregroundStyle(.secondary)
-          Button("选择…") { EditorFonts.shared.showBodyFont(nil) }
-        }
-        LabeledContent("代码") {
-          Text(settings.fontDescription(code: true)).foregroundStyle(.secondary)
-          Button("选择…") { EditorFonts.shared.showCodeFont(nil) }
-        }
+        FontRow(title: L10n.text("正文"), defaultTitle: L10n.text("系统默认"), families: EditorFonts.bodyFamilies,
+                family: $settings.bodyFontFamily, size: $settings.bodyFontSize)
+        FontRow(title: L10n.text("代码"), defaultTitle: L10n.text("默认（Menlo）"), families: EditorFonts.codeFamilies,
+                family: $settings.codeFontFamily, size: $settings.codeFontSize)
         VStack(alignment: .leading, spacing: 6) {
-          Text("落笔成文，墨在纸上。").font(Font(EditorFonts.shared.font(code: false)))
+          Text(L10n.text("落笔成文，墨在纸上。")).font(Font(EditorFonts.shared.font(code: false)))
           Text("let ink = \"Inkpot\"").font(Font(EditorFonts.shared.font(code: true))).foregroundStyle(.secondary)
         }
         .lineLimit(1)
-        .accessibilityLabel("字体预览")
-      } header: { Text("字体") } footer: {
+        .accessibilityLabel(L10n.text("字体预览"))
+      } header: { Text(L10n.text("字体")) } footer: {
         HStack {
           Spacer()
-          Button("恢复默认字体") { EditorFonts.shared.resetFonts(nil) }
+          Button(L10n.text("恢复默认字体")) { EditorFonts.shared.resetFonts(nil) }
         }
       }
     }
     .formStyle(.grouped)
     .frame(width: SettingsWindowController.contentWidth, height: SettingsWindowController.contentHeight)
+  }
+}
+
+/// 字体一行：家族下拉菜单与字号步进器，改动即时生效，不再弹出系统字体面板。
+private struct FontRow: View {
+  let title: String
+  let defaultTitle: String
+  let families: [String]
+  @Binding var family: String?
+  @Binding var size: Double
+
+  var body: some View {
+    LabeledContent(title) {
+      HStack(spacing: 8) {
+        Picker(title, selection: $family) {
+          Text(defaultTitle).tag(String?.none)
+          Divider()
+          // 旧版本经字体面板选过的非等宽代码字体不在候选里，补在最前以保持选中状态。
+          ForEach(family.map { families.contains($0) ? families : [$0] + families } ?? families, id: \.self) { name in
+            Text(name).tag(String?.some(name))
+          }
+        }
+        .labelsHidden()
+        .frame(width: 200)
+        Stepper(value: $size, in: 8...72, step: 1) {
+          Text(L10n.text("%ld 点", Int(size))).monospacedDigit()
+        }
+        .accessibilityLabel(L10n.text("%@字号", title))
+        .accessibilityValue(L10n.text("%ld 点", Int(size)))
+      }
+    }
   }
 }
 
@@ -420,9 +474,9 @@ private struct AppearanceSwatch: View {
 
   var title: String {
     switch mode {
-    case .system: "跟随系统"
-    case .light: "浅色"
-    case .dark: "深色"
+    case .system: L10n.text("跟随系统")
+    case .light: L10n.text("浅色")
+    case .dark: L10n.text("深色")
     }
   }
 
@@ -466,6 +520,7 @@ final class SettingsWindowController: NSWindowController {
       case .general: AnyView(GeneralSettingsView(settings: settings))
       case .editing: AnyView(EditingSettingsView(settings: settings))
       case .appearance: AnyView(AppearanceSettingsView(settings: settings))
+      case .about: AnyView(AboutSettingsView())
       }
       let hosting = NSHostingController(rootView: root)
       hosting.sizingOptions = [.preferredContentSize]
@@ -553,8 +608,8 @@ final class DocumentAutosave {
       suspended = true
       let message = (error as NSError).localizedDescription
       report(document, NSError(domain: "Inkpot", code: 60, userInfo: [
-        NSLocalizedDescriptionKey: "自动保存已暂停：\(message)",
-        NSLocalizedRecoverySuggestionErrorKey: "当前内容仍保留在窗口中，请手动保存或另存为；保存成功后恢复自动保存。",
+        NSLocalizedDescriptionKey: L10n.text("自动保存已暂停：%@", message),
+        NSLocalizedRecoverySuggestionErrorKey: L10n.text("当前内容仍保留在窗口中，请手动保存或另存为；保存成功后恢复自动保存。"),
       ]))
     }
   }

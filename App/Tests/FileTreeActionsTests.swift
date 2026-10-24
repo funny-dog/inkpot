@@ -54,9 +54,9 @@ final class FileTreeActionsTests: XCTestCase {
     try Data().write(to: root.appendingPathComponent("图.png"))
     try Data().write(to: root.appendingPathComponent(".隐藏.md"))
     let actions = FileTreeActions { [] }
-    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, "笔记 副本.md")
-    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, "笔记 副本 2.md")
-    XCTAssertEqual(try String(contentsOf: root.appendingPathComponent("笔记 副本.md"), encoding: .utf8), "内容")
+    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, L10n.text("%@ 副本", "笔记") + ".md")
+    XCTAssertEqual(try actions.duplicate(source).lastPathComponent, L10n.text("%@ 副本 %ld", "笔记", 2) + ".md")
+    XCTAssertEqual(try String(contentsOf: root.appendingPathComponent(L10n.text("%@ 副本", "笔记") + ".md"), encoding: .utf8), "内容")
     let names = { (filter: FileTree.Filter) in Set(try FolderEntry.read(root, filter: filter).map(\.url.lastPathComponent)) }
     XCTAssertFalse(try names(.init()).contains("图.png"))
     XCTAssertTrue(try names(.init(allFiles: true)).contains("图.png"))
@@ -126,15 +126,15 @@ final class FileTreeActionsTests: XCTestCase {
     let tree = FileTreeViewController()
     tree.openFolder(root)
     let blank = tree.contextMenu(for: nil)
-    XCTAssertEqual(blank.items.filter { !$0.isSeparatorItem }.map(\.title), ["新建文件", "新建文件夹", "复制文件路径", "在 Finder 中显示"])
+    XCTAssertEqual(blank.items.filter { !$0.isSeparatorItem }.map(\.title), [L10n.text("新建文件"), L10n.text("新建文件夹"), L10n.text("复制文件路径"), L10n.text("在 Finder 中显示")])
     XCTAssertEqual(blank.items.last?.representedObject as? URL, root.standardizedFileURL)
     let url = root.appendingPathComponent("目标.md")
     let menu = tree.contextMenu(for: FolderEntry(url: url, isDirectory: false))
-    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["打开", "在新标签页中打开", "在新窗口中打开", "新建文件", "新建文件夹", "创建副本", "重命名…", "删除…", "复制文件路径", "在 Finder 中显示"])
+    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["打开", "在新标签页中打开", "在新窗口中打开", "新建文件", "新建文件夹", "创建副本", "重命名…", "删除…", "复制文件路径", "在 Finder 中显示"].map { L10n.text($0) })
     XCTAssertEqual(menu.items.first?.representedObject as? URL, url)
     XCTAssertEqual(menu.items.last?.representedObject as? URL, url)
     let directory = tree.contextMenu(for: FolderEntry(url: root.appendingPathComponent("目录"), isDirectory: true))
-    XCTAssertFalse(directory.items.contains { $0.title == "在新标签页中打开" })
+    XCTAssertFalse(directory.items.contains { $0.title == L10n.text("在新标签页中打开") })
     XCTAssertEqual(directory.items.first?.representedObject as? URL, root.appendingPathComponent("目录"))
   }
 

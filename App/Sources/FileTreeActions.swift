@@ -33,11 +33,11 @@ final class FileTreeActions {
   static func named(_ name: String, in folder: URL, directory: Bool, requireText: Bool = true) throws -> URL {
     guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, !name.hasPrefix("."),
           name.rangeOfCharacter(from: CharacterSet(charactersIn: "/:\0\r\n")) == nil else {
-      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: "请输入有效名称；不能以点开头或包含斜杠、冒号和换行。"])
+      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: L10n.text("请输入有效名称；不能以点开头或包含斜杠、冒号和换行。")])
     }
     let url = folder.appendingPathComponent(name, isDirectory: directory).standardizedFileURL
     guard directory || !requireText || FileTree.textExtensions.contains(url.pathExtension.lowercased()) else {
-      throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: "文件请使用 .md、.markdown 或 .txt 扩展名。"])
+      throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: L10n.text("文件请使用 .md、.markdown 或 .txt 扩展名。")])
     }
     return url
   }
@@ -62,7 +62,7 @@ final class FileTreeActions {
     var index = 1
     var target: URL
     repeat {
-      let name = (index == 1 ? "\(base) 副本" : "\(base) 副本 \(index)") + (ext.isEmpty ? "" : ".\(ext)")
+      let name = (index == 1 ? L10n.text("%@ 副本", base) : L10n.text("%@ 副本 %ld", base, index)) + (ext.isEmpty ? "" : ".\(ext)")
       target = folder.appendingPathComponent(name).standardizedFileURL
       index += 1
     } while FileManager.default.fileExists(atPath: target.path)
@@ -125,7 +125,7 @@ final class FileTreeActions {
       revisions[ObjectIdentifier(document)] = document.editor?.latestRevision ?? -1
       paths[ObjectIdentifier(document)] = document.fileURL
       guard approved[ObjectIdentifier(document)] == (try document.data(ofType: document.fileType ?? "net.daringfireball.markdown")) else {
-        throw NSError(domain: "Inkpot", code: 52, userInfo: [NSLocalizedDescriptionKey: "确认期间文档又发生了变化，已取消移到废纸篓。请检查内容后重试。"])
+        throw NSError(domain: "Inkpot", code: 52, userInfo: [NSLocalizedDescriptionKey: L10n.text("确认期间文档又发生了变化，已取消移到废纸篓。请检查内容后重试。")])
       }
     }
     guard Set(matching(source).map(ObjectIdentifier.init)) == Set(affected.map(ObjectIdentifier.init)), affected.allSatisfy({

@@ -86,7 +86,7 @@ final class SettingsTests: XCTestCase {
     XCTAssertEqual(settings.imageFolder(beside: url), "assets")
     settings.documentImageFolder = true
     XCTAssertEqual(settings.imageFolder(beside: url), "中文笔记.assets")
-    XCTAssertEqual(settings.imageFolder(beside: root.appendingPathComponent(".hidden.md")), "文档.assets")
+    XCTAssertEqual(settings.imageFolder(beside: root.appendingPathComponent(".hidden.md")), L10n.text("文档") + ".assets")
   }
 
   func testChosenImageFolderIndentAndZoomPreferences() throws {
@@ -213,7 +213,7 @@ final class SettingsTests: XCTestCase {
     await autosave.saveNow()
     XCTAssertTrue(autosave.suspended)
     XCTAssertEqual(reported.count, 1)
-    XCTAssertEqual(reported.first?.hasPrefix("自动保存已暂停"), true)
+    XCTAssertEqual(reported.first?.hasPrefix(L10n.text("自动保存已暂停：%@", "")), true)
     XCTAssertEqual(try Data(contentsOf: url), Data("外部\r\n".utf8))
     // 暂停后继续编辑不再尝试保存，也不重复提示。
     await autosave.saveNow()
@@ -232,7 +232,7 @@ final class SettingsTests: XCTestCase {
   func testSettingsMenuItemAndWindow() async throws {
     let delegate = AppDelegate()
     let menu = MainMenu.make(delegate: delegate)
-    let item = try XCTUnwrap(menu.items[0].submenu?.items.first { $0.title == "设置…" })
+    let item = try XCTUnwrap(menu.items[0].submenu?.items.first { $0.title == L10n.text("设置…") })
     XCTAssertEqual(item.keyEquivalent, ",")
     XCTAssertEqual(item.keyEquivalentModifierMask, [.command])
     XCTAssertIdentical(item.target, delegate)
@@ -241,10 +241,11 @@ final class SettingsTests: XCTestCase {
     let controller = SettingsWindowController.shared
     let window = try XCTUnwrap(controller.window)
     XCTAssertTrue(window.isVisible)
-    // 工具栏式分类：通用、编辑、外观三页，窗口标题跟随当前分类。
+    // 工具栏式分类：通用、编辑、外观、关于四页，窗口标题跟随当前分类。
     XCTAssertEqual(controller.tabs.tabStyle, .toolbar)
-    XCTAssertEqual(controller.tabs.tabViewItems.map(\.label), ["通用", "编辑", "外观"])
-    XCTAssertEqual(window.toolbar?.items.count, 3)
+    XCTAssertEqual(controller.tabs.tabViewItems.map(\.label), ["通用", "编辑", "外观", "关于"].map { L10n.text($0) })
+    XCTAssertEqual(window.toolbar?.items.count, 4)
+    XCTAssertEqual(controller.tabs.tabViewItems.last?.identifier as? String, "about")
     for pane in SettingsPane.allCases {
       controller.show(pane)
       XCTAssertEqual(controller.selectedPane, pane)

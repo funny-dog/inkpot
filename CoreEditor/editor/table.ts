@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorSelection, EditorState, StateField, Range } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { isolateHistory, redo, undo } from '@codemirror/commands';
@@ -66,7 +67,7 @@ function cellPreview(state: EditorState, cell: Cell | undefined): DocumentFragme
       element.setAttribute('role', 'link');
       const destination = linkDestination(node, state);
       if (destination !== undefined) element.dataset.destination = destination;
-      element.title = '⌘单击打开链接';
+      element.title = t('⌘单击打开链接');
     }
     const last = link ? node.getChildren('LinkMark')[1]?.from ?? node.to : node.to;
     let from = node.from;
@@ -90,7 +91,7 @@ class TableWidget extends WidgetType {
     const wrapper = document.createElement('div');
     wrapper.className = 'cm-inkpot-table';
     const table = wrapper.appendChild(document.createElement('table'));
-    table.setAttribute('aria-label', 'Markdown 表格');
+    table.setAttribute('aria-label', t('Markdown 表格'));
     table.style.minWidth = `${this.table.alignments.length * 100}px`;
     this.table.rows.forEach((_cells, row) => {
       const tr = table.insertRow();
@@ -101,7 +102,7 @@ class TableWidget extends WidgetType {
         preview.className = 'cm-inkpot-table-preview';
         const input = td.appendChild(document.createElement('input'));
         input.className = 'cm-inkpot-table-input';
-        input.setAttribute('aria-label', `第 ${row + 1} 行，第 ${column + 1} 列`);
+        input.setAttribute('aria-label', t('第 {0} 行，第 {1} 列', row + 1, column + 1));
         input.dataset.row = String(row);
         input.dataset.column = String(column);
         input.spellcheck = false;
@@ -137,7 +138,7 @@ class TableWidget extends WidgetType {
     });
     const hint = wrapper.appendChild(document.createElement('div'));
     hint.className = 'cm-inkpot-table-hint';
-    hint.textContent = 'Tab 切换单元格 · Enter 下一行 · ⌘Enter 返回正文 · 格式 → 表格增删行列';
+    hint.textContent = t('Tab 切换单元格 · Enter 下一行 · ⌘Enter 返回正文 · 格式 → 表格增删行列');
     this.updateDOM(wrapper, view);
     return wrapper;
   }
@@ -262,7 +263,7 @@ export const tableCommands: Readonly<Record<string, Command>> = Object.fromEntri
   if (name === 'insertTable') {
     const { from, to } = state.selection.main;
     const before = from > 0 ? '\n\n' : '';
-    change = { from, to, insert: before + '| 列 1 | 列 2 |\n| --- | --- |\n|  |  |\n|  |  |\n\n' };
+    change = { from, to, insert: before + `| ${t('列 {0}', 1)} | ${t('列 {0}', 2)} |\n| --- | --- |\n|  |  |\n|  |  |\n\n` };
   } else {
     if (context === undefined) return false;
     const { table, row, column } = context;

@@ -7,7 +7,7 @@ import WebKit
 enum DocumentPrint {
   static func operation(for document: InkpotDocument, printInfo: NSPrintInfo) async throws -> (NSPrintOperation, WKWebView) {
     guard let info = printInfo.copy() as? NSPrintInfo else {
-      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: "读取页面设置失败，已取消打印。"])
+      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: L10n.text("读取页面设置失败，已取消打印。")])
     }
     info.horizontalPagination = .fit
     info.verticalPagination = .automatic
@@ -26,7 +26,7 @@ enum DocumentPrint {
   /// 将文档按页面设置分页打印为 PDF 并写入指定目标文件，由导出流程复用。
   static func printToPDF(for document: InkpotDocument, to fileURL: URL) async throws {
     guard let info = document.printInfo.copy() as? NSPrintInfo else {
-      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: "读取页面设置失败，已取消导出。"])
+      throw NSError(domain: "Inkpot", code: 50, userInfo: [NSLocalizedDescriptionKey: L10n.text("读取页面设置失败，已取消导出。")])
     }
     info.jobDisposition = .save
     info.dictionary()[NSPrintInfo.AttributeKey.jobSavingURL] = fileURL
@@ -43,7 +43,7 @@ enum DocumentPrint {
     }
     withExtendedLifetime(webView) {}
     guard success, FileManager.default.fileExists(atPath: fileURL.path) else {
-      throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: "生成分页 PDF 失败。"])
+      throw NSError(domain: "Inkpot", code: 51, userInfo: [NSLocalizedDescriptionKey: L10n.text("生成分页 PDF 失败。")])
     }
   }
 

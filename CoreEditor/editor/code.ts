@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorSelection, EditorState, Range, StateEffect, StateField } from '@codemirror/state';
 import { indentUnit, syntaxTree } from '@codemirror/language';
 import { cursorLineDown, cursorLineUp, isolateHistory } from '@codemirror/commands';
@@ -98,9 +99,9 @@ class LanguageLabel extends WidgetType {
     const button = document.createElement('button');
     button.type = 'button';
     button.className = 'cm-inkpot-code-language';
-    button.textContent = this.language || '纯文本';
-    button.setAttribute('aria-label', `代码语言：${this.language || '纯文本'}，点击修改`);
-    button.title = '修改代码语言；代码中按 ⌘Enter 返回正文';
+    button.textContent = this.language || t('纯文本');
+    button.setAttribute('aria-label', t('代码语言：{0}，点击修改', this.language || t('纯文本')));
+    button.title = t('修改代码语言；代码中按 ⌘Enter 返回正文');
     button.disabled = view.state.readOnly;
     button.addEventListener('click', () => {
       if (view.compositionStarted || view.state.readOnly) return;

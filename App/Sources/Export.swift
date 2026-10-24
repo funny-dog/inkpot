@@ -49,7 +49,7 @@ enum DocumentExport {
     } else if let name = document.displayName, !name.isEmpty {
       base = name
     } else {
-      base = "未命名"
+      base = L10n.text("未命名")
     }
     return "\(base).\(extensionName)"
   }
@@ -58,17 +58,17 @@ enum DocumentExport {
   static func validateDestination(sourceURL: URL?, destinationURL: URL) throws {
     guard let sourceURL else { return }
     if sourceURL.resolvingSymlinksInPath().standardizedFileURL == destinationURL.resolvingSymlinksInPath().standardizedFileURL {
-      throw NSError(domain: "Inkpot", code: 42, userInfo: [NSLocalizedDescriptionKey: "导出目标不能是当前 Markdown 源文件。"])
+      throw NSError(domain: "Inkpot", code: 42, userInfo: [NSLocalizedDescriptionKey: L10n.text("导出目标不能是当前 Markdown 源文件。")])
     }
   }
 
   static func documentHTML(_ document: InkpotDocument, pdfMode: Bool) async throws -> String {
     guard let editor = document.editor, editor.isReady else {
-      throw NSError(domain: "Inkpot", code: 40, userInfo: [NSLocalizedDescriptionKey: "编辑器尚未就绪，已取消导出。"])
+      throw NSError(domain: "Inkpot", code: 40, userInfo: [NSLocalizedDescriptionKey: L10n.text("编辑器尚未就绪，已取消导出。")])
     }
     // 页面完成全篇布局并等待公式、图表渲染，再返回独立 HTML。
     guard let html = try await editor.evaluateScript("window.inkpot.exportHTML(\(pdfMode ? "'pdf'" : "'html'"))", awaitPromise: true) as? String else {
-      throw NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: "读取导出内容失败，未写入文件。"])
+      throw NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: L10n.text("读取导出内容失败，未写入文件。")])
     }
     return html
   }
@@ -131,9 +131,9 @@ enum DocumentExport {
     var layout: NSPopUpButton?
     if pdf {
       let control = NSPopUpButton(frame: NSRect(x: 0, y: 0, width: 240, height: 28), pullsDown: false)
-      control.addItems(withTitles: ["分页 PDF", "连续长页"])
+      control.addItems(withTitles: ["分页 PDF", "连续长页"].map { L10n.text($0) })
       control.selectItem(at: isPDFPaginatedPreferred ? 0 : 1)
-      control.setAccessibilityLabel("PDF 页面布局")
+      control.setAccessibilityLabel(L10n.text("PDF 页面布局"))
       panel.accessoryView = control
       layout = control
     }

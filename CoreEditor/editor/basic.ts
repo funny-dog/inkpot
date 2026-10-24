@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorState, Range } from '@codemirror/state';
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { Decoration, EditorView, ViewPlugin, WidgetType } from '@codemirror/view';
@@ -30,7 +31,7 @@ export function basicDecorations(node: SyntaxNode, view: EditorView, searchSelec
     decorations.push(Decoration.mark({ class: 'cm-inkpot-inline-code' }).range(node.from, node.to));
     if (!editing) for (const mark of node.getChildren('CodeMark')) hide(mark.from, mark.to);
   } else if (node.name === 'Link' || node.name === 'Autolink') {
-    decorations.push(Decoration.mark({ class: 'cm-inkpot-link', attributes: { title: '⌘单击或 ⌘Enter 打开链接', role: 'link' } }).range(node.from, node.to));
+    decorations.push(Decoration.mark({ class: 'cm-inkpot-link', attributes: { title: t('⌘单击或 ⌘Enter 打开链接'), role: 'link' } }).range(node.from, node.to));
     const marks = node.getChildren('LinkMark');
     if (!editing && marks.length >= 2) {
       hide(marks[0].from, marks[0].to);

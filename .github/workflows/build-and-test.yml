@@ -67,11 +67,15 @@ jobs:
         run: |
           xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
+      - name: Test English localization
+        run: |
+          xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug -testLanguage en -only-testing:InkpotTests/LocalizationTests CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
       - name: Check Release build and resources
         run: |
           xcodebuild build -project App/Inkpot.xcodeproj -scheme Inkpot -configuration Release -destination 'platform=macOS' -derivedDataPath build/Release CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
           resources=build/Release/Build/Products/Release/Inkpot.app/Contents/Resources
-          for file in index.html ThirdPartyNotices.md math/katex.mjs math/mermaid.mjs math/katex.min.css math/lang-javascript.mjs; do
+          for file in index.html ThirdPartyNotices.md en.lproj/Localizable.strings zh-Hans.lproj/Localizable.strings math/katex.mjs math/mermaid.mjs math/katex.min.css math/lang-javascript.mjs; do
             test -s "$resources/$file"
           done
           test -d "$resources/math/fonts"

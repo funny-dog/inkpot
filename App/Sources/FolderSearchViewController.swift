@@ -31,11 +31,11 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
   private let statusLabel = NSTextField(wrappingLabelWithString: "")
   private lazy var emptyState = SidebarEmptyState(
     symbol: "magnifyingglass",
-    title: "在文件夹中查找",
-    message: "先打开一个文件夹，再搜索其中所有 Markdown 与文本文件。",
-    button: NSButton(title: "打开文件夹…", target: self, action: #selector(chooseFolder(_:)))
+    title: L10n.text("在文件夹中查找"),
+    message: L10n.text("先打开一个文件夹，再搜索其中所有 Markdown 与文本文件。"),
+    button: NSButton(title: L10n.text("打开文件夹…"), target: self, action: #selector(chooseFolder(_:)))
   )
-  private let noResults = SidebarEmptyState(symbol: "", title: "没有找到匹配内容", message: "换个关键词，或检查是否打开了正确的文件夹。")
+  private let noResults = SidebarEmptyState(symbol: "", title: L10n.text("没有找到匹配内容"), message: L10n.text("换个关键词，或检查是否打开了正确的文件夹。"))
   private var groups: [Group] = []
   private var searchTask: Task<Void, Never>?
   private var activeToken: SearchCancellation?
@@ -58,14 +58,14 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
 
   override func loadView() {
     view = NSView()
-    searchField.placeholderString = "在文件夹中搜索"
+    searchField.placeholderString = L10n.text("在文件夹中搜索")
     searchField.target = self
     searchField.action = #selector(searchFieldChanged(_:))
     searchField.sendsWholeSearchString = false
-    searchField.setAccessibilityLabel("在文件夹中搜索")
+    searchField.setAccessibilityLabel(L10n.text("在文件夹中搜索"))
     statusLabel.font = .systemFont(ofSize: 11)
     statusLabel.textColor = .secondaryLabelColor
-    statusLabel.setAccessibilityLabel("搜索状态")
+    statusLabel.setAccessibilityLabel(L10n.text("搜索状态"))
     let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("match"))
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
@@ -73,7 +73,7 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     outlineView.rowHeight = 24
     outlineView.indentationPerLevel = 10
     outlineView.style = .sourceList
-    outlineView.setAccessibilityLabel("搜索结果")
+    outlineView.setAccessibilityLabel(L10n.text("搜索结果"))
     outlineView.dataSource = self
     outlineView.delegate = self
     outlineView.target = self
@@ -148,12 +148,12 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
   }
 
   var statusText: String {
-    guard folderURL != nil else { return "未打开文件夹" }
-    if isSearching { return "正在搜索…" }
-    guard !activeQuery.isEmpty else { return "输入关键词搜索当前文件夹" }
-    guard result.matchCount > 0 else { return "没有找到匹配内容" }
-    let base = "\(result.files.count) 个文件 · \(result.matchCount) 处匹配"
-    return result.truncated ? base + "（已截断，仅显示前 \(FolderSearch.resultLimit) 处）" : base
+    guard folderURL != nil else { return L10n.text("未打开文件夹") }
+    if isSearching { return L10n.text("正在搜索…") }
+    guard !activeQuery.isEmpty else { return L10n.text("输入关键词搜索当前文件夹") }
+    guard result.matchCount > 0 else { return L10n.text("没有找到匹配内容") }
+    let base = L10n.text("%ld 个文件 · %ld 处匹配", result.files.count, result.matchCount)
+    return result.truncated ? base + L10n.text("（已截断，仅显示前 %ld 处）", FolderSearch.resultLimit) : base
   }
 
   private func apply(_ outcome: FolderSearchResult) {
@@ -222,14 +222,14 @@ extension FolderSearchViewController {
       cell.textField?.font = .boldSystemFont(ofSize: 12)
       cell.textField?.stringValue = group.file.relativePath
       cell.textField?.toolTip = group.file.url.path
-      cell.textField?.setAccessibilityLabel("文件 \(group.file.relativePath)，\(group.file.matches.count) 处匹配")
+      cell.textField?.setAccessibilityLabel(L10n.text("文件 %@，%ld 处匹配", group.file.relativePath, group.file.matches.count))
       return cell
     }
     guard let item = item as? MatchItem else { return nil }
     let cell = makeCell(identifier: "searchMatch", in: outlineView)
     cell.textField?.attributedStringValue = Self.attributedMatch(item.match)
-    cell.textField?.toolTip = "\(item.match.url.path) 第 \(item.match.line) 行"
-    cell.textField?.setAccessibilityLabel("第 \(item.match.line) 行，\(item.match.snippet)")
+    cell.textField?.toolTip = L10n.text("%@ 第 %ld 行", item.match.url.path, item.match.line)
+    cell.textField?.setAccessibilityLabel(L10n.text("第 %ld 行，%@", item.match.line, item.match.snippet))
     return cell
   }
 

@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
   }
 
   func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+    if menuItem.action == #selector(checkForUpdates(_:)) { return !UpdateChecker.shared.isChecking }
     if menuItem.action == #selector(insertImage(_:)) { return editor?.isReady == true }
     if [#selector(exportPDF(_:)), #selector(exportHTML(_:)), #selector(printMarkdown(_:))].contains(menuItem.action) { return editor?.isReady == true }
     if [#selector(showSettings(_:)), #selector(openWebsite(_:)), #selector(sendFeedback(_:)), #selector(checkForUpdates(_:)), #selector(newDocument(_:)), #selector(openFromDock(_:))].contains(menuItem.action) { return true }
@@ -101,16 +102,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
     NSDocumentController.shared.documents.last?.windowControllers.first?.window?.tabbingMode = .preferred
   }
 
-  /// 更新源确定前先打开发布页，由用户自行下载新版本。
+  @MainActor
   @objc func checkForUpdates(_ sender: Any?) {
-    if let url = URL(string: "https://github.com/funny-dog/inkpot/releases") { NSWorkspace.shared.open(url) }
+    UpdateChecker.shared.check()
   }
 
   /// 程序坞右键菜单：新建与打开，与文件菜单行为一致。
   func applicationDockMenu(_ sender: NSApplication) -> NSMenu? {
     let menu = NSMenu()
     for (title, action) in [("新建", #selector(newDocument(_:))), ("打开…", #selector(openFromDock(_:)))] {
-      let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+      let item = NSMenuItem(title: L10n.text(title), action: action, keyEquivalent: "")
       item.target = self
       menu.addItem(item)
     }
@@ -136,14 +137,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
       let healthy = Set(documents.filter { $0.editor?.isReady == true }.map { $0.safety.id })
       let drafts = try RecoveryStore.standard.drafts().filter { !healthy.contains($0.id) }
       guard !drafts.isEmpty else {
-        if !automatic { let alert = NSAlert(); alert.messageText = "没有需要恢复的草稿"; alert.runModal() }
+        if !automatic { let alert = NSAlert(); alert.messageText = L10n.text("没有需要恢复的草稿"); alert.runModal() }
         return
       }
       let alert = NSAlert()
-      alert.messageText = "发现 \(drafts.count) 份未保存草稿"
-      alert.informativeText = "恢复后将打开独立副本，不覆盖原文件。选择稍后会保留草稿。"
-      alert.addButton(withTitle: "恢复草稿")
-      alert.addButton(withTitle: "稍后")
+      alert.messageText = L10n.text("发现 %ld 份未保存草稿", drafts.count)
+      alert.informativeText = L10n.text("恢复后将打开独立副本，不覆盖原文件。选择稍后会保留草稿。")
+      alert.addButton(withTitle: L10n.text("恢复草稿"))
+      alert.addButton(withTitle: L10n.text("稍后"))
       guard alert.runModal() == .alertFirstButtonReturn else { return }
       for draft in drafts {
         let document = InkpotDocument()
@@ -170,8 +171,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuItemValidation {
         let missing = await DocumentSession.restore(session)
         if !missing.isEmpty {
           let alert = NSAlert()
-          alert.messageText = "部分文件或文件夹未能恢复"
-          alert.informativeText = "以下项目可能已被移走或删除：\n" + missing.joined(separator: "\n")
+          alert.messageText = L10n.text("部分文件或文件夹未能恢复")
+          alert.informativeText = L10n.text("以下项目可能已被移走或删除：\n") + missing.joined(separator: "\n")
           alert.runModal()
         }
       }

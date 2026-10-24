@@ -13,7 +13,7 @@ struct DocumentContent {
       throw NSError(
         domain: NSCocoaErrorDomain,
         code: NSFileReadInapplicableStringEncodingError,
-        userInfo: [NSLocalizedDescriptionKey: "当前仅支持 UTF-8 文本。文件未被修改，请使用原编码的编辑器打开。"]
+        userInfo: [NSLocalizedDescriptionKey: L10n.text("当前仅支持 UTF-8 文本。文件未被修改，请使用原编码的编辑器打开。")]
       )
     }
     text = decoded

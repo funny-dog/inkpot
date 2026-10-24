@@ -19,7 +19,7 @@ final class DocumentSafety {
   func restore(_ draft: RecoveryDraft) {
     id = draft.id
     restored = true
-    recoveredName = "恢复-" + (draft.originalURL?.lastPathComponent ?? "未命名.md")
+    recoveredName = L10n.text("恢复-%@", draft.originalURL?.lastPathComponent ?? L10n.text("未命名.md"))
   }
 
   func schedule() {
@@ -31,7 +31,7 @@ final class DocumentSafety {
       do { try await persist() } catch {
         if !reportedRecoveryError, document?.editor?.view.window?.isVisible == true {
           reportedRecoveryError = true
-          document?.presentError(NSError(domain: "Inkpot", code: 20, userInfo: [NSLocalizedDescriptionKey: "本地恢复草稿写入失败。请手动保存文档。\n\(error.localizedDescription)"]))
+          document?.presentError(NSError(domain: "Inkpot", code: 20, userInfo: [NSLocalizedDescriptionKey: L10n.text("本地恢复草稿写入失败。请手动保存文档。\n%@", error.localizedDescription)]))
         }
       }
     }
@@ -73,7 +73,7 @@ final class DocumentSafety {
       result = Result {
         if document.fileURL?.standardizedFileURL == url.standardizedFileURL {
           guard try Data(contentsOf: target) == baseline else {
-            throw NSError(domain: "Inkpot", code: 21, userInfo: [NSLocalizedDescriptionKey: "磁盘文件已被其他程序修改，已阻止覆盖。当前编辑仍保留；请另存为，或通过“文件 → 重新载入磁盘版本”放弃当前修改后载入。"])
+            throw NSError(domain: "Inkpot", code: 21, userInfo: [NSLocalizedDescriptionKey: L10n.text("磁盘文件已被其他程序修改，已阻止覆盖。当前编辑仍保留；请另存为，或通过“文件 → 重新载入磁盘版本”放弃当前修改后载入。")])
           }
         }
         try action(target)

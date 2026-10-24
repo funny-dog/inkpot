@@ -99,7 +99,8 @@ final class ImageTests: XCTestCase {
     try await waitUntil { editor.isReady }
     try await editor.insertImage("assets/image-test.png")
     let inserted = try await editor.snapshot()
-    XCTAssertEqual(inserted.text, "![图片](assets/image-test.png)原文\r\n尾\n")
+    let alt = L10n.language == "en" ? "Image" : "图片"
+    XCTAssertEqual(inserted.text, "![\(alt)](assets/image-test.png)原文\r\n尾\n")
     editor.undo(nil)
     try await waitUntil { editor.latestRevision > inserted.revision }
     try await document.synchronize()

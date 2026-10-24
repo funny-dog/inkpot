@@ -79,7 +79,7 @@ final class SessionRestoreTests: XCTestCase {
     let menu = RecentFoldersMenu(folders: folders, open: { opened.append($0) }, notifyMissing: { missing.append($0.name) })
     try FileManager.default.removeItem(at: gone)
     menu.rebuild()
-    XCTAssertEqual(menu.menu.items.map(\.title), ["已删除", "保留", "", "清除菜单"])
+    XCTAssertEqual(menu.menu.items.map(\.title), ["已删除", "保留", "", L10n.text("清除菜单")])
     menu.openRecent(menu.menu.items[0])
     XCTAssertEqual(missing, ["已删除"])
     XCTAssertEqual(folders.locations.map(\.name), ["保留"])
@@ -93,7 +93,7 @@ final class SessionRestoreTests: XCTestCase {
 
   func testFileMenuListsRecentFoldersSubmenu() throws {
     let menu = MainMenu.make(delegate: AppDelegate())
-    let item = try XCTUnwrap(menu.items[1].submenu?.items.first { $0.title == "打开最近的文件夹" })
+    let item = try XCTUnwrap(menu.items[1].submenu?.items.first { $0.title == L10n.text("打开最近的文件夹") })
     XCTAssertIdentical(item.submenu, RecentFoldersMenu.shared.menu)
   }
 

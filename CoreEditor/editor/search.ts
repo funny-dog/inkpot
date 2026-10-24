@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorView, KeyBinding, runScopeHandlers, ViewUpdate } from '@codemirror/view';
 import { closeSearchPanel, findNext, findPrevious, getSearchQuery, openSearchPanel, replaceAll, replaceNext, search, SearchQuery, setSearchQuery } from '@codemirror/search';
 import { isolateHistory } from '@codemirror/commands';
@@ -5,7 +6,7 @@ import { isolateHistory } from '@codemirror/commands';
 function navigate(view: EditorView, forward: boolean) {
   const found = (forward ? findNext : findPrevious)(view);
   const status = view.dom.querySelector('.cm-inkpot-search [role=status]');
-  if (status !== null) status.textContent = !getSearchQuery(view.state).valid && getSearchQuery(view.state).regexp ? '正则表达式无效' : found ? '' : '未找到匹配项';
+  if (status !== null) status.textContent = !getSearchQuery(view.state).valid && getSearchQuery(view.state).regexp ? t('正则表达式无效') : found ? '' : t('未找到匹配项');
   return found;
 }
 
@@ -25,14 +26,14 @@ function createPanel(view: EditorView) {
   const dom = document.createElement('div');
   dom.className = 'cm-inkpot-search';
   dom.setAttribute('role', 'search');
-  dom.setAttribute('aria-label', '当前文档查找与替换');
+  dom.setAttribute('aria-label', t('当前文档查找与替换'));
   const query = getSearchQuery(view.state);
   const find = document.createElement('input');
   const replace = document.createElement('input');
   find.value = query.search;
   replace.value = query.replace;
   find.setAttribute('main-field', 'true');
-  for (const [field, name, label] of [[find, 'search', '查找文本'], [replace, 'replace', '替换为']] as const) {
+  for (const [field, name, label] of [[find, 'search', t('查找文本')], [replace, 'replace', t('替换为')]] as const) {
     field.name = name;
     field.placeholder = label;
     field.setAttribute('aria-label', label);
@@ -50,7 +51,7 @@ function createPanel(view: EditorView) {
     input.name = name;
     input.checked = query[name];
     input.addEventListener('change', () => commit());
-    label.append(input, ['区分大小写', '整词', '正则'][index]);
+    label.append(input, [t('区分大小写'), t('整词'), t('正则')][index]);
     options.append(label);
     return input;
   });
@@ -62,7 +63,7 @@ function createPanel(view: EditorView) {
       caseSensitive: caseSensitive.checked, wholeWord: wholeWord.checked, regexp: regexp.checked });
     view.dispatch({ effects: setSearchQuery.of(current) });
     find.setAttribute('aria-invalid', String(current.regexp && !current.valid && current.search !== ''));
-    status.textContent = current.regexp && !current.valid && current.search !== '' ? '正则表达式无效' : '';
+    status.textContent = current.regexp && !current.valid && current.search !== '' ? t('正则表达式无效') : '';
   }
   function run(command: typeof findNext, field = find) {
     if (view.composing) return;
@@ -73,7 +74,7 @@ function createPanel(view: EditorView) {
     if (replacing) view.dispatch({ annotations: isolateHistory.of('full') });
     const found = command(view);
     if (replacing) view.dispatch({ annotations: isolateHistory.of('full') });
-    status.textContent = found ? '' : '未找到匹配项';
+    status.textContent = found ? '' : t('未找到匹配项');
     field.focus();
   }
   function button(label: string, name: string, action: () => void) {
@@ -90,7 +91,7 @@ function createPanel(view: EditorView) {
     const item = button('', name, action);
     item.className = '';
     item.setAttribute('aria-label', label);
-    item.title = `${label}（${shortcut}）`;
+    item.title = `${label} (${shortcut})`;
     item.innerHTML = `<svg aria-hidden="true" width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="${points}"></polyline></svg>`;
     return item;
   }
@@ -108,13 +109,13 @@ function createPanel(view: EditorView) {
     return element;
   }
   const navigation = part('cm-inkpot-search-nav');
-  navigation.append(arrow('上一个', 'previous', '⇧⌘G', '6.5,1.5 3,5 6.5,8.5', () => run(searchCommands.findPrevious)),
-    arrow('下一个', 'next', '⌘G', '3.5,1.5 7,5 3.5,8.5', () => run(searchCommands.findNext)));
+  navigation.append(arrow(t('上一个'), 'previous', '⇧⌘G', '6.5,1.5 3,5 6.5,8.5', () => run(searchCommands.findPrevious)),
+    arrow(t('下一个'), 'next', '⌘G', '3.5,1.5 7,5 3.5,8.5', () => run(searchCommands.findNext)));
   const first = document.createElement('div');
   const second = document.createElement('div');
   first.append(field(find, true), options, part('cm-inkpot-search-divider'), navigation, part('cm-inkpot-search-spacer'),
-    button('完成', 'close', () => closeSearchPanel(view)));
-  second.append(field(replace, false), button('替换', 'replace', () => run(replaceNext, replace)), button('全部替换', 'replaceAll', () => run(replaceAll, replace)), status);
+    button(t('完成'), 'close', () => closeSearchPanel(view)));
+  second.append(field(replace, false), button(t('替换'), 'replace', () => run(replaceNext, replace)), button(t('全部替换'), 'replaceAll', () => run(replaceAll, replace)), status);
   dom.append(first, second);
   dom.addEventListener('keydown', event => {
     if (event.isComposing || event.keyCode === 229) return;

@@ -1,7 +1,8 @@
+import { t } from './localization';
 import { EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
 
 // 空文档底部的常用快捷键提示：只在文档为空时显示，输入第一个字即隐藏；挂在编辑器根节点而非内容区，不进入导出与打印。
-const shortcuts: [string, string][] = [['⌘O', '打开文件'], ['⌥⌘O', '打开文件夹'], ['⇧⌘M', '切换源码模式'], ['⌘,', '设置']];
+const shortcuts = [['⌘O', '打开文件'], ['⌥⌘O', '打开文件夹'], ['⇧⌘M', '切换源码模式'], ['⌘,', '设置']] as const;
 
 const welcomePlugin = ViewPlugin.fromClass(class {
   private readonly dom: HTMLElement;
@@ -10,14 +11,14 @@ const welcomePlugin = ViewPlugin.fromClass(class {
     this.dom = document.createElement('div');
     this.dom.className = 'cm-inkpot-welcome';
     this.dom.setAttribute('role', 'note');
-    this.dom.setAttribute('aria-label', '常用快捷键');
+    this.dom.setAttribute('aria-label', t('常用快捷键'));
     const list = document.createElement('dl');
     for (const [key, label] of shortcuts) {
       const item = document.createElement('div');
       const term = document.createElement('dt');
       const detail = document.createElement('dd');
       term.textContent = key;
-      detail.textContent = label;
+      detail.textContent = t(label);
       item.append(term, detail);
       list.append(item);
     }

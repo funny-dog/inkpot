@@ -75,6 +75,8 @@ build_main() {
     "Contents/MacOS/Inkpot" \
     "Contents/Resources/index.html" \
     "Contents/Resources/ThirdPartyNotices.md" \
+    "Contents/Resources/en.lproj/Localizable.strings" \
+    "Contents/Resources/zh-Hans.lproj/Localizable.strings" \
     "Contents/Resources/AppIcon.icns" \
     "Contents/Resources/math/katex.mjs" \
     "Contents/Resources/math/mermaid.mjs" \

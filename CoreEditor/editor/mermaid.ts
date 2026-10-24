@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorState, Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
@@ -52,12 +53,12 @@ class MermaidPreview extends WidgetType {
     const element = document.createElement('div');
     element.className = 'cm-inkpot-mermaid';
     element.textContent = this.source;
-    element.setAttribute('aria-label', `Mermaid 图表：${this.source.slice(0, 100)}`);
+    element.setAttribute('aria-label', t('Mermaid 图表：{0}', this.source.slice(0, 100)));
     const editable = !view.state.readOnly && view.state.facet(EditorView.editable);
     element.setAttribute('role', editable ? 'button' : 'img');
     if (editable) {
       element.tabIndex = 0;
-      element.title = '点击或按 Enter 编辑图表源码';
+      element.title = t('点击或按 Enter 编辑图表源码');
     }
     const reveal = () => {
       if (!editable || isComposing(view)) return;
@@ -69,7 +70,7 @@ class MermaidPreview extends WidgetType {
     element.dataset.renderPending = '';
     void (async () => {
       try {
-        if (this.source.length > 50000) throw new Error('图表文本超过 50,000 字符限制');
+        if (this.source.length > 50000) throw new Error(t('图表文本超过 50,000 字符限制'));
         const svg = await render(this.source, this.dark, element);
         if (element.isConnected) {
           element.innerHTML = svg;
@@ -83,7 +84,7 @@ class MermaidPreview extends WidgetType {
       } catch {
         if (element.isConnected) {
           element.classList.add('cm-inkpot-mermaid-error');
-          element.textContent = `图表暂时无法显示，请编辑源码检查语法或简化图表。\n${this.source}`;
+          element.textContent = t('图表暂时无法显示，请编辑源码检查语法或简化图表。\n{0}', this.source);
         }
       } finally {
         delete element.dataset.renderPending;

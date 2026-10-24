@@ -72,6 +72,29 @@ extension AppearanceTests {
     XCTAssertEqual(fonts.font(code: true).pointSize, 15)
   }
 
+  func testSettingsChooseFamilyAndSizeInPlace() throws {
+    _ = NSApplication.shared
+    let suite = "InkpotFontsTests-\(UUID().uuidString)"
+    let defaults = try XCTUnwrap(UserDefaults(suiteName: suite))
+    defer { defaults.removePersistentDomain(forName: suite) }
+    let fonts = EditorFonts(defaults: defaults)
+    XCTAssertNil(fonts.family(code: false))
+    fonts.setSize(18, code: false)
+    XCTAssertNil(fonts.family(code: false))
+    XCTAssertEqual(fonts.font(code: false).pointSize, 18)
+    fonts.setFamily("Helvetica", code: false)
+    XCTAssertEqual(fonts.family(code: false), "Helvetica")
+    XCTAssertEqual(fonts.font(code: false).pointSize, 18)
+    fonts.setSize(100, code: false)
+    XCTAssertEqual(fonts.font(code: false).pointSize, 18)
+    fonts.setFamily(nil, code: false)
+    XCTAssertNil(fonts.family(code: false))
+    XCTAssertEqual(fonts.font(code: false).pointSize, 18)
+    XCTAssertTrue(EditorFonts.codeFamilies.contains("Menlo"))
+    XCTAssertFalse(EditorFonts.codeFamilies.contains("Helvetica"))
+    XCTAssertTrue(EditorFonts.bodyFamilies.contains("Helvetica"))
+  }
+
   func testFontChangesReachAllEditorsAndNewDocumentsWithoutChangingBytes() async throws {
     let keys = ["editor.bodyFontName", "editor.bodyFontSize", "editor.codeFontName", "editor.codeFontSize"]
     let saved = keys.map { UserDefaults.standard.object(forKey: $0) }

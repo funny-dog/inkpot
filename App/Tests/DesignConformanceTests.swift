@@ -64,7 +64,7 @@ final class DesignConformanceTests: XCTestCase {
       return { placeholder: document.querySelector('.cm-placeholder')?.textContent ?? '', shown: getComputedStyle(hints).display !== 'none',
         bottom: editorBox.bottom - hints.getBoundingClientRect().bottom, keys: [...hints.querySelectorAll('dt')].map(node => node.textContent) };
       """)
-    XCTAssertEqual(empty["placeholder"] as? String, "开始写作…")
+    XCTAssertEqual(empty["placeholder"] as? String, L10n.language == "en" ? "Start writing…" : "开始写作…")
     XCTAssertEqual(empty["shown"] as? Bool, true)
     XCTAssertEqual(number(empty["bottom"]), 56, accuracy: 1)
     XCTAssertEqual(empty["keys"] as? [String], ["⌘O", "⌥⌘O", "⇧⌘M", "⌘,"])
@@ -91,12 +91,12 @@ final class DesignConformanceTests: XCTestCase {
 
     // 状态栏：模式、保存状态、字数。
     let container = try XCTUnwrap(controller.splitViewItems.last?.viewController as? EditorContainerViewController)
-    XCTAssertEqual(container.modeText, "实时模式")
+    XCTAssertEqual(container.modeText, L10n.text("实时模式"))
     XCTAssertEqual(container.saveText, "")
     container.showSaveState(edited: true, saved: true, autosave: false)
-    XCTAssertEqual(container.saveText, "未保存")
+    XCTAssertEqual(container.saveText, L10n.text("未保存"))
     container.showSaveState(edited: false, saved: true, autosave: true)
-    XCTAssertEqual(container.saveText, "已自动保存")
+    XCTAssertEqual(container.saveText, L10n.text("已自动保存"))
   }
 
   func testSidebarStartsBelowTitlebarAndTabsMatchDesign() throws {

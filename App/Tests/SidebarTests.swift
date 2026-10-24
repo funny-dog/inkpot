@@ -6,7 +6,7 @@ final class SidebarTests: XCTestCase {
   func testTabBarSwitchesSidebarContent() throws {
     let sidebar = SidebarViewController()
     _ = sidebar.view
-    XCTAssertEqual(sidebar.tabs.titles, ["文件", "大纲", "搜索"])
+    XCTAssertEqual(sidebar.tabs.titles, [L10n.text("文件"), L10n.text("大纲"), L10n.text("搜索")])
     XCTAssertEqual(sidebar.tabs.selectedIndex, 1)
     XCTAssertEqual(sidebar.content, .outline)
     // 点按“文件”：切换选中项并显示文件树页。

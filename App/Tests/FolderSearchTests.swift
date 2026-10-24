@@ -203,7 +203,7 @@ final class FolderSearchTests: XCTestCase {
   func testMenuExposesFindInFolderWithShiftCommandF() throws {
     _ = NSApplication.shared
     let menu = MainMenu.make(delegate: AppDelegate())
-    let item = try XCTUnwrap(menu.items[2].submenu?.items.first { $0.title == "在文件夹中查找…" })
+    let item = try XCTUnwrap(menu.items[2].submenu?.items.first { $0.title == L10n.text("在文件夹中查找…") })
     XCTAssertEqual(item.action, #selector(DocumentViewController.findInFolder(_:)))
     XCTAssertNil(item.target)
     XCTAssertEqual(item.keyEquivalent, "f")

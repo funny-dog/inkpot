@@ -60,7 +60,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     webView.navigationDelegate = self
     webView.configuration.userContentController.add(DocumentMessageHandler(owner: self), name: "document")
     guard let url = resourceURL else {
-      return fail(NSError(domain: "Inkpot", code: 1, userInfo: [NSLocalizedDescriptionKey: "缺少编辑器资源，请重新构建应用。旧文件未被修改。"]))
+      return fail(NSError(domain: "Inkpot", code: 1, userInfo: [NSLocalizedDescriptionKey: L10n.text("缺少编辑器资源，请重新构建应用。旧文件未被修改。")]))
     }
     webView.loadFileURL(url, allowingReadAccessTo: url)
   }
@@ -84,12 +84,12 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   func snapshot() async throws -> (text: String, revision: Int) {
     if let loadingError { throw loadingError }
     guard isReady else {
-      throw NSError(domain: "Inkpot", code: 2, userInfo: [NSLocalizedDescriptionKey: "编辑器尚未就绪或已经停止，已阻止保存和关闭。"])
+      throw NSError(domain: "Inkpot", code: 2, userInfo: [NSLocalizedDescriptionKey: L10n.text("编辑器尚未就绪或已经停止，已阻止保存和关闭。")])
     }
     let snapshotGeneration = generation
     guard let result = try await evaluateScript("window.inkpot.snapshot()") as? [String: Any],
           let text = result["text"] as? String, let revision = result["revision"] as? Int, revision >= 0, snapshotGeneration == generation else {
-      throw NSError(domain: "Inkpot", code: 3, userInfo: [NSLocalizedDescriptionKey: "读取最新内容失败，已阻止保存和关闭。"])
+      throw NSError(domain: "Inkpot", code: 3, userInfo: [NSLocalizedDescriptionKey: L10n.text("读取最新内容失败，已阻止保存和关闭。")])
     }
     latestRevision = max(latestRevision, revision)
     return (text, revision)
@@ -121,7 +121,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
         // 设置中选择默认源码模式时，打开后立即切换；切换不改动文档与撤销历史。
         let mode = AppSettings.shared.defaultSourceMode ? "window.inkpot.command('toggleSourceMode'); " : ""
         imageHandler.allowRemoteImages = AppSettings.shared.loadRemoteImages
-        _ = try await evaluateScript("window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(try AppSettings.shared.editingScript()); \(mode)null")
+        _ = try await evaluateScript("window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark), \(try encodedArgument(L10n.language))); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(try AppSettings.shared.editingScript()); \(mode)null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
@@ -145,7 +145,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   }
 
   func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
-    fail(NSError(domain: "Inkpot", code: 4, userInfo: [NSLocalizedDescriptionKey: "编辑器进程意外停止。已阻止覆盖磁盘文件；尚未保存的输入可能无法恢复。请保留此窗口。"]))
+    fail(NSError(domain: "Inkpot", code: 4, userInfo: [NSLocalizedDescriptionKey: L10n.text("编辑器进程意外停止。已阻止覆盖磁盘文件；尚未保存的输入可能无法恢复。请保留此窗口。")]))
   }
 
   /// 编辑器可能被容器视图控制器包裹，沿 parent 链向上找文档容器。
@@ -333,7 +333,7 @@ extension EditorViewController {
     }
     let fileURL = (view.window?.windowController?.document as? InkpotDocument)?.fileURL
     guard let url = Self.supportedLink(destination, relativeTo: fileURL) else {
-      presentError(NSError(domain: "Inkpot", code: 22, userInfo: [NSLocalizedDescriptionKey: "此链接类型暂不支持。可打开网页、邮件、Markdown 或文本文件链接。 "]))
+      presentError(NSError(domain: "Inkpot", code: 22, userInfo: [NSLocalizedDescriptionKey: L10n.text("此链接类型暂不支持。可打开网页、邮件、Markdown 或文本文件链接。 ")]))
       return
     }
     if !url.isFileURL {

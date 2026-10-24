@@ -58,17 +58,17 @@ final class DocumentTabsTests: XCTestCase {
     _ = NSApplication.shared
     let delegate = AppDelegate()
     let menu = MainMenu.make(delegate: delegate)
-    let item = try XCTUnwrap(menu.items[1].submenu?.items.first { $0.title == "新建标签页" })
+    let item = try XCTUnwrap(menu.items[1].submenu?.items.first { $0.title == L10n.text("新建标签页") })
     XCTAssertEqual(item.action, #selector(NSResponder.newWindowForTab(_:)))
     XCTAssertNil(item.target)
     XCTAssertEqual(item.keyEquivalent, "n")
     XCTAssertEqual(item.keyEquivalentModifierMask, [.command, .option])
-    let next = try XCTUnwrap(menu.items[5].submenu?.items.first { $0.title == "下一个标签页" })
-    let previous = try XCTUnwrap(menu.items[5].submenu?.items.first { $0.title == "上一个标签页" })
+    let next = try XCTUnwrap(menu.items[5].submenu?.items.first { $0.title == L10n.text("下一个标签页") })
+    let previous = try XCTUnwrap(menu.items[5].submenu?.items.first { $0.title == L10n.text("上一个标签页") })
     XCTAssertEqual(next.action, #selector(NSWindow.selectNextTab(_:)))
     XCTAssertEqual(next.keyEquivalent, "\t")
     XCTAssertEqual(next.keyEquivalentModifierMask, [.control])
     XCTAssertEqual(previous.keyEquivalentModifierMask, [.control, .shift])
-    XCTAssertEqual(menu.items[4].submenu?.items.first { $0.title == "正文字体与字号…" }?.keyEquivalent, "t")
+    XCTAssertEqual(menu.items[4].submenu?.items.first { $0.title == L10n.text("字体与字号…") }?.keyEquivalent, "t")
   }
 }

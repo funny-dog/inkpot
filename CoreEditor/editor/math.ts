@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorState, Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { isolateHistory } from '@codemirror/commands';
@@ -86,9 +87,9 @@ class MathPreview extends WidgetType {
   toDOM(view: EditorView) {
     const element: HTMLElement = document.createElement(this.display ? 'div' : 'span');
     element.className = this.display ? 'cm-inkpot-math cm-inkpot-math-block' : 'cm-inkpot-math';
-    element.setAttribute('aria-label', `公式源码：${this.source}`);
+    element.setAttribute('aria-label', t('公式源码：{0}', this.source));
     const editable = !view.state.readOnly && view.state.facet(EditorView.editable);
-    if (editable) element.title = '点击编辑公式源码';
+    if (editable) element.title = t('点击编辑公式源码');
     // 加载完成前先显示源码，资源缺失或渲染失败时也绝不留空。
     element.textContent = this.source;
     void (async () => {

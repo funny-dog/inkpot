@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { RangeSetBuilder, StateEffect } from '@codemirror/state';
 import { LanguageDescription, LanguageSupport, ParseContext, StreamLanguage, StreamParser, syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
@@ -88,7 +89,7 @@ const descriptions = [
   LanguageDescription.of({ name: 'Markdown', alias: ['markdown', 'md', 'mdx'], support: new LanguageSupport(markdownLanguage) }),
   ...definitions.map(({ name, alias, file, mode }) => LanguageDescription.of({ name, alias, async load() {
     const parser = (await loadModule(file))[mode];
-    if (parser === undefined) throw new Error(`语言文件 ${file} 缺少 ${mode}`);
+    if (parser === undefined) throw new Error(t('语言文件 {0} 缺少 {1}', file, mode));
     return new LanguageSupport(StreamLanguage.define(parser));
   } })),
 ];

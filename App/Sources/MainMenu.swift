@@ -7,56 +7,56 @@ enum MainMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
       ("Inkpot", [
-        ("设置…", "showSettings:", ","), ("检查更新…", "checkForUpdates:", ""), ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
+        (L10n.text("设置…"), "showSettings:", ","), (L10n.text("检查更新…"), "checkForUpdates:", ""), ("", "", ""), (L10n.text("退出 Inkpot"), "terminate:", "q"),
       ]),
-      ("文件", [
-        ("新建", "newDocument:", "n"), ("新建标签页", "newWindowForTab:", "n"), ("打开…", "openDocument:", "o"),
-        ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""), ("打开最近的文件夹", "recentFoldersMenu", ""),
-        ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
-        ("另存为…", "saveDocumentAs:", "S"), ("重命名…", "renameFile:", ""),
-        ("导出为 PDF…", "exportPDF:", ""),
-        ("导出为 HTML…", "exportHTML:", ""),
-        ("重新载入磁盘版本…", "revertDocumentToSaved:", ""),
-        ("恢复未保存草稿…", "restoreDrafts:", ""), ("", "", ""),
-        ("页面设置…", "runPageLayout:", "P"), ("打印…", "printMarkdown:", "p"),
+      (L10n.text("文件"), [
+        (L10n.text("新建"), "newDocument:", "n"), (L10n.text("新建标签页"), "newWindowForTab:", "n"), (L10n.text("打开…"), "openDocument:", "o"),
+        (L10n.text("打开文件夹…"), "openFolder:", "o"), (L10n.text("打开最近使用"), "recentMenu", ""), (L10n.text("打开最近的文件夹"), "recentFoldersMenu", ""),
+        (L10n.text("关闭"), "performClose:", "w"), (L10n.text("保存"), "saveDocument:", "s"),
+        (L10n.text("另存为…"), "saveDocumentAs:", "S"), (L10n.text("重命名…"), "renameFile:", ""),
+        (L10n.text("导出为 PDF…"), "exportPDF:", ""),
+        (L10n.text("导出为 HTML…"), "exportHTML:", ""),
+        (L10n.text("重新载入磁盘版本…"), "revertDocumentToSaved:", ""),
+        (L10n.text("恢复未保存草稿…"), "restoreDrafts:", ""), ("", "", ""),
+        (L10n.text("页面设置…"), "runPageLayout:", "P"), (L10n.text("打印…"), "printMarkdown:", "p"),
       ]),
-      ("编辑", [
-        ("撤销", "undo:", "z"), ("重做", "redo:", "Z"),
-        ("剪切", "cut:", "x"), ("复制", "copy:", "c"),
-        ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a"),
-        ("复制 Markdown", "copyMarkdown", ""), ("粘贴为纯文本", "pastePlainText", "V"),
-        ("", "", ""), ("查找与替换…", "find", "f"),
-        ("查找下一个", "findNext", "g"), ("查找上一个", "findPrevious", "G"),
-        ("", "", ""), ("在文件夹中查找…", "findInFolder:", "F"),
-        ("", "", ""), ("拼写和语法", "spellingMenu", ""),
+      (L10n.text("编辑"), [
+        (L10n.text("撤销"), "undo:", "z"), (L10n.text("重做"), "redo:", "Z"),
+        (L10n.text("剪切"), "cut:", "x"), (L10n.text("复制"), "copy:", "c"),
+        (L10n.text("粘贴"), "paste:", "v"), (L10n.text("全选"), "selectAll:", "a"),
+        (L10n.text("复制 Markdown"), "copyMarkdown", ""), (L10n.text("粘贴为纯文本"), "pastePlainText", "V"),
+        ("", "", ""), (L10n.text("查找与替换…"), "find", "f"),
+        (L10n.text("查找下一个"), "findNext", "g"), (L10n.text("查找上一个"), "findPrevious", "G"),
+        ("", "", ""), (L10n.text("在文件夹中查找…"), "findInFolder:", "F"),
+        ("", "", ""), (L10n.text("拼写和语法"), "spellingMenu", ""),
       ]),
-      ("格式", [
-        ("粗体", "bold", "b"), ("斜体", "italic", "i"), ("删除线", "strikethrough", "X"),
-        ("行内代码", "inlineCode", "e"), ("链接", "link", "k"), ("", "", ""),
-        ("一级标题", "heading1", "1"), ("二级标题", "heading2", "2"),
-        ("三级标题", "heading3", "3"), ("四级标题", "heading4", "4"),
-        ("五级标题", "heading5", "5"), ("六级标题", "heading6", "6"), ("", "", ""),
-        ("有序列表", "orderedList", "7"), ("无序列表", "bulletList", "8"),
-        ("任务列表", "taskList", "9"), ("引用", "blockquote", "."),
-        ("代码块", "codeBlock", "C"), ("分隔线", "horizontalRule", "H"),
-        ("插入本地图片…", "insertImage:", ""), ("表格", "tableMenu", ""), ("公式块", "insertMathBlock", ""),
+      (L10n.text("格式"), [
+        (L10n.text("粗体"), "bold", "b"), (L10n.text("斜体"), "italic", "i"), (L10n.text("删除线"), "strikethrough", "X"),
+        (L10n.text("行内代码"), "inlineCode", "e"), (L10n.text("链接"), "link", "k"), ("", "", ""),
+        (L10n.text("一级标题"), "heading1", "1"), (L10n.text("二级标题"), "heading2", "2"),
+        (L10n.text("三级标题"), "heading3", "3"), (L10n.text("四级标题"), "heading4", "4"),
+        (L10n.text("五级标题"), "heading5", "5"), (L10n.text("六级标题"), "heading6", "6"), ("", "", ""),
+        (L10n.text("有序列表"), "orderedList", "7"), (L10n.text("无序列表"), "bulletList", "8"),
+        (L10n.text("任务列表"), "taskList", "9"), (L10n.text("引用"), "blockquote", "."),
+        (L10n.text("代码块"), "codeBlock", "C"), (L10n.text("分隔线"), "horizontalRule", "H"),
+        (L10n.text("插入本地图片…"), "insertImage:", ""), (L10n.text("表格"), "tableMenu", ""), (L10n.text("公式块"), "insertMathBlock", ""),
       ]),
-      ("显示", [
-        ("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M"),
-        ("专注模式", "toggleFocusMode:", "F8"), ("打字机模式", "toggleTypewriterMode:", "F9"),
-        ("", "", ""), ("正文字体与字号…", "showBodyFont:", "t"), ("代码字体与字号…", "showCodeFont:", ""),
-        ("恢复默认字体", "resetFonts:", ""), ("", "", ""),
-        ("实际大小", "resetZoom:", "0"), ("放大", "zoomIn:", "+"), ("缩小", "zoomOut:", "-"),
-        ("", "", ""), ("进入全屏幕", "toggleFullScreen:", "f"),
+      (L10n.text("显示"), [
+        (L10n.text("文件树"), "toggleFiles", "E"), (L10n.text("标题大纲"), "toggleOutline", "O"), (L10n.text("源码模式"), "toggleSourceMode", "M"),
+        (L10n.text("专注模式"), "toggleFocusMode:", "F8"), (L10n.text("打字机模式"), "toggleTypewriterMode:", "F9"),
+        ("", "", ""), (L10n.text("字体与字号…"), "showFontSettings:", "t"),
+        (L10n.text("恢复默认字体"), "resetFonts:", ""), ("", "", ""),
+        (L10n.text("实际大小"), "resetZoom:", "0"), (L10n.text("放大"), "zoomIn:", "+"), (L10n.text("缩小"), "zoomOut:", "-"),
+        ("", "", ""), (L10n.text("进入全屏幕"), "toggleFullScreen:", "f"),
       ]),
-      ("窗口", [
-        ("最小化", "performMiniaturize:", "m"), ("缩放", "performZoom:", ""), ("", "", ""),
-        ("显示标签栏", "toggleTabBar:", ""), ("显示所有标签页", "toggleTabOverview:", ""),
-        ("下一个标签页", "selectNextTab:", "\t"), ("上一个标签页", "selectPreviousTab:", "\t"),
-        ("将标签页移到新窗口", "moveTabToNewWindow:", ""), ("合并所有窗口", "mergeAllWindows:", ""),
-        ("", "", ""), ("前置全部窗口", "arrangeInFront:", ""),
+      (L10n.text("窗口"), [
+        (L10n.text("最小化"), "performMiniaturize:", "m"), (L10n.text("缩放"), "performZoom:", ""), ("", "", ""),
+        (L10n.text("显示标签栏"), "toggleTabBar:", ""), (L10n.text("显示所有标签页"), "toggleTabOverview:", ""),
+        (L10n.text("下一个标签页"), "selectNextTab:", "\t"), (L10n.text("上一个标签页"), "selectPreviousTab:", "\t"),
+        (L10n.text("将标签页移到新窗口"), "moveTabToNewWindow:", ""), (L10n.text("合并所有窗口"), "mergeAllWindows:", ""),
+        ("", "", ""), (L10n.text("前置全部窗口"), "arrangeInFront:", ""),
       ]),
-      ("帮助", [("官方网站", "openWebsite:", ""), ("反馈", "sendFeedback:", "")]),
+      (L10n.text("帮助"), [(L10n.text("官方网站"), "openWebsite:", ""), (L10n.text("反馈"), "sendFeedback:", "")]),
     ]
     for (title, entries) in groups {
       let item = NSMenuItem()
@@ -75,7 +75,7 @@ enum MainMenu {
         if action == "selectNextTab:" { entry.keyEquivalentModifierMask = [.control] }
         if action == "selectPreviousTab:" { entry.keyEquivalentModifierMask = [.control, .shift] }
         if action == "toggleFullScreen:" { entry.keyEquivalentModifierMask = [.command, .control] }
-        if ["showBodyFont:", "showCodeFont:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
+        if ["showFontSettings:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
         if ["toggleFocusMode:", "toggleTypewriterMode:"].contains(action) {
           entry.target = DisplayModes.shared
           let functionKey = action == "toggleFocusMode:" ? NSF8FunctionKey : NSF9FunctionKey
@@ -102,10 +102,10 @@ enum MainMenu {
           entry.action = nil
           entry.representedObject = nil
           entry.target = nil
-          let spelling = NSMenu(title: "拼写和语法")
+          let spelling = NSMenu(title: L10n.text("拼写和语法"))
           for (title, selector, key) in [
-            ("显示拼写和语法", "showGuessPanel:", ":"), ("立即检查文稿", "checkSpelling:", ";"),
-            ("", "", ""), ("输入时检查拼写", "toggleContinuousSpellChecking:", ""),
+            (L10n.text("显示拼写和语法"), "showGuessPanel:", ":"), (L10n.text("立即检查文稿"), "checkSpelling:", ";"),
+            ("", "", ""), (L10n.text("输入时检查拼写"), "toggleContinuousSpellChecking:", ""),
           ] {
             spelling.addItem(title.isEmpty ? .separator() : NSMenuItem(title: title, action: NSSelectorFromString(selector), keyEquivalent: key))
           }
@@ -113,12 +113,12 @@ enum MainMenu {
         }
         if action == "tableMenu" {
           entry.action = nil
-          let tables = NSMenu(title: "表格")
+          let tables = NSMenu(title: L10n.text("表格"))
           for (title, command) in [
-            ("插入表格", "insertTable"), ("在上方插入行", "tableRowAbove"), ("在下方插入行", "tableRowBelow"),
-            ("在左侧插入列", "tableColumnBefore"), ("在右侧插入列", "tableColumnAfter"),
-            ("删除当前行", "tableDeleteRow"), ("删除当前列", "tableDeleteColumn"),
-            ("当前列左对齐", "tableAlignLeft"), ("当前列居中", "tableAlignCenter"), ("当前列右对齐", "tableAlignRight"),
+            (L10n.text("插入表格"), "insertTable"), (L10n.text("在上方插入行"), "tableRowAbove"), (L10n.text("在下方插入行"), "tableRowBelow"),
+            (L10n.text("在左侧插入列"), "tableColumnBefore"), (L10n.text("在右侧插入列"), "tableColumnAfter"),
+            (L10n.text("删除当前行"), "tableDeleteRow"), (L10n.text("删除当前列"), "tableDeleteColumn"),
+            (L10n.text("当前列左对齐"), "tableAlignLeft"), (L10n.text("当前列居中"), "tableAlignCenter"), (L10n.text("当前列右对齐"), "tableAlignRight"),
           ] {
             let item = NSMenuItem(title: title, action: #selector(AppDelegate.editorCommand(_:)), keyEquivalent: "")
             item.representedObject = command
@@ -138,9 +138,9 @@ enum MainMenu {
         }
       }
       menu.addItem(item)
-      if title == "窗口" { NSApp.windowsMenu = submenu }
+      if title == L10n.text("窗口") { NSApp.windowsMenu = submenu }
       // 系统会给帮助菜单自动加入搜索框；把帮助菜单指向一个不显示的空菜单，真正的帮助菜单就只有官方网站和反馈。
-      if title == "帮助" { NSApp.helpMenu = NSMenu(title: "") }
+      if title == L10n.text("帮助") { NSApp.helpMenu = NSMenu(title: "") }
     }
     return menu
   }

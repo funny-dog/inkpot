@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorState, Range, StateField, Text } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { isolateHistory } from '@codemirror/commands';
@@ -90,7 +91,7 @@ class TaskCheckbox extends WidgetType {
     const input = document.createElement('input');
     input.type = 'checkbox';
     input.checked = this.checked;
-    input.setAttribute('aria-label', '任务勾选');
+    input.setAttribute('aria-label', t('任务勾选'));
     const editable = !view.state.readOnly && view.state.facet(EditorView.editable);
     input.disabled = !editable;
     input.addEventListener('mousedown', event => event.preventDefault());
@@ -114,7 +115,7 @@ class FootnoteRef extends WidgetType {
     const element = document.createElement('sup');
     element.className = 'cm-inkpot-footnote-ref';
     element.textContent = this.label;
-    element.title = this.definition.length > 0 ? this.definition : `脚注：${this.label}`;
+    element.title = this.definition.length > 0 ? this.definition : t('脚注：{0}', this.label);
     if (!view.state.readOnly && view.state.facet(EditorView.editable)) {
       element.addEventListener('mousedown', event => {
         if (event.button !== 0) return;
@@ -173,11 +174,11 @@ class TableOfContents extends WidgetType {
   toDOM(view: EditorView) {
     const wrapper = document.createElement('div');
     wrapper.className = 'cm-inkpot-toc';
-    wrapper.setAttribute('aria-label', '目录');
+    wrapper.setAttribute('aria-label', t('目录'));
     if (this.entries.length === 0) {
       const empty = wrapper.appendChild(document.createElement('div'));
       empty.className = 'cm-inkpot-toc-empty';
-      empty.textContent = '暂无标题';
+      empty.textContent = t('暂无标题');
     } else {
       const editable = !view.state.readOnly && view.state.facet(EditorView.editable);
       for (const entry of this.entries) {
@@ -185,7 +186,7 @@ class TableOfContents extends WidgetType {
         item.className = 'cm-inkpot-toc-item';
         item.style.paddingLeft = `${(entry.level - 1) * 18}px`;
         item.textContent = entry.title;
-        item.title = '跳转到此标题';
+        item.title = t('跳转到此标题');
         item.addEventListener('mousedown', (event: MouseEvent) => {
           if (event.button !== 0) return;
           event.preventDefault();

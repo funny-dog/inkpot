@@ -19,25 +19,25 @@ extension FileTreeViewController: NSMenuDelegate, NSMenuItemValidation {
       menu.addItem(item)
     }
     if let entry, !entry.isDirectory {
-      add("打开", #selector(openItem(_:)), entry.url)
-      add("在新标签页中打开", #selector(openInTab(_:)), entry.url)
-      add("在新窗口中打开", #selector(openInWindow(_:)), entry.url)
+      add(L10n.text("打开"), #selector(openItem(_:)), entry.url)
+      add(L10n.text("在新标签页中打开"), #selector(openInTab(_:)), entry.url)
+      add(L10n.text("在新窗口中打开"), #selector(openInWindow(_:)), entry.url)
       menu.addItem(.separator())
     }
-    add("新建文件", #selector(createFile(_:)), folder)
-    add("新建文件夹", #selector(createFolder(_:)), folder)
+    add(L10n.text("新建文件"), #selector(createFile(_:)), folder)
+    add(L10n.text("新建文件夹"), #selector(createFolder(_:)), folder)
     if let entry {
       menu.addItem(.separator())
-      add("创建副本", #selector(duplicateItem(_:)), entry.url)
-      add("重命名…", #selector(renameItem(_:)), entry.url)
+      add(L10n.text("创建副本"), #selector(duplicateItem(_:)), entry.url)
+      add(L10n.text("重命名…"), #selector(renameItem(_:)), entry.url)
       menu.addItem(.separator())
-      add("删除…", #selector(trashItem(_:)), entry.url)
+      add(L10n.text("删除…"), #selector(trashItem(_:)), entry.url)
     }
     // 空白处针对当前根文件夹，条目上针对该文件或文件夹。
     let target = entry?.url ?? root.entry.url
     menu.addItem(.separator())
-    add("复制文件路径", #selector(copyPath(_:)), target)
-    add("在 Finder 中显示", #selector(revealInFinder(_:)), target)
+    add(L10n.text("复制文件路径"), #selector(copyPath(_:)), target)
+    add(L10n.text("在 Finder 中显示"), #selector(revealInFinder(_:)), target)
     return menu
   }
 
@@ -79,7 +79,7 @@ extension FileTreeViewController: NSMenuDelegate, NSMenuItemValidation {
 
   private func create(_ sender: NSMenuItem, directory: Bool) {
     guard let folder = sender.representedObject as? URL else { return }
-    askName(title: directory ? "新建文件夹" : "新建文件", name: directory ? "未命名文件夹" : "未命名.md") { [weak self] name in
+    askName(title: directory ? L10n.text("新建文件夹") : L10n.text("新建文件"), name: directory ? L10n.text("未命名文件夹") : L10n.text("未命名.md")) { [weak self] name in
       let url = try FileTreeActions.shared.create(in: folder, name: name, directory: directory)
       if !directory { self?.onOpenInTab?(url) }
     }
@@ -87,7 +87,7 @@ extension FileTreeViewController: NSMenuDelegate, NSMenuItemValidation {
 
   @objc private func renameItem(_ sender: NSMenuItem) {
     guard let url = sender.representedObject as? URL else { return }
-    askName(title: "重命名", name: url.lastPathComponent) { name in
+    askName(title: L10n.text("重命名"), name: url.lastPathComponent) { name in
       _ = try await FileTreeActions.shared.rename(url, name: name)
     }
   }
@@ -96,10 +96,10 @@ extension FileTreeViewController: NSMenuDelegate, NSMenuItemValidation {
   @objc private func trashItem(_ sender: NSMenuItem) {
     guard let url = sender.representedObject as? URL, let window = view.window else { return }
     let alert = NSAlert()
-    alert.messageText = "要将“\(url.lastPathComponent)”移到废纸篓吗？"
-    alert.informativeText = "可以在废纸篓中恢复。"
-    alert.addButton(withTitle: "移到废纸篓")
-    alert.addButton(withTitle: "取消")
+    alert.messageText = L10n.text("要将“%@”移到废纸篓吗？", url.lastPathComponent)
+    alert.informativeText = L10n.text("可以在废纸篓中恢复。")
+    alert.addButton(withTitle: L10n.text("移到废纸篓"))
+    alert.addButton(withTitle: L10n.text("取消"))
     alert.beginSheetModal(for: window) { [weak self] response in
       guard response == .alertFirstButtonReturn else { return }
       Task { @MainActor in
@@ -115,10 +115,10 @@ extension FileTreeViewController: NSMenuDelegate, NSMenuItemValidation {
     alert.messageText = title
     let field = NSTextField(string: name)
     field.frame = NSRect(x: 0, y: 0, width: 300, height: 24)
-    field.setAccessibilityLabel("名称")
+    field.setAccessibilityLabel(L10n.text("名称"))
     alert.accessoryView = field
-    alert.addButton(withTitle: "确定")
-    alert.addButton(withTitle: "取消")
+    alert.addButton(withTitle: L10n.text("确定"))
+    alert.addButton(withTitle: L10n.text("取消"))
     alert.window.initialFirstResponder = field
     alert.beginSheetModal(for: window) { [weak self] response in
       guard let self, response == .alertFirstButtonReturn, root === initialRoot else { return }

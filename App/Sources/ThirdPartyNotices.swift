@@ -1,6 +1,6 @@
 import AppKit
 
-/// 许可原文随应用离线提供，从“设置 → 通用 → 关于”打开只读窗口查看，窗口按需创建。
+/// 许可原文随应用离线提供，从“设置 → 关于”打开只读窗口查看，窗口按需创建。
 @MainActor
 enum ThirdPartyNotices {
   private static var window: NSWindow?
@@ -20,7 +20,7 @@ enum ThirdPartyNotices {
   static func makeWindow(bundle: Bundle = Bundle(for: AppDelegate.self)) throws -> NSWindow {
     let notices = try text(bundle: bundle)
     let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 720, height: 540), styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-    window.title = "第三方许可"
+    window.title = L10n.text("第三方许可")
     window.minSize = NSSize(width: 480, height: 320)
     window.isReleasedWhenClosed = false
     let scroll = NSScrollView(frame: window.contentLayoutRect)
@@ -39,7 +39,7 @@ enum ThirdPartyNotices {
     text.isVerticallyResizable = true
     text.autoresizingMask = [.width]
     text.textContainer?.widthTracksTextView = true
-    text.setAccessibilityLabel("第三方依赖及许可原文")
+    text.setAccessibilityLabel(L10n.text("第三方依赖及许可原文"))
     scroll.documentView = text
     window.contentView = scroll
     window.center()

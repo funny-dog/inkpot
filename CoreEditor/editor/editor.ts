@@ -1,3 +1,4 @@
+import { setEditorLanguage, t } from './localization';
 import { EditorState } from '@codemirror/state';
 import { Command, EditorView, keymap, placeholder } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, redo, redoDepth, selectAll, undo, undoDepth, isolateHistory } from '@codemirror/commands';
@@ -26,7 +27,7 @@ import { indentBindings, indentCompartment, indentWidth } from './indent';
 
 declare const window: {
   inkpot: {
-    open: (text: string, generation?: number, dark?: boolean) => void;
+    open: (text: string, generation?: number, dark?: boolean, language?: string) => void;
     navigateHeading: (id: number) => void;
     navigateFragment: (fragment: string) => void;
     selectMatch: (line: number, column: number, length: number) => void;
@@ -80,7 +81,8 @@ document.addEventListener('inkpot-open-link', event => {
 document.addEventListener('focusout', () => queueMicrotask(() => publish(false)));
 
 window.inkpot = {
-  open(text, documentGeneration = 0, dark = false) {
+  open(text, documentGeneration = 0, dark = false, language = 'en') {
+    setEditorLanguage(language);
     generation = documentGeneration;
     setImageDocument(generation);
     view?.destroy();
@@ -118,9 +120,9 @@ window.inkpot = {
           keymap.of([...indentBindings, ...historyKeymap, ...defaultKeymap]),
           EditorView.lineWrapping,
           // 拼写检查的开关由原生“输入时检查拼写”控制；自动纠正、首字母大写保持 CodeMirror 默认关闭，不改写原文。
-          EditorView.contentAttributes.of({ 'aria-label': 'Markdown 文本编辑器', spellcheck: 'true' }),
+          EditorView.contentAttributes.of({ 'aria-label': t('Markdown 文本编辑器'), spellcheck: 'true' }),
           spellingExclusions,
-          placeholder('开始写作…'),
+          placeholder(t('开始写作…')),
           welcomeHints,
           EditorView.updateListener.of(update => {
             if (update.docChanged) {
@@ -175,8 +177,8 @@ window.inkpot = {
     view.focus();
   },
   insertImage(path) {
-    if (view === undefined || isComposing(view) || view.state.readOnly) throw new Error('请先结束输入或等待编辑器就绪，再插入图片。');
-    view.dispatch(view.state.update({ ...view.state.replaceSelection(`![图片](${path})`), annotations: isolateHistory.of('full'), userEvent: 'input.image', scrollIntoView: true }));
+    if (view === undefined || isComposing(view) || view.state.readOnly) throw new Error(t('请先结束输入或等待编辑器就绪，再插入图片。'));
+    view.dispatch(view.state.update({ ...view.state.replaceSelection(`![${t('图片')}](${path})`), annotations: isolateHistory.of('full'), userEvent: 'input.image', scrollIntoView: true }));
     view.focus();
   },
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
@@ -209,12 +211,12 @@ window.inkpot = {
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
   setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {
-    if (view === undefined) throw new Error('编辑器尚未就绪。');
+    if (view === undefined) throw new Error(t('编辑器尚未就绪。'));
     return documentHTML(view, mode === 'pdf' ? 'pdf' : 'html');
   },
   snapshot() {
-    if (view === undefined) throw new Error('编辑器尚未就绪。');
-    if (isComposing(view)) throw new Error('请先确认输入法候选文字，再保存或关闭。');
+    if (view === undefined) throw new Error(t('编辑器尚未就绪。'));
+    if (isComposing(view)) throw new Error(t('请先确认输入法候选文字，再保存或关闭。'));
     return { text: source.read(view.state), revision };
   },
   command(name) {

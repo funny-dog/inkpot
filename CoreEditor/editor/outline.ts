@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { ensureSyntaxTree } from '@codemirror/language';
 import { EditorState } from '@codemirror/state';
 import { EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
@@ -37,7 +38,7 @@ export function headings(state: EditorState, tree: Tree): Omit<Heading, 'id'>[] 
         pos = range.to;
       }
       title += state.sliceDoc(pos, node.to);
-      result.push({ from: node.from, to: node.to, level: Number(node.name.at(-1)), title: title.trim().replace(/\s+/g, ' ') || '（空标题）' });
+      result.push({ from: node.from, to: node.to, level: Number(node.name.at(-1)), title: title.trim().replace(/\s+/g, ' ') || t('（空标题）') });
       return false;
     },
   });

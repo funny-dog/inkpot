@@ -62,7 +62,7 @@ final class RecentFolders {
 final class RecentFoldersMenu: NSObject, NSMenuDelegate, NSMenuItemValidation {
   static let shared = RecentFoldersMenu()
 
-  let menu = NSMenu(title: "打开最近的文件夹")
+  let menu = NSMenu(title: L10n.text("打开最近的文件夹"))
   private let folders: RecentFolders
   private let open: @MainActor (URL) -> Void
   private let notifyMissing: @MainActor (SessionLocation) -> Void
@@ -97,7 +97,7 @@ final class RecentFoldersMenu: NSObject, NSMenuDelegate, NSMenuItemValidation {
       menu.addItem(item)
     }
     if !locations.isEmpty { menu.addItem(.separator()) }
-    let clearItem = NSMenuItem(title: "清除菜单", action: #selector(clearRecent(_:)), keyEquivalent: "")
+    let clearItem = NSMenuItem(title: L10n.text("清除菜单"), action: #selector(clearRecent(_:)), keyEquivalent: "")
     clearItem.target = self
     menu.addItem(clearItem)
   }
@@ -119,8 +119,8 @@ final class RecentFoldersMenu: NSObject, NSMenuDelegate, NSMenuItemValidation {
 
   static func alertMissing(_ location: SessionLocation) {
     let alert = NSAlert()
-    alert.messageText = "找不到文件夹“\(location.name)”"
-    alert.informativeText = "它可能已被移走、删除或位于未连接的磁盘上，已从最近的文件夹中移除。"
+    alert.messageText = L10n.text("找不到文件夹“%@”", location.name)
+    alert.informativeText = L10n.text("它可能已被移走、删除或位于未连接的磁盘上，已从最近的文件夹中移除。")
     alert.runModal()
   }
 

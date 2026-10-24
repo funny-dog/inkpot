@@ -4,7 +4,7 @@ import XCTest
 @MainActor
 final class DisplayModesTests: XCTestCase {
   private func item(_ menu: NSMenu?, _ title: String) throws -> NSMenuItem {
-    try XCTUnwrap(menu?.items.first { $0.title == title }, "缺少菜单项：\(title)")
+    try XCTUnwrap(menu?.items.first { $0.title == L10n.text(title) }, "缺少菜单项：\(title)")
   }
 
   private func modesScript(_ modes: DisplayModes) throws -> [String: Bool] {

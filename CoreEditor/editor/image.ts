@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { EditorState, Range, StateEffect, StateField } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType } from '@codemirror/view';
 import { SyntaxNode } from '@lezer/common';
@@ -26,14 +27,14 @@ class ImagePreview extends WidgetType {
   toDOM(view: EditorView) {
     const span = document.createElement('span');
     span.className = 'cm-inkpot-image';
-    span.title = '双击图片编辑 Markdown 路径';
+    span.title = t('双击图片编辑 Markdown 路径');
     const image = document.createElement('img');
-    image.alt = this.alt || '图片';
+    image.alt = this.alt || t('图片');
     image.src = `inkpot-image://local/${encodeURIComponent(this.path)}?document=${this.document}&revision=${this.revision}`;
     image.addEventListener('load', () => view.requestMeasure());
     image.addEventListener('error', () => {
-      image.alt = `图片无法读取：${this.alt || this.path}`;
-      span.title = '图片无法读取，双击修改路径';
+      image.alt = t('图片无法读取：{0}', this.alt || this.path);
+      span.title = t('图片无法读取，双击修改路径');
       view.requestMeasure();
     });
     span.append(image);

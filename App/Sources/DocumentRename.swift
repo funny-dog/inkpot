@@ -9,14 +9,14 @@ extension InkpotDocument {
       return
     }
     let alert = NSAlert()
-    alert.messageText = "重命名"
-    alert.informativeText = "保留扩展名，或改为 .md、.markdown、.txt 之一。"
+    alert.messageText = L10n.text("重命名")
+    alert.informativeText = L10n.text("保留扩展名，或改为 .md、.markdown、.txt 之一。")
     let field = NSTextField(string: url.lastPathComponent)
     field.frame = NSRect(x: 0, y: 0, width: 300, height: 24)
-    field.setAccessibilityLabel("文件名")
+    field.setAccessibilityLabel(L10n.text("文件名"))
     alert.accessoryView = field
-    alert.addButton(withTitle: "重命名")
-    alert.addButton(withTitle: "取消")
+    alert.addButton(withTitle: L10n.text("重命名"))
+    alert.addButton(withTitle: L10n.text("取消"))
     alert.window.initialFirstResponder = field
     alert.beginSheetModal(for: window) { [weak self] response in
       guard let self, response == .alertFirstButtonReturn, field.stringValue != url.lastPathComponent else { return }

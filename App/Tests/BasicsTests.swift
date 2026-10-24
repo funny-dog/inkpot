@@ -14,7 +14,7 @@ final class BasicsTests: XCTestCase {
   }
 
   private func item(_ menu: NSMenu?, _ title: String) throws -> NSMenuItem {
-    try XCTUnwrap(menu?.items.first { $0.title == title }, "缺少菜单项：\(title)")
+    try XCTUnwrap(menu?.items.first { $0.title == L10n.text(title) }, "缺少菜单项：\(title)")
   }
 
   func testEditorContextMenuKeepsSpellingAndReusesMenuCommands() throws {
@@ -28,14 +28,14 @@ final class BasicsTests: XCTestCase {
     reload.tag = 12
     menu.items = [guess, reload]
     EditorContextMenu.rebuild(menu, mainMenu: main)
-    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["建议", "剪切", "拷贝", "粘贴", "复制 / 粘贴为…", "段落", "格式", "插入"])
-    let format = try XCTUnwrap(menu.items.first { $0.title == "格式" }?.submenu)
-    XCTAssertEqual(format.items.map(\.title), ["粗体", "斜体", "删除线", "行内代码", "链接"])
+    XCTAssertEqual(menu.items.filter { !$0.isSeparatorItem }.map(\.title), ["建议", L10n.text("剪切"), L10n.text("拷贝"), L10n.text("粘贴"), L10n.text("复制 / 粘贴为…"), L10n.text("段落"), L10n.text("格式"), L10n.text("插入")])
+    let format = try XCTUnwrap(menu.items.first { $0.title == L10n.text("格式") }?.submenu)
+    XCTAssertEqual(format.items.map(\.title), [L10n.text("粗体"), L10n.text("斜体"), L10n.text("删除线"), L10n.text("行内代码"), L10n.text("链接")])
     XCTAssertEqual(format.items.first?.keyEquivalent, "b")
     XCTAssertIdentical(format.items.first?.target, delegate)
-    let insert = try XCTUnwrap(menu.items.first { $0.title == "插入" }?.submenu)
-    XCTAssertEqual(insert.items.map(\.title), ["插入本地图片…", "插入表格", "分隔线"])
-    XCTAssertEqual(menu.items.first { $0.title == "段落" }?.submenu?.items.filter { !$0.isSeparatorItem }.count, 12)
+    let insert = try XCTUnwrap(menu.items.first { $0.title == L10n.text("插入") }?.submenu)
+    XCTAssertEqual(insert.items.map(\.title), [L10n.text("插入本地图片…"), L10n.text("插入表格"), L10n.text("分隔线")])
+    XCTAssertEqual(menu.items.first { $0.title == L10n.text("段落") }?.submenu?.items.filter { !$0.isSeparatorItem }.count, 12)
   }
 
   func testMenusIncludeStandardMacItemsWithExpectedShortcuts() throws {
@@ -48,16 +48,16 @@ final class BasicsTests: XCTestCase {
     let display = menu.items[4].submenu
     let window = menu.items[5].submenu
 
-    // 应用菜单依次为设置、检查更新与退出；第三方许可在设置 → 通用 → 关于中查看。
-    XCTAssertEqual(app?.items.filter { !$0.isSeparatorItem }.map(\.title), ["设置…", "检查更新…", "退出 Inkpot"])
+    // 应用菜单依次为设置、检查更新与退出；第三方许可在设置 → 关于中查看。
+    XCTAssertEqual(app?.items.filter { !$0.isSeparatorItem }.map(\.title), [L10n.text("设置…"), L10n.text("检查更新…"), L10n.text("退出 Inkpot")])
     let updates = try item(app, "检查更新…")
     XCTAssertIdentical(updates.target, delegate)
     XCTAssertTrue(delegate.validateMenuItem(updates))
     let help = menu.items.last?.submenu
-    XCTAssertEqual(help?.items.map(\.title), ["官方网站", "反馈"])
+    XCTAssertEqual(help?.items.map(\.title), [L10n.text("官方网站"), L10n.text("反馈")])
     XCTAssertNotIdentical(NSApp.helpMenu, help)
     XCTAssertEqual(help?.items.allSatisfy { $0.target === delegate && delegate.validateMenuItem($0) }, true)
-    XCTAssertEqual(app?.items.last?.title, "退出 Inkpot")
+    XCTAssertEqual(app?.items.last?.title, L10n.text("退出 Inkpot"))
 
     let recent = try item(file, "打开最近使用")
     XCTAssertIdentical(recent.submenu, RecentDocumentsMenu.shared.menu)
@@ -82,7 +82,7 @@ final class BasicsTests: XCTestCase {
     XCTAssertEqual(display?.items.contains { $0.isHidden && $0.keyEquivalent == "=" && $0.allowsKeyEquivalentWhenHidden }, true)
     XCTAssertEqual(try item(file, "重命名…").action, NSSelectorFromString("renameFile:"))
     let dock = try XCTUnwrap(delegate.applicationDockMenu(NSApp))
-    XCTAssertEqual(dock.items.map(\.title), ["新建", "打开…"])
+    XCTAssertEqual(dock.items.map(\.title), [L10n.text("新建"), L10n.text("打开…")])
     // 没有当前编辑器（其他应用在前台）时程序坞菜单也必须可用。
     XCTAssertTrue(dock.items.allSatisfy { delegate.validateMenuItem($0) })
 
@@ -122,7 +122,7 @@ final class BasicsTests: XCTestCase {
     var opened: [URL] = []
     let recent = RecentDocumentsMenu(recentURLs: { urls }, open: { opened.append($0) }, clear: { urls = [] })
     recent.menuNeedsUpdate(recent.menu)
-    XCTAssertEqual(recent.menu.items.map(\.title), ["笔记.md — 甲", "笔记.md — 乙", "计划.md", "", "清除菜单"])
+    XCTAssertEqual(recent.menu.items.map(\.title), ["笔记.md — 甲", "笔记.md — 乙", "计划.md", "", L10n.text("清除菜单")])
     XCTAssertEqual(recent.menu.items[1].toolTip, urls[1].path)
     let clear = try XCTUnwrap(recent.menu.items.last)
     XCTAssertTrue(recent.validateMenuItem(clear))
@@ -131,7 +131,7 @@ final class BasicsTests: XCTestCase {
     XCTAssertEqual(opened, [urls[2]])
 
     recent.clearRecent(nil)
-    XCTAssertEqual(recent.menu.items.map(\.title), ["清除菜单"])
+    XCTAssertEqual(recent.menu.items.map(\.title), [L10n.text("清除菜单")])
     XCTAssertFalse(recent.validateMenuItem(try XCTUnwrap(recent.menu.items.last)))
   }
 

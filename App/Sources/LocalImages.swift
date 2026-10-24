@@ -7,7 +7,7 @@ enum LocalImages {
   static func validated(_ data: Data) throws -> (data: Data, type: UTType) {
     guard let source = CGImageSourceCreateWithData(data as CFData, nil), CGImageSourceGetCount(source) > 0,
           let identifier = CGImageSourceGetType(source), let type = UTType(identifier as String), type.conforms(to: .image) else {
-      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: "无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。"])
+      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: L10n.text("无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。")])
     }
     return (data, type)
   }
@@ -94,12 +94,12 @@ enum RemoteImages {
     let options = [kCGImageSourceShouldCache as String: false] as CFDictionary
     guard let source = CGImageSourceCreateWithData(data as CFData, options),
           let properties = CGImageSourceCopyPropertiesAtIndex(source, 0, options) as? [CFString: Any] else {
-      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: "无法解析图片元数据。"])
+      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: L10n.text("无法解析图片元数据。")])
     }
     let width = (properties[kCGImagePropertyPixelWidth] as? NSNumber)?.intValue ?? 0
     let height = (properties[kCGImagePropertyPixelHeight] as? NSNumber)?.intValue ?? 0
     guard width > 0, height > 0, width <= maxPixels / height else {
-      throw NSError(domain: "Inkpot", code: 33, userInfo: [NSLocalizedDescriptionKey: "图片像素超出允许的最大限制。"])
+      throw NSError(domain: "Inkpot", code: 33, userInfo: [NSLocalizedDescriptionKey: L10n.text("图片像素超出允许的最大限制。")])
     }
   }
 
@@ -108,7 +108,7 @@ enum RemoteImages {
   static func validate(data: Data, maxPixels: Int = maxPixelCount) throws -> (data: Data, type: UTType) {
     let validated = try LocalImages.validated(data)
     guard validated.type != .svg && !validated.type.conforms(to: .svg) else {
-      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: "无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。"])
+      throw NSError(domain: "Inkpot", code: 30, userInfo: [NSLocalizedDescriptionKey: L10n.text("无法读取此图片。当前支持常见的本地位图，不执行 SVG 或其他文档内容。")])
     }
     try validatePixelCount(in: data, maxPixels: maxPixels)
     return validated
@@ -248,7 +248,7 @@ final class RemoteImageDelegate: NSObject, URLSessionDataDelegate {
   func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
     guard let context = unregister(task: task) else { return }
     if context.exceededLimit {
-      context.continuation.resume(throwing: NSError(domain: "Inkpot", code: 36, userInfo: [NSLocalizedDescriptionKey: "图片体积超出限制（最大支持 20MB）。"]))
+      context.continuation.resume(throwing: NSError(domain: "Inkpot", code: 36, userInfo: [NSLocalizedDescriptionKey: L10n.text("图片体积超出限制（最大支持 20MB）。")]))
       return
     }
     if let error {
@@ -287,7 +287,7 @@ final class LocalImageHandler: NSObject, WKURLSchemeHandler {
       let result: Result<(Data, String), Error>
       if RemoteImages.isHTTPSReference(reference) {
         if !allowRemote {
-          result = .failure(NSError(domain: "Inkpot", code: 35, userInfo: [NSLocalizedDescriptionKey: "已禁用远程图片加载。可在设置中开启。"]))
+          result = .failure(NSError(domain: "Inkpot", code: 35, userInfo: [NSLocalizedDescriptionKey: L10n.text("已禁用远程图片加载。可在设置中开启。")]))
         } else {
           do {
             let loaded = try await RemoteImages.read(reference)
@@ -350,7 +350,7 @@ final class DocumentImages {
 
   private var canInsert: Bool {
     guard document?.fileURL != nil else {
-      document?.presentError(NSError(domain: "Inkpot", code: 31, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再插入或粘贴图片。图片将按设置保存到文档同级的素材文件夹。 "]))
+      document?.presentError(NSError(domain: "Inkpot", code: 31, userInfo: [NSLocalizedDescriptionKey: L10n.text("请先保存 Markdown 文档，再插入或粘贴图片。图片将按设置保存到文档同级的素材文件夹。 ")]))
       return false
     }
     return document?.editor?.isReady == true

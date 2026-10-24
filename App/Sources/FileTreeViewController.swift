@@ -40,13 +40,13 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
   private var changeObserver: NSObjectProtocol?
   let outlineView = NSOutlineView()
   private(set) var root: Item?
-  private let folderLabel = NSTextField(labelWithString: "未打开文件夹")
+  private let folderLabel = NSTextField(labelWithString: L10n.text("未打开文件夹"))
   private let header = NSStackView()
   private lazy var emptyState = SidebarEmptyState(
     symbol: "folder",
-    title: "还没有打开文件夹",
-    message: "打开一个文件夹，就能在这里浏览和切换其中的 Markdown 文件。",
-    button: NSButton(title: "打开文件夹…", target: self, action: #selector(chooseFolder(_:)))
+    title: L10n.text("还没有打开文件夹"),
+    message: L10n.text("打开一个文件夹，就能在这里浏览和切换其中的 Markdown 文件。"),
+    button: NSButton(title: L10n.text("打开文件夹…"), target: self, action: #selector(chooseFolder(_:)))
   )
   private let scrollView = NSScrollView()
   private var expanded: Set<URL> = []
@@ -67,11 +67,11 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     folderLabel.textColor = .secondaryLabelColor
     folderLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
     folderLabel.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    let open = NSButton(image: NSImage(systemSymbolName: "folder.badge.plus", accessibilityDescription: "打开文件夹") ?? NSImage(), target: self, action: #selector(chooseFolder(_:)))
-    open.toolTip = "打开或更换文件夹"
+    let open = NSButton(image: NSImage(systemSymbolName: "folder.badge.plus", accessibilityDescription: L10n.text("打开文件夹")) ?? NSImage(), target: self, action: #selector(chooseFolder(_:)))
+    open.toolTip = L10n.text("打开或更换文件夹")
     open.isBordered = false
-    let refresh = NSButton(image: NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: "刷新文件树") ?? NSImage(), target: self, action: #selector(refresh(_:)))
-    refresh.toolTip = "刷新文件树"
+    let refresh = NSButton(image: NSImage(systemSymbolName: "arrow.clockwise", accessibilityDescription: L10n.text("刷新文件树")) ?? NSImage(), target: self, action: #selector(refresh(_:)))
+    refresh.toolTip = L10n.text("刷新文件树")
     refresh.isBordered = false
     for child in [folderLabel, open, refresh] { header.addArrangedSubview(child) }
     header.spacing = 8
@@ -86,7 +86,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     // 源列表样式默认按系统侧栏尺寸排版、忽略 rowHeight；设置 style 会重置尺寸样式，须在其后改为自定义。
     outlineView.rowSizeStyle = .custom
     outlineView.rowHeight = SidebarLabel.rowHeight
-    outlineView.setAccessibilityLabel("文件树")
+    outlineView.setAccessibilityLabel(L10n.text("文件树"))
     outlineView.dataSource = self
     outlineView.delegate = self
     outlineView.target = self
@@ -138,7 +138,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     panel.canChooseFiles = false
     panel.canChooseDirectories = true
     panel.allowsMultipleSelection = false
-    panel.prompt = "打开文件夹"
+    panel.prompt = L10n.text("打开文件夹")
     panel.beginSheetModal(for: window) { [weak self] response in
       if response == .OK, let url = panel.url { self?.openFolder(url) }
     }
@@ -197,11 +197,11 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
         item.children = item.children ?? []
       }
       if item === root {
-        folderLabel.stringValue = url.lastPathComponent + (item.error == nil ? "" : "（无法读取）")
+        folderLabel.stringValue = url.lastPathComponent + (item.error == nil ? "" : L10n.text("（无法读取）"))
         folderLabel.toolTip = item.error ?? url.path
         outlineView.reloadData()
-        emptyState.title = item.error == nil ? "没有可显示的文件" : "无法读取文件夹"
-        emptyState.message = item.error ?? (AppSettings.shared.fileTreeFilter.allFiles ? "此文件夹是空的。" : "此文件夹中没有 Markdown 或文本文件。")
+        emptyState.title = item.error == nil ? L10n.text("没有可显示的文件") : L10n.text("无法读取文件夹")
+        emptyState.message = item.error ?? (AppSettings.shared.fileTreeFilter.allFiles ? L10n.text("此文件夹是空的。") : L10n.text("此文件夹中没有 Markdown 或文本文件。"))
         emptyState.isHidden = item.children?.isEmpty == false
       } else {
         outlineView.reloadItem(item, reloadChildren: true)
@@ -296,7 +296,7 @@ extension FileTreeViewController {
     let identifier = NSUserInterfaceItemIdentifier("file")
     let cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView ?? SidebarLabel.cell(identifier: identifier, icon: true)
     cell.textField?.lineBreakMode = .byTruncatingMiddle
-    cell.textField?.stringValue = item.entry.url.lastPathComponent + (item.error == nil ? "" : "（无法读取）")
+    cell.textField?.stringValue = item.entry.url.lastPathComponent + (item.error == nil ? "" : L10n.text("（无法读取）"))
     cell.imageView?.image = NSImage(systemSymbolName: item.entry.isDirectory ? "folder" : "doc.text", accessibilityDescription: nil)
     cell.toolTip = item.error ?? item.entry.url.path
     return cell

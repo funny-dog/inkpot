@@ -1,4 +1,7 @@
+import { setEditorLanguage } from '../../editor/localization';
 import { useLanguageModulesForTests } from '../../editor/code-languages';
+
+setEditorLanguage('zh-Hans');
 
 // jsdom 缺少的浏览器能力；编辑器模块与真实 WKWebView 使用相同的依赖。
 (window as unknown as { webkit: unknown }).webkit = { messageHandlers: {} };

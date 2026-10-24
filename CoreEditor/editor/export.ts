@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { ensureSyntaxTree, syntaxParserRunning, syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
@@ -80,26 +81,26 @@ async function embedImages(clone: HTMLElement) {
   let total = 0;
   for (const image of clone.querySelectorAll<HTMLImageElement>('img')) {
     const source = image.getAttribute('src') ?? '';
-    if (!source.startsWith('inkpot-image://local/')) throw new Error('图片来源不受支持，已取消导出。');
+    if (!source.startsWith('inkpot-image://local/')) throw new Error(t('图片来源不受支持，已取消导出。'));
     let dataURL = embedded.get(source);
     if (dataURL === undefined) {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 20000);
       try {
         const response = await fetch(source, { signal: controller.signal });
-        if (!response.ok) throw new Error('图片无法读取');
+        if (!response.ok) throw new Error(t('图片无法读取'));
         const blob = await response.blob();
         total += blob.size;
-        if (blob.size > 20 * 1024 * 1024 || total > 50 * 1024 * 1024) throw new Error('图片体积超过导出限制（单张 20 MB，总计 50 MB）');
+        if (blob.size > 20 * 1024 * 1024 || total > 50 * 1024 * 1024) throw new Error(t('图片体积超过导出限制（单张 20 MB，总计 50 MB）'));
         dataURL = await new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error('图片编码失败'));
-          reader.onerror = () => reject(new Error('图片编码失败'));
+          reader.onload = () => typeof reader.result === 'string' ? resolve(reader.result) : reject(new Error(t('图片编码失败')));
+          reader.onerror = () => reject(new Error(t('图片编码失败')));
           reader.readAsDataURL(blob);
         });
         embedded.set(source, dataURL);
       } catch (error) {
-        throw new Error(`无法导出图片“${image.alt || '图片'}”：${error instanceof Error ? error.message : '读取失败'}`);
+        throw new Error(t('无法导出图片“{0}”：{1}', image.alt || t('图片'), error instanceof Error ? error.message : t('读取失败')));
       } finally { clearTimeout(timer); }
     }
     image.src = dataURL;
@@ -108,10 +109,10 @@ async function embedImages(clone: HTMLElement) {
 
 /** 导出用的独立 HTML 文档：基于实时视图序列化，配色固定浅色，不依赖编辑器运行时。 */
 export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'html'): Promise<string> {
-  if (isComposing(view)) throw new Error('请先确认输入法候选文字，再导出。');
-  if (view.state.field(previewExport)) throw new Error('正在导出，请等待完成。');
+  if (isComposing(view)) throw new Error(t('请先确认输入法候选文字，再导出。'));
+  if (view.state.field(previewExport)) throw new Error(t('正在导出，请等待完成。'));
   const original = view.state.doc;
-  if (ensureSyntaxTree(view.state, original.length, 100) === null) throw new Error('文档尚未完成解析，请稍后重试导出。');
+  if (ensureSyntaxTree(view.state, original.length, 100) === null) throw new Error(t('文档尚未完成解析，请稍后重试导出。'));
   // 序列化以实时视图为准；记录并恢复调用前的源码模式、光标与外观（导出固定浅色）。
   const wasSource = view.state.field(sourceMode);
   const selection = view.state.selection;
@@ -131,11 +132,11 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     while ((languagesLoaded && syntaxParserRunning(view)) || view.dom.querySelector('[data-render-pending]') !== null
       || view.dom.querySelectorAll('.cm-inkpot-math:not(.cm-inkpot-math-error) .katex').length
         !== view.dom.querySelectorAll('.cm-inkpot-math:not(.cm-inkpot-math-error)').length) {
-      if (!view.dom.isConnected || view.state.doc !== original) throw new Error('文档已关闭或导出期间发生编辑，请重新导出。');
-      if (Date.now() > deadline) throw new Error('图表或公式渲染超时，请检查内容后重试。');
+      if (!view.dom.isConnected || view.state.doc !== original) throw new Error(t('文档已关闭或导出期间发生编辑，请重新导出。'));
+      if (Date.now() > deadline) throw new Error(t('图表或公式渲染超时，请检查内容后重试。'));
       await new Promise(resolve => setTimeout(resolve, 20));
     }
-    if (view.state.doc !== original) throw new Error('导出期间发生编辑，请重新导出。');
+    if (view.state.doc !== original) throw new Error(t('导出期间发生编辑，请重新导出。'));
     clone = view.contentDOM.cloneNode(true) as HTMLElement;
 
     clone.removeAttribute('contenteditable');
@@ -184,7 +185,7 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
 
     exportParagraphs(view, clone);
     await embedImages(clone);
-    if (!view.dom.isConnected || view.state.doc !== original) throw new Error('导出期间发生编辑或文档已关闭，请重新导出。');
+    if (!view.dom.isConnected || view.state.doc !== original) throw new Error(t('导出期间发生编辑或文档已关闭，请重新导出。'));
 
     if (mode === 'html') {
       // 独立 HTML 无 KaTeX 样式：保留浏览器原生渲染的 MathML，去掉依赖样式的排版副本。
@@ -199,7 +200,7 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     }
 
     const firstLine = view.state.doc.line(1).text.trim();
-    const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : '文档';
+    const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : t('文档');
     const katex = mode === 'pdf' ? '<link rel="stylesheet" href="inkpot-asset://math/katex.min.css">\n' : '';
     return `<!doctype html>
   <html lang="zh-CN">

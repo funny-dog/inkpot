@@ -36,15 +36,15 @@ final class StatisticsTests: XCTestCase {
     // 状态条容器加载后直接显示最新统计。
     let container = EditorContainerViewController(editor: editor)
     container.loadView()
-    XCTAssertEqual(container.statusText, "6 字 · 11 字符 · 4 行")
+    XCTAssertEqual(container.statusText, L10n.text("%@ 字 · %@ 字符 · %@ 行", "6", "11", "4"))
     // 状态栏左侧跟随编辑器切换显示当前模式。
-    XCTAssertEqual(container.modeText, "实时模式")
+    XCTAssertEqual(container.modeText, L10n.text("实时模式"))
     editor.performCommand("toggleSourceMode")
     try await waitUntil { editor.isSourceMode }
-    XCTAssertEqual(container.modeText, "源码模式")
+    XCTAssertEqual(container.modeText, L10n.text("源码模式"))
     editor.performCommand("toggleSourceMode")
     try await waitUntil { !editor.isSourceMode }
-    XCTAssertEqual(container.modeText, "实时模式")
+    XCTAssertEqual(container.modeText, L10n.text("实时模式"))
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(text.utf8))
   }

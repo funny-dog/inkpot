@@ -1,3 +1,4 @@
+import { t } from './localization';
 import { commonmarkLanguage } from '@codemirror/lang-markdown';
 import { HighlightStyle, Language, syntaxHighlighting } from '@codemirror/language';
 import { MarkdownParser, Strikethrough, Table, TaskList } from '@lezer/markdown';
@@ -29,12 +30,12 @@ export const writingExtensions = [
   documentSearch,
   autoPairs,
   pairingCompartment.of([]),
-  EditorState.phrases.of({
-    'current match': '当前匹配项',
-    'on line': '所在行',
-    'replaced match on line $': '已替换第 $ 行的匹配项',
-    'replaced $ matches': '已替换 $ 处匹配项',
-  }),
+  EditorState.phrases.compute([], () => ({
+    'current match': t('当前匹配项'),
+    'on line': t('所在行'),
+    'replaced match on line $': t('已替换第 $ 行的匹配项'),
+    'replaced $ matches': t('已替换 $ 处匹配项'),
+  })),
   keymap.of([
     ...searchBindings,
     ...typingBindings,

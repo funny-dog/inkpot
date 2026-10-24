@@ -34,7 +34,7 @@ enum DragDrop {
   private static func insertImages(_ urls: [URL], into document: InkpotDocument) {
     guard let base = document.fileURL else {
       Task { @MainActor in
-        document.presentError(NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 \(AppSettings.shared.imageFolder) 文件夹。"]))
+        document.presentError(NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: L10n.text("请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 %@ 文件夹。", AppSettings.shared.imageFolder)]))
       }
       return
     }

@@ -6,13 +6,13 @@ final class SidebarViewController: NSViewController {
   let outline = OutlineViewController()
   let files = FileTreeViewController()
   let search = FolderSearchViewController()
-  let tabs = SidebarTabBar(titles: ["文件", "大纲", "搜索"])
+  let tabs = SidebarTabBar(titles: ["文件", "大纲", "搜索"].map { L10n.text($0) })
   private(set) var content: Content = .outline
 
   override func loadView() {
     view = NSView()
     tabs.onSelect = { [weak self] index in self?.show(index == 0 ? .files : index == 2 ? .search : .outline) }
-    tabs.setAccessibilityLabel("侧栏内容")
+    tabs.setAccessibilityLabel(L10n.text("侧栏内容"))
     tabs.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(tabs)
     NSLayoutConstraint.activate([
@@ -55,7 +55,7 @@ final class SidebarViewController: NSViewController {
 /// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式与保存状态，右侧显示字数统计。
 final class EditorContainerViewController: NSViewController {
   private let statusField = NSTextField(labelWithString: "")
-  private let modeField = NSTextField(labelWithString: "实时模式")
+  private let modeField = NSTextField(labelWithString: L10n.text("实时模式"))
   private let saveField = NSTextField(labelWithString: "")
   private let divider = NSBox()
   var statusText: String { statusField.stringValue }
@@ -89,9 +89,9 @@ final class EditorContainerViewController: NSViewController {
     statusField.alignment = .right
     statusField.lineBreakMode = .byTruncatingHead
     statusField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-    statusField.setAccessibilityLabel("字数统计")
-    modeField.setAccessibilityLabel("编辑模式")
-    saveField.setAccessibilityLabel("保存状态")
+    statusField.setAccessibilityLabel(L10n.text("字数统计"))
+    modeField.setAccessibilityLabel(L10n.text("编辑模式"))
+    saveField.setAccessibilityLabel(L10n.text("保存状态"))
     for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (divider, bar), (saveField, bar), (statusField, bar)] {
       child.translatesAutoresizingMaskIntoConstraints = false
       parent.addSubview(child)
@@ -128,18 +128,18 @@ final class EditorContainerViewController: NSViewController {
   }
 
   private func showStats(_ words: Int, _ characters: Int, _ lines: Int) {
-    statusField.stringValue = "\(words.formatted()) 字 · \(characters.formatted()) 字符 · \(lines.formatted()) 行"
+    statusField.stringValue = L10n.text("%@ 字 · %@ 字符 · %@ 行", words.formatted(), characters.formatted(), lines.formatted())
   }
 
   /// 保存状态：有未保存修改、已保存或已自动保存；从未保存过的空白文档不显示。
   func showSaveState(edited: Bool, saved: Bool, autosave: Bool) {
     _ = view
-    saveField.stringValue = edited ? "未保存" : saved ? (autosave ? "已自动保存" : "已保存") : ""
+    saveField.stringValue = edited ? L10n.text("未保存") : saved ? (autosave ? L10n.text("已自动保存") : L10n.text("已保存")) : ""
     divider.isHidden = saveField.stringValue.isEmpty
   }
 
   private func showMode(_ source: Bool) {
-    modeField.stringValue = source ? "源码模式" : "实时模式"
+    modeField.stringValue = source ? L10n.text("源码模式") : L10n.text("实时模式")
   }
 }
 
@@ -290,21 +290,21 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     let item = NSToolbarItem(itemIdentifier: itemIdentifier)
     switch itemIdentifier {
     case .toggleSidebar:
-      item.label = "侧栏"
-      item.toolTip = "显示或隐藏文件树和标题大纲"
-      item.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: "侧栏")
+      item.label = L10n.text("侧栏")
+      item.toolTip = L10n.text("显示或隐藏文件树和标题大纲")
+      item.image = NSImage(systemSymbolName: "sidebar.left", accessibilityDescription: L10n.text("侧栏"))
       item.target = self
       item.action = #selector(toggleSidebar(_:))
     case .inkpotFocusMode:
-      item.label = "专注模式"
-      item.toolTip = "专注模式（F8）：淡化当前段落以外的内容"
-      item.image = NSImage(systemSymbolName: "scope", accessibilityDescription: "专注模式")
+      item.label = L10n.text("专注模式")
+      item.toolTip = L10n.text("专注模式（F8）：淡化当前段落以外的内容")
+      item.image = NSImage(systemSymbolName: "scope", accessibilityDescription: L10n.text("专注模式"))
       item.target = DisplayModes.shared
       item.action = #selector(DisplayModes.toggleFocusMode(_:))
     case .inkpotSourceMode:
-      item.label = "源码模式"
-      item.toolTip = "源码模式（⇧⌘M）：在 Markdown 源码与实时预览之间切换"
-      item.image = NSImage(systemSymbolName: "chevron.left.forwardslash.chevron.right", accessibilityDescription: "源码模式")
+      item.label = L10n.text("源码模式")
+      item.toolTip = L10n.text("源码模式（⇧⌘M）：在 Markdown 源码与实时预览之间切换")
+      item.image = NSImage(systemSymbolName: "chevron.left.forwardslash.chevron.right", accessibilityDescription: L10n.text("源码模式"))
       item.target = self
       item.action = #selector(toggleSourceMode(_:))
     default:

@@ -20,7 +20,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
   var onNavigate: ((Int) -> Void)?
   let outlineView = NSOutlineView()
   private let scrollView = NSScrollView()
-  private let emptyState = SidebarEmptyState(symbol: "list.bullet.indent", title: "还没有标题", message: "以 # 开头的行会作为标题列在这里，点击即可跳转。")
+  private let emptyState = SidebarEmptyState(symbol: "list.bullet.indent", title: L10n.text("还没有标题"), message: L10n.text("以 # 开头的行会作为标题列在这里，点击即可跳转。"))
   private var active: Int?
   private var roots: [Item] = []
   private var items: [Int: Item] = [:]
@@ -36,7 +36,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     outlineView.style = .sourceList
     outlineView.rowSizeStyle = .custom
     outlineView.rowHeight = SidebarLabel.rowHeight
-    outlineView.setAccessibilityLabel("标题大纲")
+    outlineView.setAccessibilityLabel(L10n.text("标题大纲"))
     outlineView.dataSource = self
     outlineView.delegate = self
     outlineView.target = self
@@ -146,7 +146,7 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     label.lineBreakMode = .byTruncatingTail
     label.baseWeight = item.heading.level == 1 ? .semibold : .regular
     label.baseColor = item.heading.level >= 3 ? .secondaryLabelColor : .labelColor
-    label.setAccessibilityLabel("\(item.heading.level)级标题，\(item.heading.title)")
+    label.setAccessibilityLabel(L10n.text("%ld级标题，%@", item.heading.level, item.heading.title))
     return cell
   }
 }

@@ -6,7 +6,7 @@ import AppKit
 final class RecentDocumentsMenu: NSObject, NSMenuDelegate, NSMenuItemValidation {
   static let shared = RecentDocumentsMenu()
 
-  let menu = NSMenu(title: "打开最近使用")
+  let menu = NSMenu(title: L10n.text("打开最近使用"))
   private let recentURLs: () -> [URL]
   private let open: (URL) -> Void
   private let clear: () -> Void
@@ -44,7 +44,7 @@ final class RecentDocumentsMenu: NSObject, NSMenuDelegate, NSMenuItemValidation 
       menu.addItem(item)
     }
     if !urls.isEmpty { menu.addItem(.separator()) }
-    let clearItem = NSMenuItem(title: "清除菜单", action: #selector(clearRecent(_:)), keyEquivalent: "")
+    let clearItem = NSMenuItem(title: L10n.text("清除菜单"), action: #selector(clearRecent(_:)), keyEquivalent: "")
     clearItem.target = self
     menu.addItem(clearItem)
   }
