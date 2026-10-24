@@ -14,7 +14,7 @@ Local.xcconfig
 /Inkpot*.sha256
 
 ## Local workspace notes and credentials
-/docs/
+/docs/local/
 /.env
 /.env.*
 !/.env.example
