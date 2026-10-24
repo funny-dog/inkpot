@@ -147,6 +147,17 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
   var outlineVisible: Bool { !splitViewItems[0].isCollapsed && !sidebar.showingFiles }
   var filesVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.showingFiles }
 
+  /// 会话恢复用的侧栏状态：是否收起、显示文件树还是大纲、宽度。
+  var sidebarState: (collapsed: Bool, showingFiles: Bool, width: Double) {
+    (splitViewItems[0].isCollapsed, sidebar.showingFiles, Double(sidebar.view.frame.width))
+  }
+
+  func applySidebarState(collapsed: Bool, showingFiles: Bool, width: Double) {
+    sidebar.showFiles(showingFiles)
+    splitViewItems[0].isCollapsed = collapsed
+    if !collapsed, width > 0 { splitView.setPosition(CGFloat(width), ofDividerAt: 0) }
+  }
+
   func toggleContent(files showFiles: Bool) {
     let wasVisible = showFiles ? filesVisible : outlineVisible
     sidebar.showFiles(showFiles)

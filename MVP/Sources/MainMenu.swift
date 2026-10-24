@@ -7,13 +7,13 @@ enum MainMenu {
     let menu = NSMenu()
     let groups: [(String, [(String, String, String)])] = [
       ("Inkpot", [
-        ("关于 Inkpot", "showAbout:", ""), ("", "", ""),
+        ("关于 Inkpot", "showAbout:", ""), ("", "", ""), ("设置…", "showSettings:", ","), ("", "", ""),
         ("隐藏 Inkpot", "hide:", "h"), ("隐藏其他", "hideOtherApplications:", "h"), ("全部显示", "unhideAllApplications:", ""),
         ("", "", ""), ("退出 Inkpot", "terminate:", "q"),
       ]),
       ("文件", [
         ("新建", "newDocument:", "n"), ("新建标签页", "newWindowForTab:", "n"), ("打开…", "openDocument:", "o"),
-        ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""),
+        ("打开文件夹…", "openFolder:", "o"), ("打开最近使用", "recentMenu", ""), ("打开最近的文件夹", "recentFoldersMenu", ""),
         ("关闭", "performClose:", "w"), ("保存", "saveDocument:", "s"),
         ("另存为…", "saveDocumentAs:", "S"),
         ("导出为 PDF…", "exportPDF:", ""),
@@ -73,6 +73,7 @@ enum MainMenu {
         if action == "toggleFullScreen:" { entry.keyEquivalentModifierMask = [.command, .control] }
         if ["showBodyFont:", "showCodeFont:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
         if action == "restoreDrafts:" { entry.target = delegate }
+        if action == "showSettings:" { entry.target = delegate }
         if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
         if ["undo:", "redo:", "selectAll:"].contains(action) { entry.target = delegate }
         if !action.hasSuffix(":") {
@@ -80,11 +81,11 @@ enum MainMenu {
           entry.representedObject = action
           entry.target = delegate
         }
-        if action == "recentMenu" {
+        if action == "recentMenu" || action == "recentFoldersMenu" {
           entry.action = nil
           entry.representedObject = nil
           entry.target = nil
-          entry.submenu = RecentDocumentsMenu.shared.menu
+          entry.submenu = action == "recentMenu" ? RecentDocumentsMenu.shared.menu : RecentFoldersMenu.shared.menu
         }
         if action == "spellingMenu" {
           // 系统标准动作，由当前编辑器 WebView 响应并显示勾选状态；设置由 WebKit 保存。

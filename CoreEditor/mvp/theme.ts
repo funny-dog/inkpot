@@ -36,6 +36,17 @@ const darkTheme = EditorView.theme({
   // code.ts 代码块。
   '&.cm-mvp-dark .cm-mvp-code': { backgroundColor: '#2a2b2f', color: '#c8cbd2' },
   '&.cm-mvp-dark .cm-mvp-code-language': { color: '#a8adb8' },
+  // code-languages.ts 代码着色。
+  '&.cm-mvp-dark .cm-mvp-token-keyword': { color: '#c678dd' },
+  '&.cm-mvp-dark .cm-mvp-token-string': { color: '#98c379' },
+  '&.cm-mvp-dark .cm-mvp-token-comment': { color: '#7f848e' },
+  '&.cm-mvp-dark .cm-mvp-token-number': { color: '#d19a66' },
+  '&.cm-mvp-dark .cm-mvp-token-type': { color: '#e5c07b' },
+  '&.cm-mvp-dark .cm-mvp-token-function': { color: '#61afef' },
+  '&.cm-mvp-dark .cm-mvp-token-property': { color: '#d19a66' },
+  '&.cm-mvp-dark .cm-mvp-token-tag': { color: '#e06c75' },
+  '&.cm-mvp-dark .cm-mvp-token-meta, &.cm-mvp-dark .cm-mvp-token-builtin': { color: '#56b6c2' },
+  '&.cm-mvp-dark .cm-mvp-token-link': { color: '#61afef' },
   // table.ts 表格。
   '&.cm-mvp-dark .cm-mvp-table th, &.cm-mvp-dark .cm-mvp-table td': { border: '1px solid #3c4043' },
   '&.cm-mvp-dark .cm-mvp-table th': { background: '#2a2b2f' },

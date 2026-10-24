@@ -12,7 +12,7 @@ enum LocalImages {
     return (data, type)
   }
 
-  static func store(_ data: Data, beside documentURL: URL) throws -> (path: String, url: URL) {
+  static func store(_ data: Data, beside documentURL: URL, folderName: String = AppSettings.defaultImageFolder) throws -> (path: String, url: URL) {
     let image = try validated(data)
     var bytes = image.data
     var type = image.type
@@ -23,7 +23,7 @@ enum LocalImages {
       bytes = png
       type = .png
     }
-    let folder = documentURL.deletingLastPathComponent().appendingPathComponent("assets", isDirectory: true)
+    let folder = documentURL.deletingLastPathComponent().appendingPathComponent(folderName, isDirectory: true)
     if FileManager.default.fileExists(atPath: folder.path) {
       let values = try folder.resourceValues(forKeys: [.isDirectoryKey, .isSymbolicLinkKey])
       guard values.isDirectory == true, values.isSymbolicLink != true else { throw CocoaError(.fileWriteInvalidFileName) }
@@ -32,7 +32,9 @@ enum LocalImages {
     let name = "image-" + UUID().uuidString.lowercased() + "." + (type.preferredFilenameExtension ?? "png")
     let url = folder.appendingPathComponent(name)
     try bytes.write(to: url, options: .withoutOverwriting)
-    return ("assets/" + name, url)
+    // Markdown 链接目标中的空格与括号需要转义，其他字符（含中文）保持原样，读取时会还原。
+    let reference = folderName.replacingOccurrences(of: " ", with: "%20").replacingOccurrences(of: "(", with: "%28").replacingOccurrences(of: ")", with: "%29")
+    return (reference + "/" + name, url)
   }
 
   static func read(_ reference: String, relativeTo documentURL: URL?) throws -> (Data, String) {
@@ -98,7 +100,7 @@ final class DocumentImages {
 
   private var canInsert: Bool {
     guard document?.fileURL != nil else {
-      document?.presentError(NSError(domain: "Inkpot", code: 31, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再插入或粘贴图片。图片将保存在文档同级的 assets 文件夹。 "]))
+      document?.presentError(NSError(domain: "Inkpot", code: 31, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再插入或粘贴图片。图片将保存在文档同级的 \(AppSettings.shared.imageFolder) 文件夹。"]))
       return false
     }
     return document?.editor?.isReady == true
@@ -125,7 +127,7 @@ final class DocumentImages {
     Task { @MainActor in
       var asset: URL?
       do {
-        let image = try await Task.detached { try LocalImages.store(data, beside: base) }.value
+        let image = try await Task.detached { [folder = AppSettings.shared.imageFolder] in try LocalImages.store(data, beside: base, folderName: folder) }.value
         asset = image.url
         guard document.fileURL == base, document.editor === editor, !document.windowControllers.isEmpty else { throw CocoaError(.userCancelled) }
         try await editor.insertImage(image.path)

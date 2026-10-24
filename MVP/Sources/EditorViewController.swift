@@ -107,7 +107,9 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
       do {
         guard generation == documentGeneration else { return }
         let argument = try encodedArgument(text)
-        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); null")
+        // 设置中选择默认源码模式时，打开后立即切换；切换不改动文档与撤销历史。
+        let mode = AppSettings.shared.defaultSourceMode ? "window.inkpotMVP.command('toggleSourceMode'); " : ""
+        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(mode)null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }

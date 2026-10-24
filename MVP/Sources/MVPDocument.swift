@@ -3,6 +3,7 @@ import AppKit
 final class MVPDocument: NSDocument {
   lazy var images = DocumentImages(document: self)
   lazy var safety = DocumentSafety(document: self)
+  lazy var autosave = DocumentAutosave(document: self)
   private var content = DocumentContent()
   private var savedData = Data()
   private var snapshotRevision = 0
@@ -38,6 +39,7 @@ final class MVPDocument: NSDocument {
       self?.snapshotIsValid = false
       self?.updateChangeCount(.changeDone)
       self?.safety.schedule()
+      self?.autosave.schedule()
     }
   }
 
@@ -138,6 +140,8 @@ final class MVPDocument: NSDocument {
     if [.saveOperation, .saveAsOperation, .autosaveInPlaceOperation, .autosaveAsOperation].contains(saveOperation) {
       savedData = writtenData
       safety.saved(writtenData)
+      // 写入可能在后台队列完成；保存成功后在主线程恢复被暂停的自动保存。
+      Task { @MainActor in self.autosave.saved() }
     }
   }
 
@@ -147,6 +151,7 @@ final class MVPDocument: NSDocument {
   }
 
   override func close() {
+    autosave.cancel()
     safety.close()
     super.close()
   }

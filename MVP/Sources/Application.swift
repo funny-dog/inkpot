@@ -9,6 +9,7 @@ enum Application {
     let delegate = AppDelegate()
     app.delegate = delegate
     app.setActivationPolicy(.regular)
+    AppSettings.shared.applyAppearance()
     app.activate(ignoringOtherApps: true)
     app.mainMenu = MainMenu.make(delegate: delegate)
     _ = NSDocumentController.shared

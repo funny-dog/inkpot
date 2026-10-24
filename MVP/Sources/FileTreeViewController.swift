@@ -143,6 +143,7 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     revealingCurrent = true
     folderLabel.stringValue = url.lastPathComponent
     folderLabel.toolTip = url.path
+    RecentFolders.shared.add(url)
     outlineView.reloadData()
     if let root { load(root) }
   }

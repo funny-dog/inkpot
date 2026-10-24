@@ -8,10 +8,14 @@ import { formatCommands } from './format';
 import { documentSearch, searchBindings } from './search';
 import { autoPairs, typingBindings } from './typing';
 import { footnoteExtension, highlightExtension, highlightTag } from './gfm';
-import { inlineMathExtension, markdownMathExtension } from './math';
+import { inlineMathExtension } from './math';
+import { markdownMathWith } from './math-parser';
+import { codeHighlighting, codeHighlightTheme, codeNest } from './code-languages';
 
 export const writingExtensions = [
-  new Language(commonmarkLanguage.data, (commonmarkLanguage.parser as MarkdownParser).configure([Table, markdownMathExtension, inlineMathExtension, Strikethrough, TaskList, highlightExtension, footnoteExtension]), [], 'markdown'),
+  new Language(commonmarkLanguage.data, (commonmarkLanguage.parser as MarkdownParser).configure([Table, markdownMathWith(codeNest), inlineMathExtension, Strikethrough, TaskList, highlightExtension, footnoteExtension]), [], 'markdown'),
+  codeHighlighting,
+  codeHighlightTheme,
   syntaxHighlighting(HighlightStyle.define([
     { tag: tags.heading, color: '#174ea6', fontWeight: 'bold' },
     { tag: tags.strong, fontWeight: 'bold' },

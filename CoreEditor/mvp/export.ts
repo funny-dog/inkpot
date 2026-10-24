@@ -1,7 +1,8 @@
-import { ensureSyntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxParserRunning } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
 import { applyAppearance } from './theme';
+import { loadDocumentLanguages } from './code-languages';
 
 const exportCSS = `
 body { font: 16px/1.7 -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif; color: #202020; background: #fff; margin: 0 auto; padding: 32px 28px; max-width: 740px; }
@@ -53,7 +54,9 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     view.dispatch({ selection: { anchor: 0 }, effects: setPreviewExport.of(true) });
     printLayout();
     const deadline = Date.now() + 10000;
-    while (view.dom.querySelector('[data-render-pending]') !== null
+    // 代码语言文件按需加载，加载后等待重新解析，使导出与编辑器着色一致。
+    const languagesLoaded = await loadDocumentLanguages();
+    while ((languagesLoaded && syntaxParserRunning(view)) || view.dom.querySelector('[data-render-pending]') !== null
       || view.dom.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error) .katex').length
         !== view.dom.querySelectorAll('.cm-mvp-math:not(.cm-mvp-math-error)').length) {
       if (!view.dom.isConnected || view.state.doc !== original) throw new Error('文档已关闭或导出期间发生编辑，请重新导出。');

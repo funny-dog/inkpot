@@ -24,7 +24,9 @@ enum DragDrop {
 
   private static func insertImages(_ urls: [URL], into document: MVPDocument) {
     guard let base = document.fileURL else {
-      document.presentError(NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 assets 文件夹。 "]))
+      Task { @MainActor in
+        document.presentError(NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: "请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 \(AppSettings.shared.imageFolder) 文件夹。"]))
+      }
       return
     }
     Task { @MainActor in
@@ -33,7 +35,7 @@ enum DragDrop {
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
           let data = try Data(contentsOf: url)
-          let image = try await Task.detached { try LocalImages.store(data, beside: base) }.value
+          let image = try await Task.detached { [folder = AppSettings.shared.imageFolder] in try LocalImages.store(data, beside: base, folderName: folder) }.value
           try await document.editor?.insertImage(image.path)
         } catch {
           if (error as NSError).code != NSUserCancelledError { document.presentError(error) }

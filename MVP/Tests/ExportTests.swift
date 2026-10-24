@@ -39,6 +39,24 @@ final class ExportTests: XCTestCase {
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
   }
 
+  func testCodeBlocksHighlightFromBundleAssetsAndExportColors() async throws {
+    let text = "```swift\r\nlet 名称 = \"值\" // 注释\r\n```\r\n\r\n```unknown\r\nlet x\r\n```\r\n"
+    let (document, editor, web) = try await makeDocument(text)
+    defer { document.close() }
+    // 真实 WKWebView 中经 inkpot-asset:// 从应用包加载 Swift 语言文件并着色；未知语言保持原样。
+    try await waitUntil {
+      try await web.evaluateJavaScript("document.querySelector('.cm-mvp-token-keyword')?.textContent === 'let' && document.querySelectorAll('.cm-mvp-token-keyword').length === 1") as? Bool == true
+    }
+    editor.performCommand("toggleSourceMode")
+    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-mvp-code') === null && document.querySelector('.cm-mvp-token-comment') !== null") as? Bool == true }
+    editor.performCommand("toggleSourceMode")
+    let html = try await DocumentExport.documentHTML(document, pdfMode: true)
+    XCTAssertTrue(html.contains("cm-mvp-token-keyword"))
+    XCTAssertTrue(html.contains("color: rgb(166, 38, 164)"))
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(text.utf8))
+  }
+
   func testExportPDFGeneratesValidData() async throws {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
