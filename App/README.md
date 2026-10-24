@@ -227,7 +227,7 @@ xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot \
 
 下载入口固定为 [GitHub 最新正式版本](https://github.com/funny-dog/inkpot/releases/latest)。设置 → 关于中的“自动检查更新并下载”默认开启，可取消勾选并记住选择；开启时立即检查，之后在启动时及应用持续运行期间每天最多检查一次。自动下载正式 Release 的 `Inkpot.dmg` 与校验文件，校验通过后保存在 `~/Library/Caches/com.erhu.inkpot/Updates/<版本>/Inkpot.dmg`，可从关于页在 Finder 中显示；未通过校验的下载不会替换缓存中的安装包。关闭选项会取消正在进行的自动下载。
 
-应用不自动安装或替换自身；升级前正常退出并处理未保存文档，再手动覆盖 `/Applications/Inkpot.app`。Homebrew 安装暂未提供。菜单“检查更新…”仍可手动查询并前往 `latest` 下载页；仓库私有、暂无正式 Release 或网络失败时，自动检查只在关于页显示状态，不弹窗打断写作。
+应用不自动安装或替换自身；升级前正常退出并处理未保存文档，再手动覆盖 `/Applications/Inkpot.app`。Homebrew 安装可通过 `brew upgrade --cask inkpot` 升级。菜单“检查更新…”仍可手动查询并前往 `latest` 下载页；暂无正式 Release 或网络失败时，自动检查只在关于页显示状态，不弹窗打断写作。
 
 ## 版权与许可
 
