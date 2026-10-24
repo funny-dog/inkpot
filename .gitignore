@@ -20,6 +20,7 @@ Local.xcconfig
 /.codex/
 /.claude/
 /.agents/
+/docs/
 /docs/superpowers/
 /.env
 /.env.*
