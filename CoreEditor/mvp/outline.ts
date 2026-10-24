@@ -11,11 +11,14 @@ export interface Heading {
   title: string;
 }
 
+// 标题只会出现在文档顶层或列表、引用这类容器里；段落、代码、表格等叶子块无需深入遍历。
+const headingContainers = new Set(['Document', 'BulletList', 'OrderedList', 'ListItem', 'Blockquote']);
+
 export function headings(state: EditorState, tree: Tree): Omit<Heading, 'id'>[] {
   const result: Omit<Heading, 'id'>[] = [];
   tree.iterate({
     enter(node) {
-      if (!/^(ATX|Setext)Heading[1-6]$/.test(node.name)) return;
+      if (!/^(ATX|Setext)Heading[1-6]$/.test(node.name)) return headingContainers.has(node.name);
       const removed: { from: number; to: number }[] = [];
       node.node.toTree().iterate({
         enter(child) {

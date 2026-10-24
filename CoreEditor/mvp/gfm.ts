@@ -4,8 +4,9 @@ import { isolateHistory } from '@codemirror/commands';
 import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { MarkdownConfig } from '@lezer/markdown';
 import { Tag, tags } from '@lezer/highlight';
-import { SyntaxNode } from '@lezer/common';
+import { SyntaxNode, Tree } from '@lezer/common';
 import { headings } from './outline';
+import { selectionMissesBlocks, topBlocks } from './blocks';
 import { selectionTouches } from './basic';
 import { isComposing, sourceMode } from './mode';
 
@@ -205,26 +206,37 @@ const tocSearch = StateField.define({
   update: (value, transaction) => transaction.isUserEvent('select.search') ? true : transaction.selection !== undefined || transaction.docChanged ? false : value,
 });
 
+// 目录条目按语法树缓存：同一棵树只提取一次标题，多个 [toc] 与选区引起的重建共用。
+const tocEntryCache = new WeakMap<Tree, { level: number; title: string; from: number }[]>();
+
+function tocEntries(state: EditorState) {
+  const tree = syntaxTree(state);
+  let entries = tocEntryCache.get(tree);
+  if (entries === undefined) {
+    entries = headings(state, tree).map(heading => ({ level: heading.level, title: heading.title, from: heading.from }));
+    tocEntryCache.set(tree, entries);
+  }
+  return entries;
+}
+
 function tocDecorations(state: EditorState) {
   if (state.field(sourceMode)) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
   const selection = state.selection.main;
-  syntaxTree(state).iterate({ enter(node) {
-    if (node.name !== 'Paragraph' || node.node.parent?.name !== 'Document') return;
-    if (state.sliceDoc(node.from, node.to).trim().toLowerCase() !== '[toc]') return;
+  for (const node of topBlocks(state).toc) {
     if (selectionTouches(state, node.from, node.to, true)
-      || (state.field(tocSearch) && selection.from < node.to && selection.to > node.from)) return;
-    const entries = headings(state, syntaxTree(state)).map(heading => ({ level: heading.level, title: heading.title, from: heading.from }));
-    ranges.push(Decoration.replace({ block: true, widget: new TableOfContents(entries) }).range(state.doc.lineAt(node.from).from, state.doc.lineAt(node.to).to));
-  } });
+      || (state.field(tocSearch) && selection.from < node.to && selection.to > node.from)) continue;
+    ranges.push(Decoration.replace({ block: true, widget: new TableOfContents(tocEntries(state)) }).range(state.doc.lineAt(node.from).from, state.doc.lineAt(node.to).to));
+  }
   return Decoration.set(ranges, true);
 }
 
 const tocBlocks = StateField.define<DecorationSet>({
   create: tocDecorations,
-  update: (value, transaction) => transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+  update: (value, transaction) => transaction.docChanged || transaction.reconfigured
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
-    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state) ? tocDecorations(transaction.state) : value,
+    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+    || (transaction.selection !== undefined && !selectionMissesBlocks(transaction, blocks => blocks.toc)) ? tocDecorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),
 });
 

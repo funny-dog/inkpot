@@ -4,7 +4,8 @@ import { isolateHistory } from '@codemirror/commands';
 import { Command, Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { MarkdownConfig } from '@lezer/markdown';
 import { SyntaxNode } from '@lezer/common';
-import { blockMathTagName, mathTag } from './math-parser';
+import { mathTag } from './math-parser';
+import { selectionMissesBlocks, topBlocks } from './blocks';
 import { selectionTouches } from './basic';
 import { isComposing, previewExport, sourceMode } from './mode';
 
@@ -141,27 +142,27 @@ function blockDecorations(state: EditorState) {
   const exporting = state.field(previewExport);
   if (state.field(sourceMode) && !exporting) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
-  syntaxTree(state).iterate({ enter(node) {
-    if (node.name !== blockMathTagName || node.node.parent?.name !== 'Document') return;
-    const selection = state.selection.main;
+  const selection = state.selection.main;
+  for (const node of topBlocks(state).math) {
     if (!exporting && (selectionTouches(state, node.from, node.to, true)
-      || (state.field(mathSearch) && selection.from < node.to && selection.to > node.from))) return;
+      || (state.field(mathSearch) && selection.from < node.to && selection.to > node.from))) continue;
     const source = state.sliceDoc(node.from + 2, node.to - 2).trim();
-    if (source.length === 0) return;
+    if (source.length === 0) continue;
     // 块级替换必须覆盖整行；闭标记总在行尾，开标记在行首。
     const from = state.doc.lineAt(node.from).from;
     const to = state.doc.lineAt(node.to).to;
     ranges.push(Decoration.replace({ block: true, widget: new MathPreview(source, true, node.from + 2) }).range(from, to));
-  } });
+  }
   return Decoration.set(ranges, true);
 }
 
 const mathBlocks = StateField.define<DecorationSet>({
   create: blockDecorations,
-  update: (value, transaction) => transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+  update: (value, transaction) => transaction.docChanged || transaction.reconfigured
     || transaction.startState.field(previewExport) !== transaction.state.field(previewExport)
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
-    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state) ? blockDecorations(transaction.state) : value,
+    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+    || (transaction.selection !== undefined && !selectionMissesBlocks(transaction, blocks => blocks.math)) ? blockDecorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),
 });
 

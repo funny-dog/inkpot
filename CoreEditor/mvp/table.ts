@@ -4,6 +4,7 @@ import { isolateHistory, redo, undo } from '@codemirror/commands';
 import { Command, Decoration, DecorationSet, EditorView, keymap, WidgetType } from '@codemirror/view';
 import { SyntaxNode } from '@lezer/common';
 import { linkDestination } from './basic';
+import { selectionMissesBlocks, topBlocks } from './blocks';
 import { isComposing, sourceMode } from './mode';
 import { Cell, readTable, serializeTable, Table } from './table-model';
 
@@ -215,22 +216,23 @@ const searchSelection = StateField.define({
 function decorations(state: EditorState) {
   if (state.field(sourceMode)) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
-  syntaxTree(state).iterate({ enter(node) {
-    if (node.name !== 'Table' || node.node.parent?.name !== 'Document') return;
-    const selection = state.selection.main;
+  const selection = state.selection.main;
+  for (const node of topBlocks(state).table) {
     if (!(state.field(searchSelection) && selection.from < node.to && selection.to > node.from)) {
       const table = readTable(state, node.from, node.to);
       ranges.push(Decoration.replace({ block: true, widget: new TableWidget(table, state.readOnly || !state.facet(EditorView.editable)) }).range(table.from, table.to));
     }
-    return false;
-  } });
+  }
   return Decoration.set(ranges, true);
 }
 const tables = StateField.define<DecorationSet>({
   create: decorations,
-  update: (value, transaction) => transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+  // 表格只在搜索命中时展开源码，普通光标移动不影响渲染；搜索状态切换且碰到表格时才重建。
+  update: (value, transaction) => transaction.docChanged || transaction.reconfigured
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
-    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state) ? decorations(transaction.state) : value,
+    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+    || (transaction.selection !== undefined && (transaction.startState.field(searchSelection) || transaction.state.field(searchSelection))
+      && !selectionMissesBlocks(transaction, blocks => blocks.table)) ? decorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),
 });
 

@@ -2,6 +2,7 @@ import { EditorState, Range, StateField } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, EditorView, WidgetType } from '@codemirror/view';
 import { selectionTouches } from './basic';
+import { selectionMissesBlocks, topBlocks } from './blocks';
 import { isComposing, previewExport, sourceMode } from './mode';
 
 type Mermaid = Pick<typeof import('mermaid').default, 'initialize' | 'render'>;
@@ -98,27 +99,26 @@ function decorations(state: EditorState) {
   const exporting = state.field(previewExport, false) === true;
   if (state.field(sourceMode) && !exporting) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
-  syntaxTree(state).iterate({ enter(node) {
-    if (node.name !== 'FencedCode' || node.node.parent?.name !== 'Document') return;
-    const info = node.node.getChild('CodeInfo');
-    const marks = node.node.getChildren('CodeMark');
-    if (info === null || state.sliceDoc(info.from, info.to).trim() !== 'mermaid' || marks.length !== 2) return false;
-    if (!exporting && selectionTouches(state, node.from, node.to, true)) return false;
+  for (const node of topBlocks(state).mermaid) {
+    const info = node.getChild('CodeInfo');
+    const marks = node.getChildren('CodeMark');
+    if (info === null || marks.length !== 2) continue;
+    if (!exporting && selectionTouches(state, node.from, node.to, true)) continue;
     const start = state.doc.lineAt(info.to).to + 1;
     const source = state.sliceDoc(start, marks[1].from).trim();
-    if (source === '') return false;
+    if (source === '') continue;
     const from = state.doc.lineAt(node.from).from;
     const to = state.doc.lineAt(node.to).to;
     ranges.push(Decoration.replace({ block: true, widget: new MermaidPreview(source, start, !exporting && state.facet(EditorView.darkTheme)) }).range(from, to));
-    return false;
-  } });
+  }
   return Decoration.set(ranges, true);
 }
 
 const mermaidBlocks = StateField.define<DecorationSet>({
   create: decorations,
-  update: (value, transaction) => transaction.docChanged || transaction.selection !== undefined || transaction.reconfigured
+  update: (value, transaction) => transaction.docChanged || transaction.reconfigured
     || transaction.effects.length > 0 || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+    || (transaction.selection !== undefined && !selectionMissesBlocks(transaction, blocks => blocks.mermaid))
     ? decorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),
 });

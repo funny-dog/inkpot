@@ -10,7 +10,7 @@ import { documentOutline } from './outline';
 import { refreshImages, setImageDocument } from './image';
 import { tableCommands, canTableCommand, syncTableSelection } from './table';
 import { mathCommands } from './math';
-import { documentStats } from './stats';
+import { documentStats, statsExtension } from './stats';
 import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
 import { isComposing } from './mode';
@@ -81,6 +81,7 @@ window.inkpotMVP = {
         doc: source.doc,
         extensions: [
           ...source.extensions,
+          statsExtension,
           ...writingExtensions,
           ...liveEditing,
           ...appearanceExtensionsFor(dark),
