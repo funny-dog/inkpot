@@ -8,3 +8,4 @@ Local.xcconfig
 
 ## Local release tools and build output
 /build/
+/MVP/build/
