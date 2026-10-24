@@ -189,7 +189,6 @@ public sealed partial class MainWindow : Window
             };
             try
             {
-                EnsureTabContentVisible(document);
                 await editor.InitializeAsync(environment, Dark);
                 await editor.OpenAsync(document.InitialText, Dark, L10n.Language);
                 document.InitialText = "";
@@ -202,23 +201,8 @@ public sealed partial class MainWindow : Window
                 throw;
             }
         }
-        else EnsureTabContentVisible(document);
         document.Editor.Control.Focus(FocusState.Programmatic);
         RefreshMenus();
-    }
-
-    // WinUI TabView 对程序化选择可能不生成容器内容（microsoft-ui-xaml#3907）：
-    // 先强制布局，仍未挂载时按“先取消选择再重选”重新触发，编辑器初始化才能等到 Loaded。
-    private void EnsureTabContentVisible(DocumentTab document)
-    {
-        if (!ReferenceEquals(Tabs.SelectedItem, document.Item)) Tabs.SelectedItem = document.Item;
-        Root.UpdateLayout();
-        if (document.Editor is { } editor && editor.Control.XamlRoot is null)
-        {
-            Tabs.SelectedItem = null;
-            Tabs.SelectedItem = document.Item;
-            Root.UpdateLayout();
-        }
     }
 
     private void RefreshMenus()

@@ -4,7 +4,8 @@
   <Grid x:Name="Root">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
     <MenuBar x:Name="Menus" />
-    <TabView x:Name="Tabs" Grid.Row="1" IsAddTabButtonVisible="True"
-      AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
+  <!-- TabView 默认 VerticalAlignment=Top，会随零固有高度的 WebView2 塌缩成标签条，必须显式拉伸填充。 -->
+  <TabView x:Name="Tabs" Grid.Row="1" VerticalAlignment="Stretch" IsAddTabButtonVisible="True"
+    AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
   </Grid>
 </Window>
