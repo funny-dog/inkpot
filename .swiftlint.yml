@@ -1,6 +1,6 @@
 included:
-  - MVP/Sources
-  - MVP/Tests
+  - App/Sources
+  - App/Tests
 
 excluded:
   - build

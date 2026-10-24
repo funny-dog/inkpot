@@ -42,7 +42,7 @@ jobs:
         run: |
           node .yarn/releases/yarn-4.18.0.cjs install --immutable
           node .yarn/releases/yarn-4.18.0.cjs notices
-          git diff --exit-code -- ../MVP/Resources/ThirdPartyNotices.md
+          git diff --exit-code -- ../App/Resources/ThirdPartyNotices.md
           node .yarn/releases/yarn-4.18.0.cjs build
           node .yarn/releases/yarn-4.18.0.cjs test --runInBand
 
@@ -58,15 +58,15 @@ jobs:
 
       - name: Build Inkpot
         run: |
-          xcodebuild build -project MVP/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/MVP CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcodebuild build -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Test Inkpot
         run: |
-          xcodebuild test -project MVP/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/MVP CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Check Release build and resources
         run: |
-          xcodebuild build -project MVP/Inkpot.xcodeproj -scheme Inkpot -configuration Release -destination 'platform=macOS' -derivedDataPath build/Release CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          xcodebuild build -project App/Inkpot.xcodeproj -scheme Inkpot -configuration Release -destination 'platform=macOS' -derivedDataPath build/Release CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
           resources=build/Release/Build/Products/Release/Inkpot.app/Contents/Resources
           for file in index.html ThirdPartyNotices.md math/katex.mjs math/mermaid.mjs math/katex.min.css math/lang-javascript.mjs; do
             test -s "$resources/$file"

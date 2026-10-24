@@ -19,8 +19,8 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "mvp/**/*.ts",
-    "mvp/**/*.mts",
+    "editor/**/*.ts",
+    "editor/**/*.mts",
     "test/**/*.ts"
   ]
 }

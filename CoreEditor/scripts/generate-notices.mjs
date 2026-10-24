@@ -1,4 +1,4 @@
-// 生成第三方许可致谢文档：MVP/Resources/ThirdPartyNotices.md。
+// 生成第三方许可致谢文档：App/Resources/ThirdPartyNotices.md。
 //
 // 从 CoreEditor/package.json 的 dependencies 出发，按 Node 模块解析规则（逐级向上
 // 查找 node_modules，兼容 scoped 包与嵌套依赖）遍历生产依赖及传递依赖，读取各包
@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url';
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const coreDir = dirname(scriptDir);
 const repoDir = dirname(coreDir);
-const outputPath = join(repoDir, 'MVP', 'Resources', 'ThirdPartyNotices.md');
+const outputPath = join(repoDir, 'App', 'Resources', 'ThirdPartyNotices.md');
 
 // 许可文件候选名（LICENSE/LICENCE/COPYING/COPYRIGHT/NOTICE 及其变体），排除同名脚本。
 const licenseFileNamePattern = /^(licen[cs]e|copying|copyright|notice)/i;

@@ -3,13 +3,13 @@ import { cp, mkdir, rm } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 
-// MVP 的公式、图表与代码语言资源：复用已有 KaTeX、Mermaid 与 legacy-modes，打包到 mvp/dist/math，
+// Inkpot 的公式、图表与代码语言资源：复用已有 KaTeX、Mermaid 与 legacy-modes，打包到 editor/dist/math，
 // 由应用经 inkpot-asset:// 按需加载，不进入单文件 index.html，避免拖慢启动。
 const require = createRequire(import.meta.url);
-// 与 mvp/code-languages.ts 的 file 字段保持一致；语言文件不依赖 CodeMirror 运行时，由编辑器包装为 StreamLanguage。
+// 与 editor/code-languages.ts 的 file 字段保持一致；语言文件不依赖 CodeMirror 运行时，由编辑器包装为 StreamLanguage。
 const legacyModes = dirname(require.resolve('@codemirror/legacy-modes/package.json'));
 const languages = ['javascript', 'python', 'xml', 'css', 'shell', 'sql', 'yaml', 'toml', 'swift', 'go', 'rust', 'clike', 'ruby', 'lua', 'diff', 'dockerfile'];
-const output = resolve('mvp/dist/math');
+const output = resolve('editor/dist/math');
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });
 await build({

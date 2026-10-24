@@ -8,13 +8,13 @@ set -euo pipefail
 #   scripts/release.sh 1.0.0 --publish  # 继续推送 main 与 tag，并创建 draft Release 上传四个资产
 #
 # 推送与发布默认不做：draft Release 建好后到 GitHub 上补更新说明再点 Publish。
-# 版本号唯一来源是 MVP/Info.plist 的 CFBundleShortVersionString / CFBundleVersion。
+# 版本号唯一来源是 App/Info.plist 的 CFBundleShortVersionString / CFBundleVersion。
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
 
 PLISTS=(
-  "MVP/Info.plist"
+  "App/Info.plist"
 )
 
 fail() {

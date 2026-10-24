@@ -9,7 +9,7 @@ set -euo pipefail
 # 环境变量：
 #   INKPOT_SIGN_IDENTITY     证书名称，默认「Inkpot Self-Signed」（须与 setup-signing.sh 一致）
 #   INKPOT_KEYCHAIN          非默认钥匙串的路径
-#   INKPOT_SKIP_WEB_BUILD=1  跳过 CoreEditor 前端构建（仅本地迭代用，前提是 mvp/dist 已是最新）
+#   INKPOT_SKIP_WEB_BUILD=1  跳过 CoreEditor 前端构建（仅本地迭代用，前提是 editor/dist 已是最新）
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$PROJECT_DIR"
@@ -54,13 +54,13 @@ build_main() {
     # build = lint + typecheck + vite 单文件打包 + render-assets（公式/Mermaid/代码语言资源）
     (cd CoreEditor && node .yarn/releases/yarn-4.18.0.cjs build)
   else
-    echo "INKPOT_SKIP_WEB_BUILD=1，跳过前端构建（沿用 CoreEditor/mvp/dist 现有产物）"
+    echo "INKPOT_SKIP_WEB_BUILD=1，跳过前端构建（沿用 CoreEditor/editor/dist 现有产物）"
   fi
-  [ -f CoreEditor/mvp/dist/index.html ] || fail "CoreEditor/mvp/dist/index.html 不存在：前端构建未执行或失败"
+  [ -f CoreEditor/editor/dist/index.html ] || fail "CoreEditor/editor/dist/index.html 不存在：前端构建未执行或失败"
 
   echo "=== 2. xcodebuild Release ==="
   xcodebuild build \
-    -project MVP/Inkpot.xcodeproj \
+    -project App/Inkpot.xcodeproj \
     -scheme Inkpot \
     -configuration Release \
     -destination 'platform=macOS' \
@@ -70,7 +70,7 @@ build_main() {
   [ -d "$APP_BUILD_DIR" ] || fail "构建产物缺失：$APP_BUILD_DIR"
 
   # 硬校验：编辑器页面与公式/Mermaid/代码语言资源必须真的进了 app，缺了立即失败，不静默发布残缺包。
-  # （pbxproj 通过 index.html 文件引用 + math folder 引用把 CoreEditor/mvp/dist 拷进 Resources。）
+  # （pbxproj 通过 index.html 文件引用 + math folder 引用把 CoreEditor/editor/dist 拷进 Resources。）
   for rel in \
     "Contents/MacOS/Inkpot" \
     "Contents/Resources/index.html" \
@@ -83,7 +83,7 @@ build_main() {
   done
   [ -d "$APP_BUILD_DIR/Contents/Resources/math/fonts" ] || fail "构建产物缺少 math/fonts（KaTeX 字体未打包）"
 
-  # 版本号唯一来源是 MVP/Info.plist，从构建产物读取，用于给 DMG/ZIP 命名
+  # 版本号唯一来源是 App/Info.plist，从构建产物读取，用于给 DMG/ZIP 命名
   VERSION=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP_BUILD_DIR/Contents/Info.plist")
   [ -n "$VERSION" ] || fail "读不到构建产物的 CFBundleShortVersionString"
 

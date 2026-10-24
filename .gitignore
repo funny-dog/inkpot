@@ -8,4 +8,24 @@ Local.xcconfig
 
 ## Local release tools and build output
 /build/
-/MVP/build/
+/App/build/
+/Inkpot*.dmg
+/Inkpot*.zip
+/Inkpot*.sha256
+
+## Local workspace notes and credentials
+/AGENTS.md
+/CLAUDE.md
+/GEMINI.md
+/.codex/
+/.claude/
+/.agents/
+/docs/superpowers/
+/.env
+/.env.*
+!/.env.example
+*.p12
+*.pfx
+*.pem
+*.key
+/.credentials*
