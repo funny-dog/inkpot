@@ -14,6 +14,7 @@ import { documentStats, statsExtension } from './stats';
 import { spellingExclusions } from './spelling';
 import { documentHTML } from './export';
 import { applyAppearance, appearanceExtensionsFor } from './theme';
+import { applyDisplayModes, displayExtensions } from './focus';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 import { applyFonts, EditorFonts } from './fonts';
@@ -29,6 +30,7 @@ declare const window: {
     snapshot: () => { text: string; revision: number };
     command: (name: string) => void;
     setAppearance: (dark: boolean) => void;
+    setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
     setFonts: (fonts: EditorFonts) => void;
     exportHTML: (mode?: string) => Promise<string>;
   };
@@ -82,6 +84,7 @@ window.inkpotMVP = {
         doc: source.doc,
         extensions: [
           ...source.extensions,
+          ...displayExtensions(),
           statsExtension,
           ...writingExtensions,
           ...liveEditing,
@@ -159,6 +162,7 @@ window.inkpotMVP = {
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
   setFonts(fonts) { if (view !== undefined) applyFonts(view, fonts); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
+  setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {
     if (view === undefined) throw new Error('编辑器尚未就绪。');
     return documentHTML(view, mode === 'pdf' ? 'pdf' : 'html');

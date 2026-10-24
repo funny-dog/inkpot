@@ -38,6 +38,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     initialText = text
     super.init(nibName: nil, bundle: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateFonts), name: EditorFonts.didChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateDisplayModes), name: DisplayModes.didChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -109,7 +110,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
         let argument = try encodedArgument(text)
         // 设置中选择默认源码模式时，打开后立即切换；切换不改动文档与撤销历史。
         let mode = AppSettings.shared.defaultSourceMode ? "window.inkpotMVP.command('toggleSourceMode'); " : ""
-        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(mode)null")
+        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(mode)null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }

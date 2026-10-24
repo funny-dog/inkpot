@@ -43,6 +43,7 @@ enum MainMenu {
       ]),
       ("显示", [
         ("文件树", "toggleFiles", "E"), ("标题大纲", "toggleOutline", "O"), ("源码模式", "toggleSourceMode", "M"),
+        ("专注模式", "toggleFocusMode:", "F8"), ("打字机模式", "toggleTypewriterMode:", "F9"),
         ("", "", ""), ("正文字体与字号…", "showBodyFont:", "t"), ("代码字体与字号…", "showCodeFont:", ""),
         ("恢复默认字体", "resetFonts:", ""), ("", "", ""), ("进入全屏幕", "toggleFullScreen:", "f"),
       ]),
@@ -72,6 +73,12 @@ enum MainMenu {
         if action == "selectPreviousTab:" { entry.keyEquivalentModifierMask = [.control, .shift] }
         if action == "toggleFullScreen:" { entry.keyEquivalentModifierMask = [.command, .control] }
         if ["showBodyFont:", "showCodeFont:", "resetFonts:"].contains(action) { entry.target = EditorFonts.shared }
+        if ["toggleFocusMode:", "toggleTypewriterMode:"].contains(action) {
+          entry.target = DisplayModes.shared
+          let functionKey = action == "toggleFocusMode:" ? NSF8FunctionKey : NSF9FunctionKey
+          if let scalar = UnicodeScalar(functionKey) { entry.keyEquivalent = String(scalar) }
+          entry.keyEquivalentModifierMask = []
+        }
         if action == "restoreDrafts:" { entry.target = delegate }
         if action == "showSettings:" { entry.target = delegate }
         if action == "openFolder:" { entry.keyEquivalentModifierMask = [.command, .option]; entry.target = delegate }
