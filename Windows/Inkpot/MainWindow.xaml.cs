@@ -121,7 +121,8 @@ public sealed partial class MainWindow : Window
         Command(format, "OrderedList", "orderedList", VirtualKey.Number7);
         Command(format, "BulletList", "bulletList", VirtualKey.Number8);
         Command(format, "TaskList", "taskList", VirtualKey.Number9, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
-        Command(format, "Quote", "blockquote", VirtualKey.NumberPeriod, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        // WinRT 的 VirtualKey 枚举没有句点成员，190 是主键盘句点键的虚拟键值。
+        Command(format, "Quote", "blockquote", (VirtualKey)190, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "CodeBlock", "codeBlock", VirtualKey.C, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "Rule", "horizontalRule", VirtualKey.H, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "SourceMode", "toggleSourceMode", VirtualKey.M, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);

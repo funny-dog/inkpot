@@ -30,7 +30,7 @@ internal sealed class EditorSession : IDisposable
             browserExecutableFolder: null,
             userDataFolder: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Inkpot", "WebView2"),
-            options: null);
+            options: null).AsTask();
     }
 
     internal async Task InitializeAsync(Task<CoreWebView2Environment> environment, bool dark)
