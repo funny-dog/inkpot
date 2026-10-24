@@ -28,6 +28,7 @@ enum MainMenu {
         ("粘贴", "paste:", "v"), ("全选", "selectAll:", "a"),
         ("", "", ""), ("查找与替换…", "find", "f"),
         ("查找下一个", "findNext", "g"), ("查找上一个", "findPrevious", "G"),
+        ("", "", ""), ("在文件夹中查找…", "findInFolder:", "F"),
         ("", "", ""), ("拼写和语法", "spellingMenu", ""),
       ]),
       ("格式", [

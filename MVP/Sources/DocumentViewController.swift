@@ -1,16 +1,18 @@
 import AppKit
 
 final class SidebarViewController: NSViewController {
+  enum Content { case files, outline, search }
+
   let outline = OutlineViewController()
   let files = FileTreeViewController()
-  private let tabs = NSSegmentedControl(labels: ["文件", "大纲"], trackingMode: .selectOne, target: nil, action: nil)
-  private(set) var showingFiles = false
+  let search = FolderSearchViewController()
+  private let tabs = NSSegmentedControl(labels: ["文件", "大纲", "搜索"], trackingMode: .selectOne, target: nil, action: nil)
+  private(set) var content: Content = .outline
 
   override func loadView() {
     view = NSView()
     tabs.target = self
     tabs.action = #selector(changeTab(_:))
-    tabs.selectedSegment = 1
     tabs.setAccessibilityLabel("侧栏内容")
     tabs.translatesAutoresizingMaskIntoConstraints = false
     view.addSubview(tabs)
@@ -19,7 +21,7 @@ final class SidebarViewController: NSViewController {
       tabs.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 12),
       tabs.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -12),
     ])
-    for controller in [files, outline] {
+    for controller in [files, outline, search] {
       addChild(controller)
       controller.view.translatesAutoresizingMaskIntoConstraints = false
       view.addSubview(controller.view)
@@ -30,18 +32,31 @@ final class SidebarViewController: NSViewController {
         controller.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
       ])
     }
-    showFiles(false)
+    show(.outline)
   }
 
-  func showFiles(_ show: Bool) {
+  func show(_ content: Content) {
     _ = view
-    showingFiles = show
-    tabs.selectedSegment = show ? 0 : 1
-    files.view.isHidden = !show
-    outline.view.isHidden = show
+    self.content = content
+    switch content {
+    case .files: tabs.selectedSegment = 0
+    case .outline: tabs.selectedSegment = 1
+    case .search: tabs.selectedSegment = 2
+    }
+    files.view.isHidden = content != .files
+    outline.view.isHidden = content != .outline
+    search.view.isHidden = content != .search
   }
 
-  @objc private func changeTab(_ sender: Any?) { showFiles(tabs.selectedSegment == 0) }
+  func showFiles(_ show: Bool) { self.show(show ? .files : .outline) }
+
+  @objc private func changeTab(_ sender: Any?) {
+    switch tabs.selectedSegment {
+    case 0: show(.files)
+    case 2: show(.search)
+    default: show(.outline)
+    }
+  }
 }
 
 /// 编辑器区域容器：编辑器下方常驻字数统计状态条。
@@ -93,9 +108,10 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
   private let sidebar = SidebarViewController()
   var outline: OutlineViewController { sidebar.outline }
   var files: FileTreeViewController { sidebar.files }
+  var search: FolderSearchViewController { sidebar.search }
   private let editor: EditorViewController
   private lazy var editorContainer = EditorContainerViewController(editor: editor)
-  private let fileSwitch = DocumentFileSwitch()
+  var fileSwitch = DocumentFileSwitch()
   private var activationObserver: NSObjectProtocol?
 
   init(editor: EditorViewController) {
@@ -128,6 +144,10 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
         do { try await DocumentTabs.open(url, in: window).showWindows() } catch { self.presentError(error) }
       }
     }
+    files.onFolderChange = { [weak self] url in self?.search.folderURL = url }
+    search.folderURL = files.folderURL
+    search.onOpenMatch = { [weak self] match in self?.openFile(match.url, match: match) }
+    search.onOpenFolder = { [weak self] in self?.openFolder(nil) }
   }
 
   override func viewDidAppear() {
@@ -144,12 +164,13 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     files.selectCurrentFile((window.windowController?.document as? MVPDocument)?.fileURL)
   }
 
-  var outlineVisible: Bool { !splitViewItems[0].isCollapsed && !sidebar.showingFiles }
-  var filesVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.showingFiles }
+  var outlineVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.content == .outline }
+  var filesVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.content == .files }
+  var searchVisible: Bool { !splitViewItems[0].isCollapsed && sidebar.content == .search }
 
-  /// 会话恢复用的侧栏状态：是否收起、显示文件树还是大纲、宽度。
+  /// 会话恢复用的侧栏状态：是否收起、显示文件树还是大纲（搜索页按大纲恢复）、宽度。
   var sidebarState: (collapsed: Bool, showingFiles: Bool, width: Double) {
-    (splitViewItems[0].isCollapsed, sidebar.showingFiles, Double(sidebar.view.frame.width))
+    (splitViewItems[0].isCollapsed, sidebar.content == .files, Double(sidebar.view.frame.width))
   }
 
   func applySidebarState(collapsed: Bool, showingFiles: Bool, width: Double) {
@@ -164,6 +185,14 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     splitViewItems[0].isCollapsed = wasVisible
   }
 
+  /// 编辑菜单“在文件夹中查找…”：显示侧栏搜索页并聚焦搜索框；没有文件夹时由搜索页提示先打开。
+  @objc func findInFolder(_ sender: Any?) {
+    sidebar.show(.search)
+    splitViewItems[0].isCollapsed = false
+    search.folderURL = files.folderURL
+    search.focusSearchField()
+  }
+
   @objc func openFolder(_ sender: Any?) {
     sidebar.showFiles(true)
     splitViewItems[0].isCollapsed = false
@@ -171,7 +200,7 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     files.chooseFolder(sender)
   }
 
-  func openFile(_ url: URL, fragment: String? = nil) {
+  func openFile(_ url: URL, fragment: String? = nil, match: FolderSearchMatch? = nil) {
     guard let controller = view.window?.windowController, !fileSwitch.isOpening else { return }
     Task { @MainActor in
       do {
@@ -180,6 +209,7 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
         if document?.editor === editor {
           editor.focusEditor()
           if let fragment { editor.navigateFragment(fragment) }
+          if let match { editor.selectMatch(line: match.line, column: match.column, length: match.length) }
         }
       } catch {
         files.selectCurrentFile((controller.document as? MVPDocument)?.fileURL)

@@ -11,6 +11,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   private(set) var activeHeading: Int?
   private var generation = 0
   private var pendingFragment: String?
+  private var pendingMatch: (line: Int, column: Int, length: Int)?
   private(set) var isComposing = false
   private(set) var isReady = false
   private(set) var latestRevision = 0
@@ -103,6 +104,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     tableActions = []
     tableCellFocused = false
     pendingFragment = nil
+    pendingMatch = nil
     let documentGeneration = generation
     Task { @MainActor in
       do {
@@ -114,6 +116,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
+        if let pendingMatch { self.pendingMatch = nil; applyMatch(pendingMatch) }
       } catch {
         fail(error)
       }
@@ -252,16 +255,6 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     onOutline?(updated, activeHeading)
   }
 
-  func navigateHeading(_ id: Int) {
-    guard isReady, headings.contains(where: { $0.id == id }) else { return }
-    view.window?.makeFirstResponder(webView)
-    Task { @MainActor in
-      do {
-        _ = try await evaluateScript("window.inkpotMVP.navigateHeading(\(id)); null")
-      } catch { fail(error) }
-    }
-  }
-
   private func fail(_ error: Error) {
     pageReady = false
     isReady = false
@@ -281,6 +274,16 @@ extension EditorViewController {
   func focusEditor() {
     view.window?.makeFirstResponder(webView)
     performCommand("focus")
+  }
+
+  func navigateHeading(_ id: Int) {
+    guard isReady, headings.contains(where: { $0.id == id }) else { return }
+    view.window?.makeFirstResponder(webView)
+    Task { @MainActor in
+      do {
+        _ = try await evaluateScript("window.inkpotMVP.navigateHeading(\(id)); null")
+      } catch { fail(error) }
+    }
   }
 
   func navigateFragment(_ fragment: String) {
@@ -377,5 +380,30 @@ private final class DocumentMessageHandler: NSObject, WKScriptMessageHandler {
 
   func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
     owner?.receive(message)
+  }
+}
+
+// 文件夹搜索结果定位。
+extension EditorViewController {
+  /// 选中从 1 开始的行号、行内 UTF-16 偏移与长度，并滚动到该处；用于文件夹搜索结果定位。
+  func selectMatch(line: Int, column: Int, length: Int) {
+    guard isReady else {
+      // 切到目标文件时编辑器正在重新加载，等就绪后再定位。
+      pendingMatch = (line, column, length)
+      return
+    }
+    applyMatch((line, column, length))
+  }
+
+  private func applyMatch(_ match: (line: Int, column: Int, length: Int)) {
+    view.window?.makeFirstResponder(webView)
+    Task { @MainActor in
+      do {
+        _ = try await evaluateScript("window.inkpotMVP.selectMatch(\(match.line), \(max(match.column, 0)), \(max(match.length, 1))); null")
+      } catch {
+        // 定位失败不阻断编辑，保留当前文档与未保存内容。
+        NSLog("定位搜索结果失败：%@", error.localizedDescription)
+      }
+    }
   }
 }
