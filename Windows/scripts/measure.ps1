@@ -16,6 +16,16 @@ try {
         Start-Sleep -Milliseconds 100
     }
     $raw = Get-Content -Raw $report | ConvertFrom-Json
+    # 成败都先截图：编辑器逻辑通过但组合层未渲染时，截图直接暴露空白窗口。
+    Add-Type -AssemblyName System.Windows.Forms
+    Add-Type -AssemblyName System.Drawing
+    $screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
+    $bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
+    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+    try {
+        $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
+        $bitmap.Save((Join-Path (Resolve-Path $ResultsDirectory) 'window-screenshot.png'), [System.Drawing.Imaging.ImageFormat]::Png)
+    } finally { $graphics.Dispose(); $bitmap.Dispose() }
     if (!$raw.success) { throw $raw.error }
     $ids = @($process.Id) + @($raw.webView2ProcessIds) | Sort-Object -Unique
     $samples = @()
@@ -27,16 +37,6 @@ try {
         $samples += [ordered]@{ processes = $entries; totalWorkingSetBytes = ($entries | Measure-Object workingSetBytes -Sum).Sum; totalPrivateBytes = ($entries | Measure-Object privateBytes -Sum).Sum }
         Start-Sleep -Seconds 1
     }
-    # 记录应用当时画面：冒烟逻辑通过但组合层未渲染时，截图能直接暴露空白窗口。
-    Add-Type -AssemblyName System.Windows.Forms
-    Add-Type -AssemblyName System.Drawing
-    $screen = [System.Windows.Forms.SystemInformation]::VirtualScreen
-    $bitmap = New-Object System.Drawing.Bitmap $screen.Width, $screen.Height
-    $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
-    try {
-        $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
-        $bitmap.Save((Join-Path (Resolve-Path $ResultsDirectory) 'window-screenshot.png'), [System.Drawing.Imaging.ImageFormat]::Png)
-    } finally { $graphics.Dispose(); $bitmap.Dispose() }
     $bytes = (Get-ChildItem $AppDirectory -File -Recurse | Measure-Object Length -Sum).Sum
     $machine = Get-CimInstance Win32_ComputerSystem
     $cpu = Get-CimInstance Win32_Processor | Select-Object -First 1

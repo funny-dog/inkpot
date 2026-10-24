@@ -17,7 +17,7 @@ public sealed partial class MainWindow
         {
             var initial = CreateDocument();
             await ActivateCurrentAsync();
-            AssertEditorVisible(initial, "首个文档");
+            await AssertEditorVisibleAsync(initial, "首个文档");
             report["readyMilliseconds"] = initial.Editor!.ReadyMilliseconds;
             report["readyUnixMilliseconds"] = initial.Editor.ReadyUnixMilliseconds;
             report["editorVisualSize"] = $"{initial.Editor.Control.ActualWidth:0}x{initial.Editor.Control.ActualHeight:0}";
@@ -52,7 +52,7 @@ public sealed partial class MainWindow
                 Tabs.SelectedItem = document.Item;
                 await ActivateCurrentAsync();
                 await document.Editor!.CommandAsync("focus");
-                AssertEditorVisible(document, $"标签{documents.IndexOf(document) + 1}");
+                await AssertEditorVisibleAsync(document, $"标签{documents.IndexOf(document) + 1}");
             }
             report["activatedTabs"] = documents.Count(document => document.Editor is not null);
             report["appWorkingSetBytes"] = Process.GetCurrentProcess().WorkingSet64;
@@ -70,17 +70,33 @@ public sealed partial class MainWindow
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
             await File.WriteAllTextAsync(reportPath, report.ToJsonString(new() { WriteIndented = true }));
-            // runner 在读取报告和采样子进程内存后关闭窗口，避免采样已经退出的进程。
-            if (report["success"]?.GetValue<bool>() != true) { allowClose = true; Close(); }
+            // 失败时保留窗口数秒：measure.ps1 读到报告会先截图留现场再关闭应用。
+            if (report["success"]?.GetValue<bool>() != true)
+            {
+                allowClose = true;
+                await Task.Delay(TimeSpan.FromSeconds(8));
+                Close();
+            }
         }
     }
 
     // 冒烟必须确认编辑器真的显示出来：逻辑通过但组合层不可见时，用户看到的就是空白窗口。
-    private static void AssertEditorVisible(DocumentTab document, string label)
+    // 布局可能在 ready 之后才完成，先短等；仍不可视时输出布局链关键尺寸供定位。
+    private async Task AssertEditorVisibleAsync(DocumentTab document, string label)
     {
         var control = document.Editor?.Control ?? throw new IOException($"{label}没有编辑器。");
-        if (control.XamlRoot is null || !control.IsLoaded || control.ActualWidth < 100 || control.ActualHeight < 100)
-            throw new IOException(
-                $"{label}的编辑器未进入可视区域：XamlRoot={control.XamlRoot is not null} IsLoaded={control.IsLoaded} 尺寸={control.ActualWidth:0}x{control.ActualHeight:0}。");
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (control.ActualHeight < 100 || control.ActualWidth < 100)
+        {
+            if (DateTime.UtcNow > deadline)
+                throw new IOException(
+                    $"{label}的编辑器未进入可视区域：尺寸={control.ActualWidth:0}x{control.ActualHeight:0} " +
+                    $"XamlRoot={control.XamlRoot is not null} IsLoaded={control.IsLoaded} " +
+                    $"TabView={Tabs.ActualWidth:0}x{Tabs.ActualHeight:0} Root={Root.ActualHeight:0} " +
+                    $"父级={control.Parent?.GetType().Name ?? "null"} 选中={ReferenceEquals(Tabs.SelectedItem, document.Item)}");
+            await Task.Delay(100);
+        }
+        if (control.XamlRoot is null || !control.IsLoaded)
+            throw new IOException($"{label}的编辑器有可视尺寸但未完成挂载。");
     }
 }
