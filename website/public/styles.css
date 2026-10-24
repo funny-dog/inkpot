@@ -169,6 +169,25 @@ body {
   gap: 6px;
 }
 
+/* 语言切换按钮 */
+.nav__lang {
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.nav__lang:hover { color: var(--text); border-color: var(--text); }
+
+.nav__lang[hidden] { display: none; }
+
 /* 按钮 */
 
 .btn {
