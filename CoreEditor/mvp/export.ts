@@ -96,6 +96,9 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
       element.remove();
     }
 
+    // 专注模式的淡化只在编辑器视口内生效，导出与打印不携带。
+    for (const element of clone.querySelectorAll('.cm-focus-dim')) element.classList.remove('cm-focus-dim');
+
     // 复选框的选中态是运行时属性，克隆与序列化都会丢失，按原件写回属性。
     const sourceBoxes = view.contentDOM.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
     const boxes = clone.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');

@@ -38,6 +38,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     initialText = text
     super.init(nibName: nil, bundle: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateFonts), name: EditorFonts.didChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateDisplayModes), name: DisplayModes.didChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -107,7 +108,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
       do {
         guard generation == documentGeneration else { return }
         let argument = try encodedArgument(text)
-        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); null")
+        _ = try await evaluateScript("window.inkpotMVP.open(\(argument), \(documentGeneration), \(Appearance.isDark)); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); null")
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
