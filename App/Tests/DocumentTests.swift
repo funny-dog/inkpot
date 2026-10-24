@@ -397,7 +397,9 @@ extension DocumentTests {
     let item = NSMenuItem(title: "标题大纲", action: nil, keyEquivalent: "O")
     item.representedObject = "toggleOutline"
     XCTAssertTrue(editor.validateMenuItem(item))
-    XCTAssertEqual(item.state, .on)
+    XCTAssertEqual(item.state, .off)
+    editor.performCommand("toggleOutline")
+    try await waitUntil { editor.validateMenuItem(item) && item.state == .on }
     editor.performCommand("toggleOutline")
     try await waitUntil { editor.validateMenuItem(item) && item.state == .off }
     editor.performCommand("toggleOutline")
