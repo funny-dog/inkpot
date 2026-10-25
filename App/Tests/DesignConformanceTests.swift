@@ -106,9 +106,10 @@ final class DesignConformanceTests: XCTestCase {
     let sidebar = try XCTUnwrap(controller.splitViewItems.first?.viewController as? SidebarViewController)
     let tabs = sidebar.tabs.convert(sidebar.tabs.bounds, to: nil)
     // 切换条在红绿灯所在的标题栏区域下方，高 28、两侧各留 12。
+    // 水平边距按侧栏自身坐标断言；macOS 26 的悬浮侧栏样式会让侧栏从窗口边缘整体内缩。
     XCTAssertLessThanOrEqual(tabs.maxY, window.contentLayoutRect.maxY)
     XCTAssertEqual(tabs.height, 28)
-    XCTAssertEqual(tabs.minX, 12)
-    XCTAssertEqual(sidebar.view.frame.width - tabs.maxX, 12, accuracy: 0.5)
+    XCTAssertEqual(sidebar.tabs.frame.minX, 12)
+    XCTAssertEqual(sidebar.view.bounds.width - sidebar.tabs.frame.maxX, 12, accuracy: 0.5)
   }
 }
