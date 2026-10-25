@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   inkpot:
-    runs-on: [self-hosted, macOS, ARM64, inkpot]
+    runs-on: macos-26
     timeout-minutes: 30
     if: github.ref != 'refs/heads/feat/windows-mvp' && !(github.event_name == 'workflow_dispatch' && inputs.windows_only) && (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository))
     env:
