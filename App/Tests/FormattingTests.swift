@@ -22,7 +22,7 @@ final class FormattingTests: XCTestCase {
       ("代码块", "codeBlock", "C"), ("分隔线", "horizontalRule", "H"),
     ]
     for (title, command, key) in commands {
-      let entry = try XCTUnwrap(format?.items.first { $0.title == title })
+      let entry = try XCTUnwrap(format?.items.first { $0.title == L10n.text(title) })
       XCTAssertEqual(entry.representedObject as? String, command)
       XCTAssertEqual(entry.action, #selector(AppDelegate.editorCommand(_:)))
       XCTAssertIdentical(entry.target, delegate)

@@ -141,12 +141,12 @@ final class FolderSearchTests: XCTestCase {
     controller.findInFolder(nil)
     XCTAssertTrue(controller.searchVisible)
     XCTAssertNil(controller.search.folderURL)
-    XCTAssertEqual(controller.search.statusText, "未打开文件夹")
+    XCTAssertEqual(controller.search.statusText, L10n.text("未打开文件夹"))
     XCTAssertFalse(controller.search.searchField.isEnabled)
     controller.files.openFolder(root)
     XCTAssertEqual(controller.search.folderURL, root.standardizedFileURL)
     XCTAssertTrue(controller.search.searchField.isEnabled)
-    XCTAssertEqual(controller.search.statusText, "输入关键词搜索当前文件夹")
+    XCTAssertEqual(controller.search.statusText, L10n.text("输入关键词搜索当前文件夹"))
     XCTAssertFalse(document.isDocumentEdited)
   }
 
@@ -164,10 +164,10 @@ final class FolderSearchTests: XCTestCase {
     page.beginSearch("关键词")
     try await waitUntil { !page.isSearching && page.result.matchCount == 1 }
     XCTAssertEqual(page.result.files.map(\.relativePath), ["b.md"])
-    XCTAssertEqual(page.statusText, "1 个文件 · 1 处匹配")
+    XCTAssertEqual(page.statusText, L10n.text("%ld 个文件 · %ld 处匹配", 1, 1))
     page.beginSearch("没有这个词")
     try await waitUntil { !page.isSearching && page.result.matchCount == 0 }
-    XCTAssertEqual(page.statusText, "没有找到匹配内容")
+    XCTAssertEqual(page.statusText, L10n.text("没有找到匹配内容"))
   }
 
   func testOpeningSearchResultSwitchesFileAndSelectsTheMatch() async throws {
