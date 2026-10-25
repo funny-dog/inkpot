@@ -322,7 +322,7 @@ public sealed partial class MainWindow : Window
         busy = true;
         Menus.IsEnabled = false;
         Tabs.IsEnabled = false;
-        SidebarPanel.IsEnabled = false;
+        SetSidebarEnabled(false);
         try { await action(); }
         catch (Exception error)
         {
@@ -333,7 +333,7 @@ public sealed partial class MainWindow : Window
             }
             else await DialogAsync(L10n.Text("Error"), error.Message);
         }
-        finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; SidebarPanel.IsEnabled = true; RefreshMenus(); }
+        finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; SetSidebarEnabled(true); RefreshMenus(); }
     }
 
     private async void AddTab(TabView sender, object args) => await RunAsync(async () => { CreateDocument(); await ActivateCurrentAsync(); });

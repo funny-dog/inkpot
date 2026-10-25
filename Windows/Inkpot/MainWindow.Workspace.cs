@@ -56,8 +56,8 @@ public sealed partial class MainWindow
         SidebarPanel.Visibility = SidebarDivider.Visibility = preferences.SidebarVisible ? Visibility.Visible : Visibility.Collapsed;
         FilesPanel.Visibility = showingOutline ? Visibility.Collapsed : Visibility.Visible;
         OutlinePanel.Visibility = showingOutline ? Visibility.Visible : Visibility.Collapsed;
-        FilesButton.IsEnabled = showingOutline;
-        OutlineButton.IsEnabled = !showingOutline;
+        FilesButton.IsEnabled = !busy && showingOutline;
+        OutlineButton.IsEnabled = !busy && !showingOutline;
         foreach (var (key, item) in viewMenus)
             item.IsChecked = key switch
             {
@@ -68,6 +68,13 @@ public sealed partial class MainWindow
                 _ => false,
             };
         RefreshOutline();
+    }
+
+    private void SetSidebarEnabled(bool enabled)
+    {
+        FilesTree.IsEnabled = OutlineList.IsEnabled = OpenFolderButton.IsEnabled = SidebarDivider.IsEnabled = enabled;
+        FilesButton.IsEnabled = enabled && showingOutline;
+        OutlineButton.IsEnabled = enabled && !showingOutline;
     }
 
     private async Task ChangePreferencesAsync(AppPreferences next)
