@@ -22,7 +22,8 @@ concurrency:
 
 jobs:
   inkpot:
-    runs-on: macos-26
+    # xcode-27 镜像（macOS 26 + Xcode 27）与本机开发工具链一致，避开 Xcode 26 运行时的并发缺陷。
+    runs-on: xcode-27
     timeout-minutes: 30
     if: github.ref != 'refs/heads/feat/windows-mvp' && !(github.event_name == 'workflow_dispatch' && inputs.windows_only) && (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository))
     env:
