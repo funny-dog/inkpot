@@ -11,6 +11,8 @@
   <ItemGroup>
     <Compile Include="..\Inkpot\Storage\*.cs" Link="Storage\%(FileName)%(Extension)" />
     <Compile Include="..\Inkpot\Bridge\HostMessage.cs" Link="Bridge\HostMessage.cs" />
+    <Compile Include="..\Inkpot\AppPreferences.cs" Link="AppPreferences.cs" />
+    <Compile Include="..\Inkpot\Workspace\FileTree.cs" Link="Workspace\FileTree.cs" />
   </ItemGroup>
 
   <ItemGroup>

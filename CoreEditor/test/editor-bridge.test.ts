@@ -29,6 +29,7 @@ describe('Inkpot 宿主桥接', () => {
     window.webkit = undefined;
     window.chrome = { webview: { postMessage, addEventListener: (_type, listener) => { receive = listener; } } };
     const api = { configure: jest.fn(), open: jest.fn(), command: jest.fn(), setAppearance: jest.fn(), pastePlainText: jest.fn(),
+      navigateHeading: jest.fn(), setFonts: jest.fn(), setEditingPreferences: jest.fn(), setDisplayModes: jest.fn(),
       snapshot: jest.fn(() => ({ text: '中文\r\n尾', revision: 3 })) };
     listenToHost(api as unknown as InkpotAPI);
     if (receive === undefined) throw new Error('未安装入站监听器');
@@ -46,11 +47,27 @@ describe('Inkpot 宿主桥接', () => {
     expect(api.setAppearance).toHaveBeenCalledWith(false);
     receive({ data: { requestId: 5, method: 'pastePlainText', text: '粘贴\r\n原文' } });
     expect(api.pastePlainText).toHaveBeenCalledWith('粘贴\r\n原文');
+    const fonts = { bodyFamily: '微软雅黑', bodySize: 18, codeFamily: 'Consolas', codeSize: 14 };
+    const preferences = { brackets: false, markdown: true, remoteImages: false, indent: 4 };
+    receive({ data: { requestId: 8, method: 'setFonts', fonts } });
+    expect(api.setFonts).toHaveBeenCalledWith(fonts);
+    receive({ data: { requestId: 9, method: 'setEditingPreferences', preferences } });
+    expect(api.setEditingPreferences).toHaveBeenCalledWith(preferences);
+    receive({ data: { requestId: 10, method: 'setDisplayModes', modes: { focus: true, typewriter: false } } });
+    expect(api.setDisplayModes).toHaveBeenCalledWith({ focus: true, typewriter: false });
+    receive({ data: { requestId: 11, method: 'navigateHeading', id: 0 } });
+    expect(api.navigateHeading).toHaveBeenCalledWith(0);
     api.snapshot.mockImplementation(() => { throw new Error('尚未确认候选'); });
     receive({ data: { requestId: 6, method: 'snapshot' } });
     expect(postMessage).toHaveBeenLastCalledWith({ response: true, requestId: 6, error: '尚未确认候选' });
     for (const request of [{ method: 'open', text: 1 }, { method: 'command', name: false },
-      { method: 'pastePlainText', text: 1 }, { method: 'setAppearance', dark: 'true' }, { method: 'constructor' }, {}]) {
+      { method: 'pastePlainText', text: 1 }, { method: 'setAppearance', dark: 'true' }, { method: 'constructor' },
+      { method: 'navigateHeading', id: -1 }, { method: 'navigateHeading', id: 0.5 },
+      { method: 'setFonts', fonts: null }, { method: 'setFonts', fonts: { ...fonts, bodySize: 100 } },
+      { method: 'setFonts', fonts: { ...fonts, codeFamily: 123 } },
+      { method: 'setDisplayModes', modes: { focus: 'true', typewriter: false } },
+      { method: 'setEditingPreferences', preferences: { ...preferences, indent: 3 } },
+      { method: 'setEditingPreferences', preferences: { ...preferences, brackets: null } }, {}]) {
       receive({ data: { ...request, requestId: 7 } });
       expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ response: true, requestId: 7, error: expect.any(String) }));
     }
@@ -59,6 +76,17 @@ describe('Inkpot 宿主桥接', () => {
     expect(postMessage).toHaveBeenCalledTimes(count);
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true, shiftKey: true }));
     expect(postMessage).toHaveBeenLastCalledWith({ shortcut: 'saveAs', generation: 9 });
+    for (const [key, modifiers, shortcut] of [
+      [',', { ctrlKey: true }, 'settings'], ['o', { ctrlKey: true, altKey: true }, 'openFolder'],
+      ['e', { ctrlKey: true, shiftKey: true }, 'sidebar'], ['o', { ctrlKey: true, shiftKey: true }, 'outline'],
+      ['F8', {}, 'focusMode'], ['F9', {}, 'typewriterMode'],
+    ] as const) {
+      document.dispatchEvent(new KeyboardEvent('keydown', { key, ...modifiers }));
+      expect(postMessage).toHaveBeenLastCalledWith({ shortcut, generation: 9 });
+    }
+    const beforeComposing = postMessage.mock.calls.length;
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: ',', ctrlKey: true, isComposing: true }));
+    expect(postMessage).toHaveBeenCalledTimes(beforeComposing);
   });
 
   test.each(['WebKit', 'WebView2'])('%s 原样发送全部消息', host => {

@@ -49,6 +49,7 @@ try {
         documentCharacters = $raw.documentCharacters; documentUtf8Bytes = $raw.documentUtf8Bytes
         activatedTabs = $raw.activatedTabs; webViewsBeforeActivation = $raw.webViewsBeforeActivation
         editorVisualSize = $raw.editorVisualSize
+        sidebarFilesOutlineSettingsAndStatus = $raw.sidebarFilesOutlineSettingsAndStatus
         memorySamples = $samples; publishedBytes = $bytes
         method = '一次新进程启动到 ready；打开 1 MiB UTF-8 Markdown 后取得完整快照；激活10标签后对应用及本环境全部WebView2进程采样3次。runner磁盘缓存未清理，启动数据不是硬件冷启动验收。'
     }
@@ -56,9 +57,10 @@ try {
     $measurements | ConvertTo-Json -Depth 8
     if ($env:GITHUB_STEP_SUMMARY) {
         @"
-## Windows MVP 验证
+## Windows 应用验证
 
 - 实际启动、编辑/撤销、混合行尾往返、1 MiB 大文本消息：通过
+- 文件树按需展开、设置对话框显示与取消、偏好持久化与同步、大纲跳转、标签切换、侧栏显隐与状态栏：$($raw.sidebarFilesOutlineSettingsAndStatus)
 - 标签按需创建：激活前 $($raw.webViewsBeforeActivation) 个，全部激活后 $($raw.activatedTabs) 个；编辑器可视尺寸 $($raw.editorVisualSize)
 - 新进程到 ready：$($measurements.startupProcessToReadyMilliseconds) ms
 - 1 MiB 文档打开及完整快照：$($raw.open1MiBMilliseconds) ms

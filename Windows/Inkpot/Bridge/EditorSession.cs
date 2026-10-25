@@ -19,6 +19,10 @@ internal sealed class EditorSession : IDisposable
     internal PublishMessage? State { get; private set; }
     internal event Action<PublishMessage>? Published;
     internal event Action<string>? ShortcutRequested;
+    internal event Action? OutlineChanged;
+    internal IReadOnlyList<OutlineHeading> Headings { get; private set; } = [];
+    internal int? ActiveHeading { get; private set; }
+    private int outlineRevision;
     internal double ReadyMilliseconds { get; private set; }
     internal long ReadyUnixMilliseconds { get; private set; }
 
@@ -75,6 +79,12 @@ internal sealed class EditorSession : IDisposable
                 case ShortcutMessage shortcut when shortcut.Generation == generation:
                     ShortcutRequested?.Invoke(shortcut.Shortcut);
                     break;
+                case OutlineMessage outline when outline.Generation == generation && outline.Revision >= Math.Max(outlineRevision, State?.Revision ?? 0):
+                    if (outline.Headings is not null) Headings = outline.Headings;
+                    ActiveHeading = outline.Active;
+                    outlineRevision = outline.Revision;
+                    OutlineChanged?.Invoke();
+                    break;
             }
         };
         core.NavigationStarting += (_, args) => { if (args.Uri != Page) args.Cancel = true; };
@@ -93,6 +103,10 @@ internal sealed class EditorSession : IDisposable
     {
         State = null;
         generation++;
+        Headings = [];
+        ActiveHeading = null;
+        outlineRevision = 0;
+        OutlineChanged?.Invoke();
         return SendAsync(new JsonObject
         {
             ["method"] = "open", ["text"] = text, ["generation"] = generation,
@@ -103,6 +117,20 @@ internal sealed class EditorSession : IDisposable
 
     internal Task CommandAsync(string name) => SendAsync(new JsonObject { ["method"] = "command", ["name"] = name });
     internal Task PasteAsync(string text) => SendAsync(new JsonObject { ["method"] = "pastePlainText", ["text"] = text });
+    internal Task NavigateHeadingAsync(int id) => SendAsync(new JsonObject { ["method"] = "navigateHeading", ["id"] = id });
+
+    internal async Task ApplyPreferencesAsync(AppPreferences preferences, bool initial = false)
+    {
+        await SendAsync(new JsonObject { ["method"] = "setFonts", ["fonts"] = new JsonObject {
+            ["bodyFamily"] = preferences.BodyFamily, ["bodySize"] = preferences.BodySize,
+            ["codeFamily"] = preferences.CodeFamily, ["codeSize"] = preferences.CodeSize } });
+        await SendAsync(new JsonObject { ["method"] = "setEditingPreferences", ["preferences"] = new JsonObject {
+            ["brackets"] = preferences.PairBrackets, ["markdown"] = preferences.PairMarkdown,
+            ["remoteImages"] = false, ["indent"] = preferences.IndentWidth } });
+        await SendAsync(new JsonObject { ["method"] = "setDisplayModes", ["modes"] = new JsonObject {
+            ["focus"] = preferences.FocusMode, ["typewriter"] = preferences.TypewriterMode } });
+        if (initial && preferences.DefaultSourceMode) await CommandAsync("toggleSourceMode");
+    }
 
     internal async Task<EditorSnapshot> SnapshotAsync()
     {

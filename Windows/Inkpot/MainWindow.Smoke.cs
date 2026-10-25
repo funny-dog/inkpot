@@ -3,6 +3,9 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Inkpot.Bridge;
 using Inkpot.Storage;
+using Inkpot.Workspace;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace Inkpot;
 
@@ -30,6 +33,8 @@ public sealed partial class MainWindow
             await initial.Editor.CommandAsync("undo");
             if ((await initial.Editor.SnapshotAsync()).Text != original) throw new IOException("撤销未恢复原文。");
             report["editUndoAndLineEndings"] = true;
+            await AssertWorkspaceAsync(initial, reportPath);
+            report["sidebarFilesOutlineSettingsAndStatus"] = true;
             var text = new StringBuilder();
             const string paragraph = "Markdown paragraph 中文测试 with **bold** and a link.\n\n";
             int paragraphBytes = Encoding.UTF8.GetByteCount(paragraph);
@@ -78,6 +83,84 @@ public sealed partial class MainWindow
                 Close();
             }
         }
+    }
+
+    private async Task AssertWorkspaceAsync(DocumentTab initial, string reportPath)
+    {
+        string directory = Path.Combine(Path.GetDirectoryName(Path.GetFullPath(reportPath))!, "workspace-fixture");
+        Directory.CreateDirectory(Path.Combine(directory, "子目录"));
+        string path = Path.Combine(directory, "文档2.md");
+        const string markdown = "# 第一章\r\n中文正文\n\n## 第二章\n更多文字\n";
+        await File.WriteAllTextAsync(path, markdown);
+        await File.WriteAllTextAsync(Path.Combine(directory, "子目录", "子文档.txt"), "子目录内容");
+        await OpenFolderAsync(directory);
+        Root.UpdateLayout();
+        if (SidebarPanel.ActualWidth < 180 || SidebarPanel.ActualHeight < 100 || FilesTree.RootNodes.Count != 2)
+            throw new IOException("文件树侧栏未显示或未列出测试文件。");
+        var directoryNode = FilesTree.RootNodes.First(node => node.Content is FileTreeEntry { IsDirectory: true });
+        if (!directoryNode.HasUnrealizedChildren || directoryNode.Children.Count != 0) throw new IOException("文件树未按需加载。");
+        await ExpandDirectoryAsync(directoryNode, (FileTreeEntry)directoryNode.Content);
+        directoryNode.IsExpanded = true;
+        if (directoryNode.HasUnrealizedChildren || directoryNode.Children.Count != 1) throw new IOException("子目录展开失败。");
+
+        var before = await initial.Editor!.SnapshotAsync();
+        var originalPreferences = preferences;
+        var changed = preferences with { BodySize = 18, CodeSize = 16, IndentWidth = 4, PairBrackets = false,
+            PairMarkdown = false, FocusMode = true, TypewriterMode = true, Appearance = "dark", DefaultSourceMode = true };
+        await ChangePreferencesAsync(changed);
+        if (AppPreferences.Load(preferencesPath!) != changed.Normalize()) throw new IOException("设置没有完整持久化。");
+        var font = await initial.Editor.Control.CoreWebView2.ExecuteScriptAsync("document.querySelector('.cm-editor').style.getPropertyValue('--inkpot-body-size')");
+        if (font != "\"18px\"" || Root.ActualTheme != ElementTheme.Dark || (await initial.Editor.SnapshotAsync()) != before)
+            throw new IOException("设置未同步，或改变了文档文本／撤销版本。");
+
+        AppPreferences? accepted = null;
+        var dialog = PreferencesDialog.Create(Root.XamlRoot, preferences, next => accepted = next);
+        var showing = dialog.ShowAsync();
+        try
+        {
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+            while (!dialog.IsLoaded || dialog.ActualWidth < 100)
+            {
+                if (DateTime.UtcNow > deadline) throw new IOException("设置对话框没有进入可视区域。");
+                await Task.Delay(50);
+            }
+        }
+        finally { dialog.Hide(); await showing; }
+        if (accepted is not null || preferences != changed) throw new IOException("取消设置修改了偏好。");
+
+        await OpenPathAsync(path);
+        var fixture = Current!;
+        if (fixture == initial || fixture.Editor?.State?.SourceMode != true || (await fixture.Editor!.SnapshotAsync()).Text != markdown)
+            throw new IOException("文件树打开流程或默认源码模式没有生效。");
+        await ShowOutlineAsync();
+        var outlineDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+        while (fixture.Editor.Headings.Count != 2)
+        {
+            if (DateTime.UtcNow > outlineDeadline) throw new IOException("大纲消息没有传入 Windows 侧栏。");
+            await Task.Delay(50);
+        }
+        RefreshOutline();
+        if (OutlineList.Items.Count != 2 || EmptyOutline.Visibility != Visibility.Collapsed)
+            throw new IOException("大纲未显示标题。");
+        await fixture.Editor.NavigateHeadingAsync(fixture.Editor.Headings[1].Id);
+        // 通过编辑操作验证光标已到第二个标题；撤销后正文必须完全一致。
+        await fixture.Editor.PasteAsync("跳转");
+        if (!(await fixture.Editor.SnapshotAsync()).Text.Contains("## 跳转第二章"))
+            throw new IOException("大纲跳转没有定位第二章。");
+        await fixture.Editor.CommandAsync("undo");
+        if ((await fixture.Editor.SnapshotAsync()).Text != markdown || StatisticsLabel.Text.Length == 0 || ModeLabel.Text != L10n.Text("SourceLabel"))
+            throw new IOException("大纲导航或状态栏不正确。");
+        fixture.SavedRevision = fixture.Editor.State!.Revision;
+        await CloseDocumentAsync(fixture);
+        Tabs.SelectedItem = initial.Item;
+        await ActivateCurrentAsync();
+        if ((await initial.Editor.SnapshotAsync()) != before || outlineItems.Keys.Except(initial.Editor.Headings.Select(item => item.Id)).Any())
+            throw new IOException("切换标签丢失原文或保留了其他文档的大纲。");
+        await ToggleSidebarAsync();
+        if (SidebarPanel.Visibility != Visibility.Collapsed || SidebarColumn.Width.Value != 0) throw new IOException("侧栏不能隐藏。");
+        await ChangePreferencesAsync(originalPreferences);
+        showingOutline = false;
+        RefreshSidebar();
     }
 
     // 冒烟必须确认编辑器真的显示出来：逻辑通过但组合层不可见时，用户看到的就是空白窗口。

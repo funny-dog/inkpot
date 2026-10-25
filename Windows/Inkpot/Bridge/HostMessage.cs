@@ -27,7 +27,16 @@ internal abstract record HostMessage
             int revision = root.GetProperty("revision").GetInt32();
             if (revision < 0) return null;
             if (root.TryGetProperty("outline", out var outline) && outline.GetBoolean())
-                return new OutlineMessage(generation, revision);
+            {
+                var headings = root.TryGetProperty("headings", out var items) ? items.EnumerateArray().Select(item =>
+                    new OutlineHeading(item.GetProperty("id").GetInt32(), item.GetProperty("from").GetInt32(),
+                        item.GetProperty("to").GetInt32(), item.GetProperty("level").GetInt32(), item.GetProperty("title").GetString()!)).ToArray() : null;
+                if (headings?.Any(item => item.Id < 0 || item.From < 0 || item.To < item.From || item.Level is < 1 or > 6 || item.Title is null) == true
+                    || headings is not null && headings.Select(item => item.Id).Distinct().Count() != headings.Length) return null;
+                var activeValue = root.GetProperty("active");
+                int? active = activeValue.ValueKind == JsonValueKind.Null ? null : activeValue.GetInt32();
+                return active < 0 ? null : new OutlineMessage(generation, revision, headings, active);
+            }
             var stats = root.GetProperty("stats");
             return new PublishMessage(generation, revision, root.GetProperty("changed").GetBoolean(),
                 root.GetProperty("canUndo").GetBoolean(), root.GetProperty("canRedo").GetBoolean(),
@@ -48,7 +57,8 @@ internal sealed record ReadyMessage : HostMessage;
 internal sealed record PasteImageMessage(int Generation) : HostMessage;
 internal sealed record ShortcutMessage(int Generation, string Shortcut) : HostMessage;
 internal sealed record LinkMessage(int Generation, string OpenLink) : HostMessage;
-internal sealed record OutlineMessage(int Generation, int Revision) : HostMessage;
+internal sealed record OutlineHeading(int Id, int From, int To, int Level, string Title);
+internal sealed record OutlineMessage(int Generation, int Revision, OutlineHeading[]? Headings, int? Active) : HostMessage;
 internal sealed record EditorSnapshot(string Text, int Revision);
 internal sealed record DocumentStats(int Words, int Characters, int Lines);
 internal sealed record ResponseMessage(int RequestId, EditorSnapshot? Snapshot, string? Error) : HostMessage;

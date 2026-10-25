@@ -159,4 +159,103 @@
   <data name="Heading6" xml:space="preserve">
     <value>Heading 6</value>
   </data>
+  <data name="View" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings…</value>
+  </data>
+  <data name="OpenFolder" xml:space="preserve">
+    <value>Open Folder…</value>
+  </data>
+  <data name="Sidebar" xml:space="preserve">
+    <value>Sidebar</value>
+  </data>
+  <data name="Files" xml:space="preserve">
+    <value>Files</value>
+  </data>
+  <data name="Outline" xml:space="preserve">
+    <value>Outline</value>
+  </data>
+  <data name="NoFolder" xml:space="preserve">
+    <value>Please open a folder first</value>
+  </data>
+  <data name="NoHeadings" xml:space="preserve">
+    <value>No headings in this document</value>
+  </data>
+  <data name="FocusMode" xml:space="preserve">
+    <value>Focus Mode</value>
+  </data>
+  <data name="TypewriterMode" xml:space="preserve">
+    <value>Typewriter Mode</value>
+  </data>
+  <data name="StatsFormat" xml:space="preserve">
+    <value>{0} words · {1} characters · {2} lines</value>
+  </data>
+  <data name="LiveMode" xml:space="preserve">
+    <value>Live Mode</value>
+  </data>
+  <data name="SourceLabel" xml:space="preserve">
+    <value>Source Mode</value>
+  </data>
+  <data name="ResizeSidebar" xml:space="preserve">
+    <value>Resize sidebar width</value>
+  </data>
+  <data name="Preferences" xml:space="preserve">
+    <value>Preferences</value>
+  </data>
+  <data name="Appearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="AppearanceSystem" xml:space="preserve">
+    <value>System</value>
+  </data>
+  <data name="AppearanceLight" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="AppearanceDark" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="FontSection" xml:space="preserve">
+    <value>Fonts</value>
+  </data>
+  <data name="BodyFont" xml:space="preserve">
+    <value>Body Font</value>
+  </data>
+  <data name="BodyFontSize" xml:space="preserve">
+    <value>Body Font Size</value>
+  </data>
+  <data name="CodeFont" xml:space="preserve">
+    <value>Code Font</value>
+  </data>
+  <data name="CodeFontSize" xml:space="preserve">
+    <value>Code Font Size</value>
+  </data>
+  <data name="DefaultFont" xml:space="preserve">
+    <value>(System Default)</value>
+  </data>
+  <data name="EditingSection" xml:space="preserve">
+    <value>Editing</value>
+  </data>
+  <data name="DefaultSourceMode" xml:space="preserve">
+    <value>Open in Source Mode by default</value>
+  </data>
+  <data name="IndentWidth" xml:space="preserve">
+    <value>Tab Indentation</value>
+  </data>
+  <data name="SpacesFormat" xml:space="preserve">
+    <value>{0} spaces</value>
+  </data>
+  <data name="PairingSection" xml:space="preserve">
+    <value>Auto-pairing</value>
+  </data>
+  <data name="PairBrackets" xml:space="preserve">
+    <value>Automatically pair brackets and quotes</value>
+  </data>
+  <data name="PairMarkdown" xml:space="preserve">
+    <value>Automatically pair Markdown formatting characters</value>
+  </data>
+  <data name="DisplayModesSection" xml:space="preserve">
+    <value>Display Modes</value>
+  </data>
 </root>

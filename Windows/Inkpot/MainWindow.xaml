@@ -1,11 +1,43 @@
 <Window x:Class="Inkpot.MainWindow"
  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
- xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+ xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
   <Grid x:Name="Root">
-    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
     <MenuBar x:Name="Menus" />
-  <!-- TabView 默认 VerticalAlignment=Top，会随零固有高度的 WebView2 塌缩成标签条，必须显式拉伸填充。 -->
-  <TabView x:Name="Tabs" Grid.Row="1" VerticalAlignment="Stretch" IsAddTabButtonVisible="True"
-    AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
+    <Grid Grid.Row="1" x:Name="WorkspaceGrid">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition x:Name="SidebarColumn" Width="260"/>
+        <ColumnDefinition x:Name="DividerColumn" Width="6"/>
+        <ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <Grid x:Name="SidebarPanel" Padding="8,0,8,8" Background="{ThemeResource LayerFillColorDefaultBrush}">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,8">
+          <Button x:Name="FilesButton" Click="ShowFiles"/>
+          <Button x:Name="OutlineButton" Click="ShowOutline"/>
+        </StackPanel>
+        <Grid Grid.Row="1" x:Name="FilesPanel">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <Button x:Name="OpenFolderButton" Click="OpenFolder" HorizontalAlignment="Stretch"/>
+          <TextBlock x:Name="FolderLabel" Grid.Row="1" Margin="4,8" TextTrimming="CharacterEllipsis"/>
+          <TreeView x:Name="FilesTree" Grid.Row="2" SelectionMode="Single" Expanding="ExpandDirectory" ItemInvoked="InvokeFile"/>
+        </Grid>
+        <Grid Grid.Row="1" x:Name="OutlinePanel" Visibility="Collapsed">
+          <ListView x:Name="OutlineList" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="InvokeHeading"/>
+          <TextBlock x:Name="EmptyOutline" Margin="8" TextWrapping="Wrap"/>
+        </Grid>
+      </Grid>
+      <primitives:Thumb x:Name="SidebarDivider" Grid.Column="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+        DragDelta="ResizeSidebar" DragCompleted="FinishResizeSidebar" KeyDown="ResizeSidebarWithKeyboard" IsTabStop="True"/>
+      <!-- TabView 与 WebView2 均须拉伸，避免正文区域塌缩成标签条。 -->
+      <TabView x:Name="Tabs" Grid.Column="2" VerticalAlignment="Stretch" IsAddTabButtonVisible="True"
+        AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
+    </Grid>
+    <Grid Grid.Row="2" Padding="12,5" Background="{ThemeResource LayerFillColorDefaultBrush}">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <TextBlock x:Name="ModeLabel"/>
+      <TextBlock x:Name="StatisticsLabel" Grid.Column="1" HorizontalAlignment="Right"/>
+    </Grid>
   </Grid>
 </Window>

@@ -25,6 +25,29 @@ public sealed class BridgeTests
     public void InvalidMessagesCannotUpdateState(string json) => Assert.Null(HostMessage.Parse(json));
 
     [Fact]
+    public void ParsesOutlineAndActiveOnlyUpdatesWithoutLosingHeadings()
+    {
+        var message = Assert.IsType<OutlineMessage>(HostMessage.Parse("""
+            {"outline":true,"generation":2,"revision":3,"headings":[{"id":0,"from":0,"to":5,"level":1,"title":"标题"}],"active":0}
+            """));
+        Assert.Equal(new OutlineHeading(0, 0, 5, 1, "标题"), Assert.Single(message.Headings!));
+        Assert.Equal(0, message.Active);
+        var update = Assert.IsType<OutlineMessage>(HostMessage.Parse("""
+            {"outline":true,"generation":2,"revision":3,"active":null}
+            """));
+        Assert.Null(update.Headings);
+        Assert.Null(update.Active);
+    }
+
+    [Theory]
+    [InlineData("{\"id\":0,\"from\":0,\"to\":5,\"level\":7,\"title\":\"x\"}")]
+    [InlineData("{\"id\":-1,\"from\":0,\"to\":5,\"level\":1,\"title\":\"x\"}")]
+    [InlineData("{\"id\":0,\"from\":5,\"to\":0,\"level\":1,\"title\":\"x\"}")]
+    [InlineData("{\"id\":0,\"from\":0,\"to\":5,\"level\":1,\"title\":null}")]
+    public void RejectsInvalidOutlineHeadings(string heading)
+        => Assert.Null(HostMessage.Parse("{\"outline\":true,\"generation\":2,\"revision\":0,\"active\":null,\"headings\":[" + heading + "]}"));
+
+    [Fact]
     public async Task SavedBaselineMatchesDiskAndCanBeUsedForNextSave()
     {
         string directory = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N"));

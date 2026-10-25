@@ -7,6 +7,11 @@ on:
     branches: ['main']
     types: [synchronize, opened, reopened, ready_for_review]
   workflow_dispatch:
+    inputs:
+      windows_only:
+        description: '只运行 Windows 构建、测试与发布产物冒烟'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -19,7 +24,7 @@ jobs:
   inkpot:
     runs-on: [self-hosted, macOS, ARM64, inkpot]
     timeout-minutes: 30
-    if: github.ref != 'refs/heads/feat/windows-mvp' && (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository))
+    if: github.ref != 'refs/heads/feat/windows-mvp' && !(github.event_name == 'workflow_dispatch' && inputs.windows_only) && (github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository))
     env:
       DEVELOPER_DIR: /Applications/Xcode.app/Contents/Developer
 
@@ -108,7 +113,7 @@ jobs:
         working-directory: Windows
         run: dotnet build Inkpot.Windows.sln -c Release -p:Platform=x64
 
-      - name: Test file safety
+      - name: Test file safety, preferences and workspace
         working-directory: Windows
         run: dotnet test Inkpot.Tests/Inkpot.Tests.csproj -c Release --logger trx --results-directory TestResults
 

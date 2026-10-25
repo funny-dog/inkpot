@@ -9,7 +9,7 @@ export type HostMessage =
   | { ready: true }
   | { pasteImage: true; generation: number }
   | { openLink: string; generation: number }
-  | { shortcut: 'new' | 'open' | 'save' | 'saveAs' | 'close'; generation: number }
+  | { shortcut: HostShortcut; generation: number }
   | { response: true; requestId: number; snapshot?: { text: string; revision: number }; error?: string }
   // headings 为 undefined 时只更新当前标题；active 为 null 表示没有当前标题。
   | { outline: true; headings: Heading[] | undefined; active: number | null; revision: number; generation: number }
@@ -35,6 +35,8 @@ export interface ResourceBases {
   /** 宿主图片处理入口；后接编码后的完整路径及 document/revision 查询参数。 */
   imageBase: string;
 }
+
+type HostShortcut = 'new' | 'open' | 'save' | 'saveAs' | 'close' | 'settings' | 'openFolder' | 'sidebar' | 'outline' | 'focusMode' | 'typewriterMode';
 
 export let assetBase = 'inkpot-asset://math/';
 export let imageBase = 'inkpot-image://local/';
@@ -86,6 +88,10 @@ export type HostRequest = { requestId: number } & (
   | { method: 'command'; name: string }
   | { method: 'pastePlainText'; text: string }
   | { method: 'setAppearance'; dark: boolean }
+  | { method: 'navigateHeading'; id: number }
+  | { method: 'setFonts'; fonts: EditorFonts }
+  | { method: 'setDisplayModes'; modes: { focus: boolean; typewriter: boolean } }
+  | { method: 'setEditingPreferences'; preferences: PairingPreferences & { remoteImages: boolean; indent: number } }
 );
 
 type HostChannel = { postMessage: (message: HostMessage) => void };
@@ -110,9 +116,19 @@ export function listenToHost(api: InkpotAPI) {
   let generation = 0;
   if (window.chrome?.webview?.addEventListener === undefined) return;
   document.addEventListener('keydown', event => {
-    if (!event.ctrlKey || event.altKey || event.isComposing) return;
-    const shortcuts: Partial<Record<string, 'new' | 'open' | 'save' | 'saveAs' | 'close'>> = { n: 'new', o: 'open', s: event.shiftKey ? 'saveAs' : 'save', w: 'close' };
-    const shortcut = shortcuts[event.key.toLowerCase()];
+    if (event.isComposing || event.metaKey) return;
+    const key = event.key.toLowerCase();
+    let shortcut: HostShortcut | undefined;
+    if (event.ctrlKey && event.altKey && !event.shiftKey && key === 'o') shortcut = 'openFolder';
+    else if (event.ctrlKey && !event.altKey) {
+      const shortcuts: Partial<Record<string, HostShortcut>> = event.shiftKey
+        ? { s: 'saveAs', e: 'sidebar', o: 'outline' }
+        : { n: 'new', o: 'open', s: 'save', w: 'close', ',': 'settings' };
+      shortcut = shortcuts[key];
+    } else if (!event.ctrlKey && !event.altKey && !event.shiftKey) {
+      if (key === 'f8') shortcut = 'focusMode';
+      if (key === 'f9') shortcut = 'typewriterMode';
+    }
     if (shortcut === undefined) return;
     event.preventDefault();
     postToHost({ shortcut, generation });
@@ -146,6 +162,28 @@ export function listenToHost(api: InkpotAPI) {
           if (typeof request.dark !== 'boolean') throw new Error('无效的外观消息。');
           api.setAppearance(request.dark);
           break;
+        case 'navigateHeading':
+          if (typeof request.id !== 'number' || !Number.isSafeInteger(request.id) || request.id < 0) throw new Error('无效的标题标识。');
+          api.navigateHeading(request.id);
+          break;
+        case 'setFonts': {
+          const fonts = request.fonts as EditorFonts | null | undefined;
+          if (fonts === undefined || fonts === null || typeof fonts.bodyFamily !== 'string' || typeof fonts.codeFamily !== 'string'
+            || ![fonts.bodySize, fonts.codeSize].every(size => typeof size === 'number' && Number.isFinite(size) && size >= 8 && size <= 72)) throw new Error('无效的字体设置。');
+          api.setFonts(fonts);
+          break;
+        }
+        case 'setDisplayModes':
+          if (typeof request.modes?.focus !== 'boolean' || typeof request.modes.typewriter !== 'boolean') throw new Error('无效的显示模式。');
+          api.setDisplayModes(request.modes);
+          break;
+        case 'setEditingPreferences': {
+          const preferences = request.preferences;
+          if (typeof preferences?.brackets !== 'boolean' || typeof preferences.markdown !== 'boolean' || typeof preferences.remoteImages !== 'boolean'
+            || ![2, 4].includes(preferences.indent)) throw new Error('无效的编辑设置。');
+          api.setEditingPreferences(preferences);
+          break;
+        }
         case undefined:
         default: throw new Error('未知的宿主操作。');
       }

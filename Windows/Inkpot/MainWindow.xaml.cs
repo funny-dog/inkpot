@@ -31,6 +31,7 @@ public sealed partial class MainWindow : Window
         Title = "Inkpot";
         SystemBackdrop = new MicaBackdrop();
         AppWindow.Resize(new Windows.Graphics.SizeInt32(1100, 780));
+        InitializeWorkspace(arguments);
         try { environment = EditorSession.CreateEnvironmentAsync(); }
         catch (Exception error) { environment = Task.FromException<CoreWebView2Environment>(error); }
         BuildMenus();
@@ -42,6 +43,7 @@ public sealed partial class MainWindow : Window
         });
         Root.Loaded += async (_, _) => await RunAsync(async () =>
         {
+            if (preferencesError is not null) await DialogAsync(L10n.Text("Error"), preferencesError.Message);
             int reportIndex = Array.IndexOf(arguments, "--smoke-report");
             if (reportIndex >= 0 && reportIndex + 1 < arguments.Length)
             {
@@ -81,6 +83,7 @@ public sealed partial class MainWindow : Window
         var file = Menu("File");
         Item(file, "New", async () => { CreateDocument(); await ActivateCurrentAsync(); }, VirtualKey.N);
         Item(file, "Open", OpenPickerAsync, VirtualKey.O);
+        Item(file, "OpenFolder", OpenFolderPickerAsync, VirtualKey.O, VirtualKeyModifiers.Control | VirtualKeyModifiers.Menu);
         Item(file, "Save", async () => { if (Current is { } document) await SaveAsync(document); }, VirtualKey.S);
         Item(file, "SaveAs", async () => { if (Current is { } document) await SaveAsync(document, saveAs: true); }, VirtualKey.S, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Item(file, "Close", async () => { if (Current is { } document && await CloseDocumentAsync(document))
@@ -125,7 +128,24 @@ public sealed partial class MainWindow : Window
         Command(format, "Quote", "blockquote", (VirtualKey)190, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "CodeBlock", "codeBlock", VirtualKey.C, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "Rule", "horizontalRule", VirtualKey.H, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
-        Command(format, "SourceMode", "toggleSourceMode", VirtualKey.M, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        var view = Menu("View");
+        Command(view, "SourceMode", "toggleSourceMode", VirtualKey.M, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        void Toggle(string key, Func<Task> action, VirtualKey shortcut, VirtualKeyModifiers modifiers)
+        {
+            var item = new ToggleMenuFlyoutItem { Text = L10n.Text(key) };
+            item.Click += async (_, _) => { await RunAsync(action); RefreshSidebar(); };
+            var accelerator = new KeyboardAccelerator { Key = shortcut, Modifiers = modifiers };
+            accelerator.Invoked += async (_, args) => { args.Handled = true; await RunAsync(action); };
+            item.KeyboardAccelerators.Add(accelerator);
+            view.Items.Add(item);
+            viewMenus.Add(key, item);
+        }
+        Toggle("Sidebar", ToggleSidebarAsync, VirtualKey.E, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        Toggle("Outline", ToggleOutlineAsync, VirtualKey.O, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        Toggle("FocusMode", ToggleFocusAsync, VirtualKey.F8, VirtualKeyModifiers.None);
+        Toggle("TypewriterMode", ToggleTypewriterAsync, VirtualKey.F9, VirtualKeyModifiers.None);
+        Item(view, "Settings", ShowSettingsAsync, (VirtualKey)188);
+        RefreshSidebar();
         RefreshMenus();
     }
 
@@ -169,6 +189,7 @@ public sealed partial class MainWindow : Window
             document.Editor = editor;
             document.Item.Content = editor.Control;
             editor.Published += _ => { document.RefreshHeader(); RefreshMenus(); };
+            editor.OutlineChanged += () => { if (Current == document) RefreshOutline(); };
             editor.ShortcutRequested += action =>
             {
                 if (Current != document) return;
@@ -180,6 +201,12 @@ public sealed partial class MainWindow : Window
                         case "open": await OpenPickerAsync(); break;
                         case "save": await SaveAsync(document); break;
                         case "saveAs": await SaveAsync(document, saveAs: true); break;
+                        case "openFolder": await OpenFolderPickerAsync(); break;
+                        case "settings": await ShowSettingsAsync(); break;
+                        case "sidebar": await ToggleSidebarAsync(); break;
+                        case "outline": await ToggleOutlineAsync(); break;
+                        case "focusMode": await ToggleFocusAsync(); break;
+                        case "typewriterMode": await ToggleTypewriterAsync(); break;
                         case "close":
                             if (await CloseDocumentAsync(document))
                             { if (documents.Count == 0) CreateDocument(); await ActivateCurrentAsync(); }
@@ -192,6 +219,7 @@ public sealed partial class MainWindow : Window
                 EnsureTabContentVisible(document);
                 await editor.InitializeAsync(environment, Dark);
                 await editor.OpenAsync(document.InitialText, Dark, L10n.Language);
+                await editor.ApplyPreferencesAsync(preferences, initial: true);
                 document.InitialText = "";
             }
             catch
@@ -205,6 +233,7 @@ public sealed partial class MainWindow : Window
         else EnsureTabContentVisible(document);
         document.Editor.Control.Focus(FocusState.Programmatic);
         RefreshMenus();
+        RefreshOutline();
     }
 
     // WinUI TabView 对程序化选择可能不生成容器内容（microsoft-ui-xaml#3907）：
@@ -223,6 +252,7 @@ public sealed partial class MainWindow : Window
 
     private void RefreshMenus()
     {
+        RefreshStatus();
         var state = Current?.Editor?.State;
         foreach (var (name, item) in commandMenus)
             item.IsEnabled = state is not null && !state.Composing && (name switch
@@ -292,6 +322,7 @@ public sealed partial class MainWindow : Window
         busy = true;
         Menus.IsEnabled = false;
         Tabs.IsEnabled = false;
+        SidebarPanel.IsEnabled = false;
         try { await action(); }
         catch (Exception error)
         {
@@ -302,7 +333,7 @@ public sealed partial class MainWindow : Window
             }
             else await DialogAsync(L10n.Text("Error"), error.Message);
         }
-        finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; RefreshMenus(); }
+        finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; SidebarPanel.IsEnabled = true; RefreshMenus(); }
     }
 
     private async void AddTab(TabView sender, object args) => await RunAsync(async () => { CreateDocument(); await ActivateCurrentAsync(); });
