@@ -28,9 +28,9 @@ final class GfmTests: XCTestCase {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelectorAll('input[type=\"checkbox\"]').length === 2 && document.querySelectorAll('input[type=\"checkbox\"]')[1].checked === true") as? Bool == true
+      try await web.evaluateQueued("document.querySelectorAll('input[type=\"checkbox\"]').length === 2 && document.querySelectorAll('input[type=\"checkbox\"]')[1].checked === true") as? Bool == true
     }
-    _ = try await web.evaluateJavaScript("""
+    _ = try await web.evaluateQueued("""
       document.querySelector('input[type="checkbox"]').click(); null
       """)
     try await waitUntil { editor.latestRevision > 0 }
@@ -47,9 +47,9 @@ final class GfmTests: XCTestCase {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-footnote-ref') !== null && document.querySelector('.cm-inkpot-toc') !== null && document.querySelector('.cm-inkpot-toc-item')?.textContent === '标题'") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-inkpot-footnote-ref') !== null && document.querySelector('.cm-inkpot-toc') !== null && document.querySelector('.cm-inkpot-toc-item')?.textContent === '标题'") as? Bool == true
     }
-    let details = try await web.evaluateJavaScript("""
+    let details = try await web.evaluateQueued("""
       JSON.stringify({ref: document.querySelector('.cm-inkpot-footnote-ref')?.title, tocItems: document.querySelectorAll('.cm-inkpot-toc-item').length})
       """) as? String
     XCTAssertTrue(try XCTUnwrap(details).contains("脚注定义"))
@@ -61,14 +61,14 @@ final class GfmTests: XCTestCase {
   func testTocItemClickJumpsToHeading() async throws {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-toc-item') !== null") as? Bool == true }
-    _ = try await web.evaluateJavaScript("""
+    try await waitUntil { try await web.evaluateQueued("document.querySelector('.cm-inkpot-toc-item') !== null") as? Bool == true }
+    _ = try await web.evaluateQueued("""
       document.querySelector('.cm-inkpot-toc-item').dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true})); null
       """)
     try await waitUntil {
-      try await web.evaluateJavaScript("window.inkpot.snapshot().text.indexOf('标题') === 1 || true") as? Bool == true
+      try await web.evaluateQueued("window.inkpot.snapshot().text.indexOf('标题') === 1 || true") as? Bool == true
     }
-    let focused = try await web.evaluateJavaScript("document.activeElement.className.includes('cm-content')") as? Bool
+    let focused = try await web.evaluateQueued("document.activeElement.className.includes('cm-content')") as? Bool
     XCTAssertTrue(try XCTUnwrap(focused))
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))

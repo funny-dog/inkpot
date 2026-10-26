@@ -16,9 +16,9 @@ final class DocumentTests: XCTestCase {
       try await waitUntil { editor.isReady }
       editor.performCommand("find")
       try await waitUntil {
-        try await webView.evaluateJavaScript("document.activeElement?.name === 'search'") as? Bool == true
+        try await webView.evaluateQueued("document.activeElement?.name === 'search'") as? Bool == true
       }
-      _ = try await webView.evaluateJavaScript("""
+      _ = try await webView.evaluateQueued("""
         const find = document.querySelector('input[name=search]');
         find.value = '中文'; find.dispatchEvent(new InputEvent('input', {bubbles: true}));
         document.querySelector('button[name=next]').click();
@@ -29,7 +29,7 @@ final class DocumentTests: XCTestCase {
         """)
       let continued = try await editor.snapshot()
       XCTAssertEqual(continued.text, "\(prefix)中文\r\n\(nextPrefix)\r\n尾\n")
-      _ = try await webView.evaluateJavaScript("""
+      _ = try await webView.evaluateQueued("""
         document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown', {
           key: 'Enter', keyCode: 13, bubbles: true, cancelable: true
         })); null
@@ -58,7 +58,7 @@ final class DocumentTests: XCTestCase {
     let editor = document.makeEditor()
     let webView = try XCTUnwrap(editor.view as? WKWebView)
     try await waitUntil { editor.isReady }
-    let rendered = try await webView.evaluateJavaScript("""
+    let rendered = try await webView.evaluateQueued("""
       document.querySelector('.cm-inkpot-heading1')?.textContent === '标题' &&
       document.querySelector('.cm-inkpot-list-marker')?.textContent === '• ' &&
       document.querySelectorAll('.cm-inkpot-hidden-inline').length === 4 &&
@@ -67,24 +67,24 @@ final class DocumentTests: XCTestCase {
     XCTAssertTrue(try XCTUnwrap(rendered))
     editor.performCommand("find")
     try await waitUntil {
-      try await webView.evaluateJavaScript("document.activeElement?.name === 'search'") as? Bool == true
+      try await webView.evaluateQueued("document.activeElement?.name === 'search'") as? Bool == true
     }
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       const find = document.querySelector('input[name=search]');
       find.value = '粗体'; find.dispatchEvent(new InputEvent('input', {bubbles: true})); null
       """)
     editor.performCommand("findNext")
     try await waitUntil {
-      try await webView.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-hidden-inline').length === 2") as? Bool == true
+      try await webView.evaluateQueued("document.querySelectorAll('.cm-inkpot-hidden-inline').length === 2") as? Bool == true
     }
-    _ = try await webView.evaluateJavaScript("document.querySelector('button[name=close]').click(); null")
+    _ = try await webView.evaluateQueued("document.querySelector('button[name=close]').click(); null")
     let item = NSMenuItem(title: "源码模式", action: nil, keyEquivalent: "M")
     item.representedObject = "toggleSourceMode"
     XCTAssertTrue(editor.validateMenuItem(item))
     XCTAssertEqual(item.state, .off)
     editor.performCommand("toggleSourceMode")
     try await waitUntil { editor.validateMenuItem(item) && item.state == .on }
-    let sourceVisible = try await webView.evaluateJavaScript("""
+    let sourceVisible = try await webView.evaluateQueued("""
       document.querySelector('.cm-content').textContent.includes('# 标题') &&
       document.querySelector('.cm-inkpot-hidden-inline') === null &&
       document.querySelector('.cm-inkpot-list-marker') === null
@@ -121,32 +121,32 @@ final class DocumentTests: XCTestCase {
 
     editor.performCommand("find")
     try await waitUntil {
-      try await webView.evaluateJavaScript("document.activeElement?.name === 'search'") as? Bool == true
+      try await webView.evaluateQueued("document.activeElement?.name === 'search'") as? Bool == true
     }
     let formatItem = NSMenuItem(title: "粗体", action: nil, keyEquivalent: "b")
     formatItem.representedObject = "bold"
     try await waitUntil { !editor.validateMenuItem(formatItem) }
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       const find = document.querySelector('input[name=search]');
       find.value = '中文'; find.dispatchEvent(new InputEvent('input', {bubbles: true})); null
       """)
     editor.selectAll(nil)
     try await waitUntil {
-      try await webView.evaluateJavaScript("document.activeElement.selectionStart === 0 && document.activeElement.selectionEnd === 2") as? Bool == true
+      try await webView.evaluateQueued("document.activeElement.selectionStart === 0 && document.activeElement.selectionEnd === 2") as? Bool == true
     }
     editor.performCommand("bold")
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
     XCTAssertFalse(document.isDocumentEdited)
 
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       const replacement = document.querySelector('input[name=replace]');
       replacement.value = '替换'; replacement.dispatchEvent(new InputEvent('input', {bubbles: true}));
       document.querySelector('button[name=replaceAll]').click(); null
       """)
     let replaced = try await editor.snapshot()
     XCTAssertEqual(replaced.text, "# 标题\r\n替换 替换\n尾")
-    _ = try await webView.evaluateJavaScript("document.querySelector('button[name=close]').click(); null")
+    _ = try await webView.evaluateQueued("document.querySelector('button[name=close]').click(); null")
     let replacedRevision = replaced.revision
     editor.undo(nil)
     try await waitUntil { editor.latestRevision > replacedRevision }
@@ -166,7 +166,7 @@ final class DocumentTests: XCTestCase {
     try await waitUntil { editor.isReady }
     let initialSnapshot = try await editor.snapshot()
     XCTAssertEqual(initialSnapshot.text, original)
-    _ = try await webView.evaluateJavaScript(
+    _ = try await webView.evaluateQueued(
       "document.querySelector('.cm-content').focus(); document.execCommand('insertText', false, '末字');"
     )
     try await waitUntil { editor.latestRevision > 0 }
@@ -192,7 +192,7 @@ final class DocumentTests: XCTestCase {
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
     XCTAssertTrue(document.isDocumentEdited)
-    _ = try await webView.evaluateJavaScript(
+    _ = try await webView.evaluateQueued(
       "window.inkpot.snapshot = () => { throw new Error('模拟同步失败'); }; null"
     )
     do {
@@ -276,20 +276,20 @@ extension DocumentTests {
     let editor = document.makeEditor()
     let webView = try XCTUnwrap(editor.view as? WKWebView)
     try await waitUntil { editor.isReady }
-    let rendered = try await webView.evaluateJavaScript("""
+    let rendered = try await webView.evaluateQueued("""
       document.querySelector('.cm-inkpot-code-language')?.textContent === 'js' &&
       !document.querySelector('.cm-content').textContent.includes('```') &&
       getComputedStyle(document.querySelectorAll('.cm-inkpot-code')[1]).fontFamily.includes('Menlo')
       """) as? Bool
     XCTAssertTrue(try XCTUnwrap(rendered))
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       document.querySelector('.cm-inkpot-code-language').click();
       document.execCommand('insertText', false, 'python');
       document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, bubbles: true, cancelable: true})); null
       """)
     let changed = try await editor.snapshot()
     XCTAssertEqual(changed.text, "```python\r\n\t原文  \n```\r尾")
-    let labelUpdated = try await webView.evaluateJavaScript("document.querySelector('.cm-inkpot-code-language')?.textContent === 'python'") as? Bool
+    let labelUpdated = try await webView.evaluateQueued("document.querySelector('.cm-inkpot-code-language')?.textContent === 'python'") as? Bool
     XCTAssertTrue(try XCTUnwrap(labelUpdated))
     editor.undo(nil)
     try await waitUntil { editor.latestRevision > changed.revision }
@@ -299,17 +299,17 @@ extension DocumentTests {
 
     try document.read(from: Data("```".utf8), ofType: "net.daringfireball.markdown")
     try await waitUntil { editor.isReady }
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       for (const [key, keyCode] of [['End', 35], ['Enter', 13]]) {
         document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown', {key, keyCode, bubbles: true, cancelable: true}));
       } null
       """)
     let created = try await editor.snapshot()
     XCTAssertEqual(created.text, "```\n\n```")
-    _ = try await webView.evaluateJavaScript("document.execCommand('insertText', false, '字'); null")
+    _ = try await webView.evaluateQueued("document.execCommand('insertText', false, '字'); null")
     let typed = try await editor.snapshot()
     XCTAssertEqual(typed.text, "```\n字\n```")
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, metaKey: true, bubbles: true, cancelable: true})); null
       """)
     let exited = try await editor.snapshot()
@@ -407,10 +407,10 @@ extension DocumentTests {
     let second = editor.headings[1].id
     editor.navigateHeading(second)
     try await waitUntil { editor.activeHeading == second }
-    let scrollTop = try await webView.evaluateJavaScript("document.querySelector('.cm-scroller').scrollTop") as? Double
+    let scrollTop = try await webView.evaluateQueued("document.querySelector('.cm-scroller').scrollTop") as? Double
     XCTAssertGreaterThan(try XCTUnwrap(scrollTop), 100)
     let first = editor.headings[0].id
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       const scroller = document.querySelector('.cm-scroller');
       scroller.scrollTop = 0; scroller.dispatchEvent(new Event('scroll')); null
       """)
@@ -420,9 +420,9 @@ extension DocumentTests {
     XCTAssertFalse(document.isDocumentEdited)
     editor.navigateHeading(first)
     try await waitUntil {
-      try await webView.evaluateJavaScript("window.getSelection()?.anchorNode?.textContent.includes('第一章')") as? Bool == true
+      try await webView.evaluateQueued("window.getSelection()?.anchorNode?.textContent.includes('第一章')") as? Bool == true
     }
-    _ = try await webView.evaluateJavaScript("document.execCommand('insertText', false, '新'); null")
+    _ = try await webView.evaluateQueued("document.execCommand('insertText', false, '新'); null")
     try await waitUntil { editor.headings.first?.title == "新第一章" }
     XCTAssertEqual(editor.headings.first?.id, first)
     XCTAssertEqual(editor.headings[1].id, second)
@@ -445,7 +445,7 @@ extension DocumentTests {
     let editor = document.makeEditor()
     let web = try XCTUnwrap(editor.view as? WKWebView)
     try await waitUntil { editor.isReady && editor.headings.count == 2 }
-    let rendered = try await web.evaluateJavaScript("""
+    let rendered = try await web.evaluateQueued("""
       document.querySelector('.cm-inkpot-heading1')?.textContent === '起点' &&
       getComputedStyle(document.querySelector('.cm-inkpot-setext-mark')).height === '0px' &&
       document.querySelector('.cm-inkpot-inline-code') !== null &&
@@ -454,8 +454,8 @@ extension DocumentTests {
       """) as? Bool
     XCTAssertTrue(try XCTUnwrap(rendered))
     editor.performCommand("find")
-    try await waitUntil { try await web.evaluateJavaScript("document.activeElement?.name === 'search'") as? Bool == true }
-    _ = try await web.evaluateJavaScript("""
+    try await waitUntil { try await web.evaluateQueued("document.activeElement?.name === 'search'") as? Bool == true }
+    _ = try await web.evaluateQueued("""
       const search = document.querySelector('input[name=search]');
       search.value = '跳转'; search.dispatchEvent(new InputEvent('input', {bubbles: true}));
       document.querySelector('button[name=next]').click();
@@ -464,7 +464,7 @@ extension DocumentTests {
         key: 'Enter', keyCode: 13, metaKey: true, bubbles: true, cancelable: true
       })); null
       """)
-    try await waitUntil { try await web.evaluateJavaScript("window.getSelection()?.anchorNode?.textContent.includes('目标')") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("window.getSelection()?.anchorNode?.textContent.includes('目标')") as? Bool == true }
     let snapshot = try await editor.snapshot()
     XCTAssertEqual(snapshot.revision, 0)
     try await document.synchronize()

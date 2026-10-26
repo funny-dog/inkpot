@@ -75,14 +75,14 @@ final class ImageTests: XCTestCase {
     let web = try XCTUnwrap(editor.view as? WKWebView)
     try await waitUntil { editor.isReady }
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-image img')?.naturalWidth === 32") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-inkpot-image img')?.naturalWidth === 32") as? Bool == true
     }
     document.fileURL = moved.appendingPathComponent("b.md")
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-image img')?.naturalWidth === 48") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-inkpot-image img')?.naturalWidth === 48") as? Bool == true
     }
     editor.performCommand("toggleSourceMode")
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-image') === null") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelector('.cm-inkpot-image') === null") as? Bool == true }
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(source.utf8))
     XCTAssertFalse(document.isDocumentEdited)
@@ -125,7 +125,7 @@ final class ImageTests: XCTestCase {
     try FileManager.default.removeItem(at: originalImage)
     let reader = WKWebView()
     try await reader.loadHTMLString(html, baseURL: nil)
-    try await waitUntil { try await reader.evaluateJavaScript("document.querySelector('img')?.naturalWidth === 32") as? Bool == true }
+    try await waitUntil { try await reader.evaluateQueued("document.querySelector('img')?.naturalWidth === 32") as? Bool == true }
   }
 
   func testRemoteImagesURLValidationAndRedirectionPolicy() async throws {

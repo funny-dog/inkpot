@@ -39,7 +39,7 @@ final class ExportTests: XCTestCase {
   func testExportHTMLStructureAndByteFidelity() async throws {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 1") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelectorAll('.cm-inkpot-math .katex').length === 1") as? Bool == true }
     let html = try await DocumentExport.documentHTML(document, pdfMode: false)
     XCTAssertTrue(html.contains("<!doctype html>"))
     XCTAssertTrue(html.contains("<title>标题</title>"))
@@ -57,10 +57,10 @@ final class ExportTests: XCTestCase {
     defer { document.close() }
     // 真实 WKWebView 中经 inkpot-asset:// 从应用包加载 Swift 语言文件并着色；未知语言保持原样。
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-token-keyword')?.textContent === 'let' && document.querySelectorAll('.cm-inkpot-token-keyword').length === 1") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-inkpot-token-keyword')?.textContent === 'let' && document.querySelectorAll('.cm-inkpot-token-keyword').length === 1") as? Bool == true
     }
     editor.performCommand("toggleSourceMode")
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-code') === null && document.querySelector('.cm-inkpot-token-comment') !== null") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelector('.cm-inkpot-code') === null && document.querySelector('.cm-inkpot-token-comment') !== null") as? Bool == true }
     editor.performCommand("toggleSourceMode")
     let html = try await DocumentExport.documentHTML(document, pdfMode: true)
     XCTAssertTrue(html.contains("cm-inkpot-token-keyword"))
@@ -72,7 +72,7 @@ final class ExportTests: XCTestCase {
   func testExportPDFGeneratesValidData() async throws {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 1") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelectorAll('.cm-inkpot-math .katex').length === 1") as? Bool == true }
     let data = try await DocumentExport.pdfData(document)
     XCTAssertGreaterThan(data.count, 1000)
     XCTAssertEqual(String(data: data.prefix(5), encoding: .ascii), "%PDF-")

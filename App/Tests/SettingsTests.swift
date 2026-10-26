@@ -181,14 +181,14 @@ final class SettingsTests: XCTestCase {
     AppSettings.shared.defaultSourceMode = true
     let (document, editor, web) = try await document("**粗体**")
     defer { document.close() }
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-source') !== null") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelector('.cm-inkpot-source') !== null") as? Bool == true }
     let item = NSMenuItem(title: "源码模式", action: nil, keyEquivalent: "")
     item.representedObject = "toggleSourceMode"
     try await waitUntil { _ = editor.validateMenuItem(item); return item.state == .on }
     XCTAssertFalse(document.isDocumentEdited)
     AppSettings.shared.defaultSourceMode = false
     editor.replaceText("新内容")
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-live') !== null") as? Bool == true }
+    try await waitUntil { try await web.evaluateQueued("document.querySelector('.cm-inkpot-live') !== null") as? Bool == true }
   }
 
   func testAutosaveWritesAfterIdleSkipsUntitledAndSuspendsAfterFailure() async throws {
@@ -199,7 +199,7 @@ final class SettingsTests: XCTestCase {
     defer { document.close() }
     var reported: [String] = []
     let autosave = DocumentAutosave(document: document, isEnabled: { true }, report: { _, error in reported.append(error.localizedDescription) })
-    _ = try await web.evaluateJavaScript("document.execCommand('insertText', false, '新'); null")
+    _ = try await web.evaluateQueued("document.execCommand('insertText', false, '新'); null")
     try await waitUntil { editor.latestRevision > 0 && document.isDocumentEdited }
     autosave.schedule()
     try await waitUntil { (try? Data(contentsOf: url)) == Data("新原文\r\n".utf8) }
@@ -208,7 +208,7 @@ final class SettingsTests: XCTestCase {
     // 外部修改后自动保存不覆盖，暂停并保留窗口中的内容。
     try await Task.sleep(for: .milliseconds(1100))
     try Data("外部\r\n".utf8).write(to: url)
-    _ = try await web.evaluateJavaScript("document.execCommand('insertText', false, '再'); null")
+    _ = try await web.evaluateQueued("document.execCommand('insertText', false, '再'); null")
     try await waitUntil { editor.latestRevision > 1 }
     await autosave.saveNow()
     XCTAssertTrue(autosave.suspended)
@@ -222,7 +222,7 @@ final class SettingsTests: XCTestCase {
     let (untitled, untitledEditor, untitledWeb) = try await self.document("空白")
     defer { untitled.close() }
     let disabled = DocumentAutosave(document: untitled, isEnabled: { true }, report: { _, _ in XCTFail("未保存过的文档不应自动保存") })
-    _ = try await untitledWeb.evaluateJavaScript("document.execCommand('insertText', false, '字'); null")
+    _ = try await untitledWeb.evaluateQueued("document.execCommand('insertText', false, '字'); null")
     try await waitUntil { untitledEditor.latestRevision > 0 }
     await disabled.saveNow()
     XCTAssertTrue(untitled.isDocumentEdited)

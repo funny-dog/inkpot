@@ -47,7 +47,7 @@ final class StatisticsTests: XCTestCase {
     do {
       try await waitUntil { editor.isReady && editor.latestStats != nil }
     } catch {
-      let page = (try? await web.evaluateJavaScript(
+      let page = (try? await web.evaluateQueued(
         "JSON.stringify({ready: document.readyState, api: typeof window.inkpot, dark: matchMedia('(prefers-color-scheme: dark)').matches})"
       )) as? String ?? "求值失败"
       XCTFail("就绪=\(editor.isReady) 页面=\(page)")

@@ -190,7 +190,7 @@ final class FolderSearchTests: XCTestCase {
     try await waitUntil { (window.document as? InkpotDocument)?.fileURL?.standardizedFileURL == second.standardizedFileURL }
     // 隐藏窗口中的 WebView 在聚焦切换期间可能拒绝并发求值，轮询时按否处理并重试。
     try await waitUntil {
-      let selection = try? await webView.evaluateJavaScript("window.getSelection()?.toString() ?? ''")
+      let selection = try? await webView.evaluateQueued("window.getSelection()?.toString() ?? ''")
       return (selection as? String) == "关键词"
     }
     let opened = try XCTUnwrap(window.document as? InkpotDocument)

@@ -27,13 +27,13 @@ final class AppearanceTests: XCTestCase {
     let (document, editor, web) = try await makeDocument(original)
     defer { document.close() }
     let dark = Appearance.isDark
-    _ = try await web.evaluateJavaScript("window.inkpot.setAppearance(\(!dark)); null")
+    _ = try await web.evaluateQueued("window.inkpot.setAppearance(\(!dark)); null")
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(!dark)) && document.documentElement.classList.contains('inkpot-dark') === \(String(!dark))") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(!dark)) && document.documentElement.classList.contains('inkpot-dark') === \(String(!dark))") as? Bool == true
     }
-    _ = try await web.evaluateJavaScript("window.inkpot.setAppearance(\(dark)); null")
+    _ = try await web.evaluateQueued("window.inkpot.setAppearance(\(dark)); null")
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(dark))") as? Bool == true
+      try await web.evaluateQueued("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(dark))") as? Bool == true
     }
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
@@ -44,7 +44,7 @@ final class AppearanceTests: XCTestCase {
     defer { document.close() }
     let dark = Appearance.isDark
     // open 已按系统外观初始化，无需任何后续脚本调用。
-    let initial = try await web.evaluateJavaScript("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(dark))") as? Bool
+    let initial = try await web.evaluateQueued("document.querySelector('.cm-editor').className.includes('cm-inkpot-dark') === \(String(dark))") as? Bool
     XCTAssertTrue(try XCTUnwrap(initial))
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data("正文".utf8))

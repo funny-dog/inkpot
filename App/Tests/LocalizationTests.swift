@@ -44,9 +44,9 @@ final class LocalizationTests: XCTestCase {
       guard Date.now < deadline else { throw CocoaError(.coderReadCorrupt) }
       try await Task.sleep(for: .milliseconds(20))
     }
-    let language = try await web.evaluateJavaScript("document.documentElement.lang") as? String
+    let language = try await web.evaluateQueued("document.documentElement.lang") as? String
     XCTAssertEqual(language, L10n.language)
-    let placeholder = try await web.evaluateJavaScript("document.querySelector('.cm-placeholder')?.textContent") as? String
+    let placeholder = try await web.evaluateQueued("document.querySelector('.cm-placeholder')?.textContent") as? String
     XCTAssertEqual(placeholder, L10n.language == "en" ? "Start writing…" : "开始写作…")
     _ = try await editor.evaluateScript("window.inkpot.command('find'); null")
     let done = try await editor.evaluateScript("document.querySelector('button[name=close]')?.textContent") as? String

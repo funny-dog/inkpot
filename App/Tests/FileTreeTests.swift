@@ -135,7 +135,7 @@ final class FileTreeTests: XCTestCase {
     try await waitUntil { editor.isReady && editor.headings.first?.title == "B" }
     let undoItem = NSMenuItem(title: "撤销", action: #selector(EditorViewController.undo(_:)), keyEquivalent: "z")
     XCTAssertFalse(editor.validateMenuItem(undoItem))
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       window.webkit.messageHandlers.document.postMessage({
         changed: true, generation: 1, revision: 999, canUndo: true, canRedo: true,
         searchInputFocused: false, editorFocused: true, sourceMode: true
@@ -165,7 +165,7 @@ final class FileTreeTests: XCTestCase {
     let (current, window, editor) = try await document(source, at: sourceURL)
     let webView = try XCTUnwrap(editor.view as? WKWebView)
     defer { current.close() }
-    _ = try await webView.evaluateJavaScript("document.execCommand('insertText', false, '未保存'); null")
+    _ = try await webView.evaluateQueued("document.execCommand('insertText', false, '未保存'); null")
     try await waitUntil { editor.latestRevision > 0 }
     let before = try await editor.snapshot()
     var confirmed = false
@@ -245,7 +245,7 @@ extension FileTreeTests {
     _ = try await first.value
     XCTAssertFalse(session.isOpening)
     XCTAssertIdentical(window.document, current)
-    _ = try await webView.evaluateJavaScript("""
+    _ = try await webView.evaluateQueued("""
       const savedSnapshot = window.inkpot.snapshot;
       window.inkpot.snapshot = () => { throw new Error('测试同步失败'); }; null
       """)
@@ -259,7 +259,7 @@ extension FileTreeTests {
     } catch { XCTAssertIdentical(window.document, current) }
     XCTAssertIdentical(current.editor, editor)
     XCTAssertFalse(NSDocumentController.shared.documents.contains { $0.fileURL == targetURL })
-    _ = try await webView.evaluateJavaScript("window.inkpot.snapshot = savedSnapshot; null")
+    _ = try await webView.evaluateQueued("window.inkpot.snapshot = savedSnapshot; null")
     try await current.synchronize()
     XCTAssertFalse(current.isDocumentEdited)
   }
