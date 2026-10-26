@@ -52,12 +52,13 @@ final class SidebarViewController: NSViewController {
   func showFiles(_ show: Bool) { self.show(show ? .files : .outline) }
 }
 
-/// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式与保存状态，右侧显示字数统计。
+/// 编辑器区域容器：编辑器下方常驻状态栏，左侧显示编辑模式与保存状态，右侧显示字数统计与缩放。
 final class EditorContainerViewController: NSViewController {
   private let statusField = NSTextField(labelWithString: "")
   private let modeField = NSTextField(labelWithString: L10n.text("实时模式"))
   private let saveField = NSTextField(labelWithString: "")
   private let divider = NSBox()
+  let zoomControl = EditorZoomControl()
   var statusText: String { statusField.stringValue }
   var modeText: String { modeField.stringValue }
   var saveText: String { saveField.stringValue }
@@ -92,7 +93,7 @@ final class EditorContainerViewController: NSViewController {
     statusField.setAccessibilityLabel(L10n.text("字数统计"))
     modeField.setAccessibilityLabel(L10n.text("编辑模式"))
     saveField.setAccessibilityLabel(L10n.text("保存状态"))
-    for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (divider, bar), (saveField, bar), (statusField, bar)] {
+    for (child, parent) in [(editor.view, view), (bar, view), (separator, bar), (modeField, bar), (divider, bar), (saveField, bar), (statusField, bar), (zoomControl, bar)] {
       child.translatesAutoresizingMaskIntoConstraints = false
       parent.addSubview(child)
     }
@@ -118,8 +119,10 @@ final class EditorContainerViewController: NSViewController {
       saveField.leadingAnchor.constraint(equalTo: divider.trailingAnchor, constant: 10),
       saveField.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
       statusField.leadingAnchor.constraint(greaterThanOrEqualTo: saveField.trailingAnchor, constant: 12),
-      statusField.trailingAnchor.constraint(equalTo: bar.trailingAnchor, constant: -14),
+      statusField.trailingAnchor.constraint(equalTo: zoomControl.leadingAnchor, constant: -12),
       statusField.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
+      zoomControl.trailingAnchor.constraint(equalTo: bar.trailingAnchor, constant: -10),
+      zoomControl.centerYAnchor.constraint(equalTo: modeField.centerYAnchor),
     ])
     editor.onStats = { [weak self] words, characters, lines in self?.showStats(words, characters, lines) }
     if let stats = editor.latestStats { showStats(stats.words, stats.characters, stats.lines) }

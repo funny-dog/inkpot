@@ -68,6 +68,37 @@ final class EditorZoom: NSObject, NSMenuItemValidation {
   }
 }
 
+/// 状态栏直接复用全局缩放档位，与菜单、快捷键和设置同步。
+@MainActor
+final class EditorZoomControl: NSPopUpButton {
+  init() {
+    super.init(frame: .zero, pullsDown: false)
+    controlSize = .small
+    isBordered = false
+    font = .monospacedDigitSystemFont(ofSize: 11, weight: .regular)
+    addItems(withTitles: EditorZoom.levels.map { "\(Int(($0 * 100).rounded()))%" })
+    target = self
+    action = #selector(changeZoom(_:))
+    toolTip = L10n.text("缩放")
+    setAccessibilityLabel(L10n.text("缩放"))
+    setContentCompressionResistancePriority(.required, for: .horizontal)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateSelection), name: EditorZoom.didChange, object: nil)
+    updateSelection()
+  }
+
+  @available(*, unavailable)
+  required init?(coder: NSCoder) { fatalError("使用 init() 初始化缩放控件") }
+
+  @objc private func updateSelection() {
+    selectItem(at: EditorZoom.levels.firstIndex(of: EditorZoom.shared.level) ?? 5)
+  }
+
+  @objc private func changeZoom(_ sender: Any?) {
+    guard EditorZoom.levels.indices.contains(indexOfSelectedItem) else { return }
+    EditorZoom.shared.level = EditorZoom.levels[indexOfSelectedItem]
+  }
+}
+
 extension EditorViewController {
   @objc func updateZoom() {
     (view as? WKWebView)?.pageZoom = EditorZoom.shared.level

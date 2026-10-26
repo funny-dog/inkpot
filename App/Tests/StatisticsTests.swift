@@ -4,6 +4,30 @@ import XCTest
 
 @MainActor
 final class StatisticsTests: XCTestCase {
+  func testStatusBarZoomChangesPageAndFollowsOtherControls() throws {
+    _ = NSApplication.shared
+    let previous = EditorZoom.shared.level
+    defer { EditorZoom.shared.level = previous }
+    EditorZoom.shared.level = 1
+    let editor = EditorViewController(text: "原文")
+    let container = EditorContainerViewController(editor: editor)
+    _ = container.view
+    let other = EditorZoomControl()
+    XCTAssertEqual(container.zoomControl.titleOfSelectedItem, "100%")
+    XCTAssertEqual(container.zoomControl.itemTitles, EditorZoom.levels.map { "\(Int(($0 * 100).rounded()))%" })
+    container.zoomControl.selectItem(withTitle: "125%")
+    let action = try XCTUnwrap(container.zoomControl.action)
+    XCTAssertTrue(NSApp.sendAction(action, to: container.zoomControl.target, from: container.zoomControl))
+    XCTAssertEqual(EditorZoom.shared.level, 1.25)
+    XCTAssertEqual((editor.view as? WKWebView)?.pageZoom, 1.25)
+    XCTAssertEqual(other.titleOfSelectedItem, "125%")
+    EditorZoom.shared.zoomOut(nil)
+    XCTAssertEqual(container.zoomControl.titleOfSelectedItem, "110%")
+    XCTAssertEqual(other.titleOfSelectedItem, "110%")
+    EditorZoom.shared.resetZoom(nil)
+    XCTAssertEqual(container.zoomControl.titleOfSelectedItem, "100%")
+  }
+
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
     let deadline = Date.now.addingTimeInterval(5)
     while !(try await condition()) {
