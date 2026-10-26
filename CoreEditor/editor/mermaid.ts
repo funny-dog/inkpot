@@ -90,6 +90,25 @@ class MermaidPreview extends WidgetType {
   ignoreEvent() { return false; }
 }
 
+class ShowMermaid extends WidgetType {
+  constructor(readonly anchor: number) { super(); }
+  eq(other: ShowMermaid) { return this.anchor === other.anchor; }
+  toDOM(view: EditorView) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'cm-inkpot-code-language cm-inkpot-mermaid-show';
+    button.textContent = t('显示 Mermaid 图');
+    button.addEventListener('mousedown', event => event.preventDefault());
+    button.addEventListener('click', () => {
+      if (isComposing(view)) return;
+      // 开围栏起点在块外，不改源码也能收起文档末尾的图表。
+      view.dispatch({ selection: { anchor: this.anchor }, scrollIntoView: true });
+      view.focus();
+    });
+    return button;
+  }
+}
+
 function decorations(state: EditorState) {
   const exporting = state.field(previewExport, false) === true;
   if (state.field(sourceMode) && !exporting) return Decoration.none;
@@ -98,10 +117,15 @@ function decorations(state: EditorState) {
     const info = node.getChild('CodeInfo');
     const marks = node.getChildren('CodeMark');
     if (info === null || marks.length !== 2) continue;
-    if (!exporting && selectionTouches(state, node.from, node.to, true)) continue;
     const start = state.doc.lineAt(info.to).to + 1;
     const source = state.sliceDoc(start, marks[1].from).trim();
     if (source === '') continue;
+    if (!exporting && selectionTouches(state, node.from, node.to, true)) {
+      if (!state.readOnly && state.facet(EditorView.editable)) {
+        ranges.push(Decoration.widget({ widget: new ShowMermaid(node.from), side: 1 }).range(state.doc.lineAt(info.to).to));
+      }
+      continue;
+    }
     const from = state.doc.lineAt(node.from).from;
     const to = state.doc.lineAt(node.to).to;
     ranges.push(Decoration.replace({ block: true, widget: new MermaidPreview(source, start, !exporting && state.facet(EditorView.darkTheme)) }).range(from, to));
@@ -120,12 +144,15 @@ const mermaidBlocks = StateField.define<DecorationSet>({
 
 export function hasMermaidPreview(state: EditorState, from: number) {
   let found = false;
-  state.field(mermaidBlocks).between(state.doc.lineAt(from).from, from + 1, () => { found = true; });
+  state.field(mermaidBlocks).between(state.doc.lineAt(from).from, from + 1, (_from, _to, decoration) => {
+    if (decoration.spec.widget instanceof MermaidPreview) found = true;
+  });
   return found;
 }
 
 export const mermaidEditing = [mermaidBlocks, EditorView.atomicRanges.of(view => view.state.field(mermaidBlocks)),
   EditorView.theme({
+    '.cm-inkpot-mermaid-show': { marginLeft: '12px', textDecoration: 'underline' },
     '.cm-inkpot-mermaid': { display: 'block', padding: '12px 0', overflowX: 'auto', contain: 'inline-size', textAlign: 'center', whiteSpace: 'normal' },
     '.cm-inkpot-mermaid[tabindex]': { cursor: 'pointer' },
     '.cm-inkpot-mermaid svg': { maxWidth: '100%', height: 'auto' },

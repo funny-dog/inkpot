@@ -43,6 +43,7 @@ const english = {
   '点击编辑公式源码': 'Click to edit math source',
   'Mermaid 图表：{0}': 'Mermaid diagram: {0}',
   '点击或按 Enter 编辑图表源码': 'Click or press Enter to edit diagram source',
+  '显示 Mermaid 图': 'Show Mermaid Diagram',
   '图表文本超过 50,000 字符限制': 'Diagram exceeds the 50,000-character limit',
   '图表暂时无法显示，请编辑源码检查语法或简化图表。\n{0}': 'Unable to display this diagram. Edit the source to check its syntax or simplify it.\n{0}',
   '列 {0}': 'Column {0}',

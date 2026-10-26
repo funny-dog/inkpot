@@ -37,6 +37,40 @@ const flushed = () => new Promise(resolve => setTimeout(resolve, 0));
 const original = '前文\r\n\r\n```mermaid\r\nflowchart LR\n甲 --> 乙\r\n```\r\n\r\n尾';
 
 describe('Inkpot Mermaid', () => {
+  test.each([original, '```mermaid\r\nflowchart LR\n甲 --> 乙\r\n```'])('源码按钮原地恢复图表，保留原文和撤销历史：%s', async text => {
+    const { view, read } = editor(text);
+    await flushed();
+    for (let cycle = 0; cycle < 2; cycle++) {
+      view.dom.querySelector('.cm-inkpot-mermaid')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+      const button = view.dom.querySelector<HTMLButtonElement>('.cm-inkpot-mermaid-show');
+      expect(button?.textContent).toBe('显示 Mermaid 图');
+      expect(view.dom.querySelector('.cm-inkpot-code-language')?.textContent).toBe('mermaid');
+      button?.click();
+      await flushed();
+      expect(view.dom.querySelector('.cm-inkpot-mermaid svg')).not.toBeNull();
+      expect(view.dom.querySelector('.cm-inkpot-mermaid-show')).toBeNull();
+      expect(read()).toBe(text);
+      expect(undoDepth(view.state)).toBe(0);
+    }
+  });
+
+  test('源码按钮避开全局源码模式、只读和组合输入', async () => {
+    const { view, read } = editor(original);
+    view.dispatch({ selection: { anchor: view.state.doc.toString().indexOf('甲') } });
+    const button = view.dom.querySelector<HTMLButtonElement>('.cm-inkpot-mermaid-show');
+    expect(button).not.toBeNull();
+    view.contentDOM.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    button?.click();
+    expect(view.dom.querySelector('.cm-inkpot-mermaid')).toBeNull();
+    view.contentDOM.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+    toggleSourceMode(view);
+    expect(view.dom.querySelector('.cm-inkpot-mermaid-show')).toBeNull();
+    const readonly = editor(original, true);
+    readonly.view.dispatch({ selection: { anchor: readonly.view.state.doc.toString().indexOf('甲') } });
+    expect(readonly.view.dom.querySelector('.cm-inkpot-mermaid-show')).toBeNull();
+    expect(read()).toBe(original);
+  });
+
   test('离线图表装饰保持原文，点击展开、修改后移出更新，撤销恢复字节', async () => {
     const { view, read } = editor(original);
     await flushed();

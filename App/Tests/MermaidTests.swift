@@ -23,6 +23,21 @@ final class MermaidTests: XCTestCase {
     return (document, editor)
   }
 
+  func testSourceButtonRestoresDiagramAtDocumentEndWithoutEditing() async throws {
+    let original = "```mermaid\r\nflowchart LR\n甲 --> 乙\r\n```"
+    let (document, editor) = try await makeDocument(original)
+    defer { document.close() }
+    try await waitUntil { try await editor.evaluateScript("document.querySelector('.cm-inkpot-mermaid svg') !== null") as? Bool == true }
+    _ = try await editor.evaluateScript("document.querySelector('.cm-inkpot-mermaid').dispatchEvent(new MouseEvent('mousedown', {bubbles:true, cancelable:true})); null")
+    let visible = try await editor.evaluateScript("(() => { const b = document.querySelector('.cm-inkpot-mermaid-show'); return b?.getBoundingClientRect().width > 0; })()") as? Bool
+    XCTAssertTrue(try XCTUnwrap(visible))
+    _ = try await editor.evaluateScript("document.querySelector('.cm-inkpot-mermaid-show').click(); null")
+    try await waitUntil { try await editor.evaluateScript("document.querySelector('.cm-inkpot-mermaid svg') !== null") as? Bool == true }
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
+    XCTAssertFalse(document.isDocumentEdited)
+  }
+
   func testOfflineDiagramsErrorsStrictConfigurationAndSourceFidelity() async throws {
     let original = """
       \u{FEFF}开头\r
