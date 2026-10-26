@@ -29,7 +29,7 @@ Inkpot 是面向 macOS 的轻量 Markdown 编辑器。基于 MarkEdit 的成熟�
 
 使用范围与已知限制见 [功能说明](App/README.md)。
 
-Windows 预览版使用 WinUI 3 与 WebView2，复用同一编辑器；提供文件树、大纲、基础设置和多标签编辑，但尚未与 macOS 全部功能对齐。构建方法、已支持功能和缺项见 [Windows 说明](Windows/README.md)。
+Windows 11 版本使用 WinUI 3 + WebView2，并复用同一编辑器；设置、文件树、大纲、图片、导出打印与恢复功能见 [Windows 文档](Windows/README.md)。
 
 ### 下载与安装
 

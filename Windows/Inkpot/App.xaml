@@ -28,12 +28,13 @@
       <Setter Property="CornerRadius" Value="4" />
     </Style>
 
-    <!-- 侧栏“文件 / 大纲”切换的分段按钮，对应 macOS 侧栏顶部的滑块。 -->
+    <!-- 侧栏文件、大纲和搜索的分段按钮，对应 macOS 侧栏顶部的滑块。 -->
     <Style x:Key="InkpotSegmentStyle" TargetType="ToggleButton" BasedOn="{StaticResource DefaultToggleButtonStyle}">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
       <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
       <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="MinWidth" Value="0" />
       <Setter Property="MinHeight" Value="0" />
       <Setter Property="Height" Value="26" />
       <Setter Property="Padding" Value="8,0" />

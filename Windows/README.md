@@ -1,20 +1,30 @@
 # Inkpot Windows
 
-C# / WinUI 3 原生窗口以 WebView2 承载仓库共用的 `CoreEditor/`，不复制编辑器源码。当前为非打包应用，提供新建、打开、编辑、保存/另存为、撤销重做、多标签、关闭保护及中英文界面，并提供文件树、大纲、设置、显示菜单和字数状态栏。
+C# / WinUI 3 原生窗口以 WebView2 承载仓库共用的 `CoreEditor/`，不复制编辑器源码。Windows 接入与 macOS 对应的设置、文档管理、写作显示、图片和导出能力，界面提供中英文。
 
 ## 界面布局
 
-与 macOS 版保持同一套布局：菜单栏右侧放侧栏、专注模式和源码模式三个按钮，对应 macOS 工具栏；侧栏顶部用分段按钮切换文件和大纲，未打开文件夹或没有标题时显示带说明的空状态；底部状态栏左侧是编辑模式和保存状态，右侧是字数统计。侧栏选中行和按钮选中态使用与 macOS 一致的墨蓝强调色（深色模式下为浅蓝），其余控件沿用 Windows 原生 Fluent 样式。设置对话框按外观、字体、编辑、自动配对、显示模式分组。
+与 macOS 版保持同一套布局：菜单栏右侧放侧栏、专注模式和源码模式三个按钮，对应 macOS 工具栏；侧栏顶部用分段按钮切换文件、大纲和搜索，未打开文件夹或没有标题时显示带说明的空状态；底部状态栏左侧是编辑模式和保存状态，右侧是字数统计。侧栏选中行和按钮选中态使用与 macOS 一致的墨蓝强调色（深色模式下为浅蓝），其余控件沿用 Windows 原生 Fluent 样式。设置窗口包含通用、编辑、外观和关于页面。
 
-## 侧栏与设置
+## 功能与入口
 
-- 文件 → 打开文件夹（Ctrl+Alt+O）：文件树按目录优先及名称自然排序，只显示 Markdown／文本文件；子目录展开时读取，不跟随符号链接或目录联接，也不显示隐藏／系统项。打开文件进入标签页，相同路径复用已有标签，不替换其他标签的未保存内容。
-- 显示 → 侧栏（Ctrl+Shift+E）、标题大纲（Ctrl+Shift+O）：支持侧栏显隐、文件／大纲切换，拖动分隔条调整宽度；分隔条也可通过 Tab 聚焦后用左右键调整。大纲按标题层级缩进，点击跳转，随正文滚动高亮当前章节。
-- 显示 → 设置（Ctrl+,）：正文与代码字体／字号、系统／浅色／深色外观、默认源码模式、2／4 空格缩进、自动配对、专注和打字机模式。保存后同步当前已打开的标签；默认模式只影响之后首次激活的文档。取消不修改偏好。
-- 专注模式（F8）、打字机模式（F9）可在显示菜单切换。底部显示当前实时／源码模式、字数、字符数和行数。
-- 偏好保存在 `%LOCALAPPDATA%\Inkpot\preferences.json`，重启后保留；侧栏显隐和宽度也会保存。设置读取／保存失败会提示，不改写 Markdown 内容或撤销历史。
+| 功能 | Windows 入口与行为 |
+| --- | --- |
+| 设置与关于 | 文件 → 设置（Ctrl+,），包含通用、编辑、外观、关于；帮助 → 关于 Inkpot 直接进入关于页，可查看版本与离线第三方许可 |
+| 文件管理 | 打开文件夹（Ctrl+Alt+O）、文件树（Ctrl+Shift+E）、最近文件/文件夹；文件树按自然顺序懒加载，右键新建、复制、重命名、移到回收站、复制路径或在资源管理器中显示 |
+| 文件夹搜索 | Ctrl+Shift+F；后台递归搜索 Markdown/文本，最多显示 1000 处匹配，点击跳转并选中命中内容 |
+| 标题大纲 | Ctrl+Shift+O；层级导航与正文当前标题同步；侧栏可拖动调整宽度 |
+| 多窗口与标签 | Ctrl+N 新窗口，Ctrl+Alt+N 新标签，Ctrl+Tab / Ctrl+Shift+Tab 切换；窗口菜单可拆分、合并、隐藏标签栏、查看所有标签；移窗保留编辑器和撤销历史 |
+| 写作显示 | 显示菜单提供源码模式（Ctrl+Shift+M）、专注模式（F8）、打字机模式（F9）、字体字号、缩放和全屏（F11） |
+| 偏好 | 启动方式、文件树范围、自动保存、默认编辑模式、2/4 空格缩进、自动配对、拼写检查、正文/等宽代码字体字号、明暗外观和图片目录；更改后即时同步各窗口 |
+| 图片与链接 | 菜单插入、粘贴和拖入位图，复制到相对素材目录；支持本地图片及可选 HTTPS 图片预览，限制 20 MB/4000 万像素；网页、邮件、Markdown/文本链接及文内锚点导航 |
+| 表格与公式 | 格式 → 表格提供插入、增删行列与对齐，表格右键提供当前可用操作；格式 → 插入公式块；共享 KaTeX、Mermaid 与代码高亮资源 |
+| 剪贴板 | 普通粘贴支持 HTML 转 Markdown，源码/代码区域保持纯文本；编辑菜单提供复制 Markdown、粘贴为纯文本（Ctrl+Shift+V） |
+| 导出打印 | 文件菜单导出独立 HTML、分页/连续 PDF，图片内嵌；页面设置（Ctrl+Shift+P）选择尺寸、方向与页边距；打印（Ctrl+P）打开系统打印对话框 |
+| 状态与恢复 | 状态栏显示模式、保存状态与字/字符/行数；停止输入约 2 秒保存恢复草稿，可选自动保存已有文件；正常关闭恢复文件、标签顺序、选中标签、窗口位置与侧栏 |
+| 更新与帮助 | 帮助菜单提供官网、反馈、检查更新；关于页可开启每日自动检查和下载，下载经 SHA-256 校验后缓存，退出应用后手动解压覆盖安装 |
 
-Windows 版尚未与 macOS 全部功能对齐：暂不提供文件树右键管理、文件夹全文搜索、图片读取／插入、HTML／PDF 导出与打印、最近打开、会话／草稿恢复、自动保存或自动更新。
+连续 PDF 受引擎 200 英寸页高上限约束，超限会提示改为分页，不截断内容。系统打印的最终打印机选项由 Windows 对话框提供。
 
 ## 构建与运行
 
@@ -30,7 +40,9 @@ dotnet test Inkpot.Tests/Inkpot.Tests.csproj -c Release
 dotnet publish Inkpot/Inkpot.csproj -c Release -p:Platform=x64 -o ../build/Windows
 ```
 
-发布目录含 .NET 运行时，仍需安装共享的 [Windows App Runtime 2.5.1](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) 与 [WebView2 Evergreen Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。不安装独立 WebView2 固定版本，不生成 MSIX 或安装器；分发方式留待后续决定。启动 `build/Windows/Inkpot.exe`，也可用命令行传入一个或多个 `.md`、`.markdown`、`.txt` 文件路径。
+发布目录含 .NET 运行时，仍需安装共享的 [Windows App Runtime 2.5.1](https://learn.microsoft.com/windows/apps/windows-app-sdk/downloads) 与 [WebView2 Evergreen Runtime](https://developer.microsoft.com/microsoft-edge/webview2/)。不安装独立 WebView2 固定版本，不生成 MSIX 或安装器。启动 `build/Windows/Inkpot.exe`，也可用命令行传入一个或多个 `.md`、`.markdown`、`.txt` 文件路径。
+
+`.github/workflows/release-windows.yml` 在正式 GitHub Release 发布后构建与测试 Windows，并附加 `Inkpot-windows-x64.zip` 和 `.sha256`；更新器只接受这组 Windows 资产。已有 Release 若没有 Windows 资产，会引导前往下载页，不下载 Mac 安装包。
 
 ## 文件安全与桥接
 
@@ -40,6 +52,11 @@ dotnet publish Inkpot/Inkpot.csproj -c Release -p:Platform=x64 -o ../build/Windo
 - 标签初次激活时才创建 WebView2，全部共享同一个环境。编辑器资源通过 HTTPS 虚拟域名映射，禁止跳转到其他页面，正文通过结构化消息传递。
 - `CoreEditor/editor/bridge.ts` 是协议入口；Windows 对消息解析、文档 generation 和 revision 做校验，不接收旧文档状态。
 - WebView2 浏览数据保存在 `%LOCALAPPDATA%\Inkpot\WebView2`，不在程序目录写入用户文档或恢复草稿。
+- 偏好、会话和草稿分别在 `%LOCALAPPDATA%\Inkpot\settings.json`、`session.json`、`drafts/`；元数据原子替换，损坏的 JSON 会保留副本。草稿保留原始文本、BOM 与文件基线，恢复后仍须通过外部修改检查才能覆盖原文件。
+- 自动保存遇到外部修改会暂停，不自动覆盖；通过手动保存处理冲突。恢复草稿会创建独立的脏标签，不替换正在编辑的标签。
+- 文件树不跟随重解析点；删除先确认并移入系统回收站。导出先生成完整临时产物，图片或渲染失败不覆盖目标。
+- 自动化验收可设置 `INKPOT_DATA_DIRECTORY` 使用独立数据目录；`--smoke-report` 默认自动使用临时目录，不读取用户设置或草稿。
+- 未处理异常会在数据目录的 `Logs/crash.log` 记录时间、消息和异常堆栈，便于与 Windows 崩溃转储对照定位；日志记录不拦截或忽略原异常。
 
 文件在基线检查与最终原子替换之间仍有很短的竞争窗口；未提供跨进程锁协议。外部编辑器在这段时间写入时，不能保证检测每一次并发写入。
 
@@ -53,7 +70,7 @@ dotnet publish Inkpot/Inkpot.csproj -c Release -p:Platform=x64 -o ../build/Windo
 ./Windows/scripts/measure.ps1 -AppDirectory build/Windows -ResultsDirectory build/WindowsResults
 ```
 
-检查实际编辑、撤销、混合行尾及 1 MiB 文本传输；验证 10 标签按需创建与激活，并记录逐进程工作集和私有内存、发布目录大小。原始机器信息、测量方法和数据保存在 `measurements.json`，不把 GitHub Windows Server runner 的数据当作 Windows 11 桌面性能验收。启动时间从启动进程前取样到网页发出 ready；未清理系统缓存，不等于重启机器后的冷启动。1 MiB 文档指标包括完整快照往返，比单纯收到 open 确认更严格。
+检查实际编辑、撤销、混合行尾、偏好、大纲/状态栏、文件树、图片/公式/Mermaid 的 HTML 内嵌、真实 PDF、设置/关于、移窗撤销历史及 1 MiB 文本传输；验证 10 标签按需创建与激活，并记录逐进程工作集和私有内存、发布目录大小。原始机器信息、测量方法和数据保存在 `measurements.json`，不把 GitHub Windows Server runner 的数据当作 Windows 11 桌面性能验收。启动时间从启动进程前取样到网页发出 ready；未清理系统缓存，不等于重启机器后的冷启动。1 MiB 文档指标包括完整快照往返，比单纯收到 open 确认更严格。
 
 ## Windows 11 人工验收
 

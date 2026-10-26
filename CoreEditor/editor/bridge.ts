@@ -9,8 +9,8 @@ export type HostMessage =
   | { ready: true }
   | { pasteImage: true; generation: number }
   | { openLink: string; generation: number }
-  | { shortcut: HostShortcut; generation: number }
-  | { response: true; requestId: number; snapshot?: { text: string; revision: number }; error?: string }
+  | { shortcut: string; generation: number }
+  | { response: true; requestId: number; snapshot?: { text: string; revision: number }; value?: string; error?: string }
   // headings 为 undefined 时只更新当前标题；active 为 null 表示没有当前标题。
   | { outline: true; headings: Heading[] | undefined; active: number | null; revision: number; generation: number }
   // 状态通知不携带正文；需要保存时由宿主调用 snapshot 取得最新文本。
@@ -35,8 +35,6 @@ export interface ResourceBases {
   /** 宿主图片处理入口；后接编码后的完整路径及 document/revision 查询参数。 */
   imageBase: string;
 }
-
-type HostShortcut = 'new' | 'open' | 'save' | 'saveAs' | 'close' | 'settings' | 'openFolder' | 'sidebar' | 'outline' | 'focusMode' | 'typewriterMode';
 
 export let assetBase = 'inkpot-asset://math/';
 export let imageBase = 'inkpot-image://local/';
@@ -77,6 +75,8 @@ export interface InkpotAPI {
   setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean; indent?: number }) => void;
   selectedMarkdown: () => string;
   pastePlainText: (text: string) => void;
+  pasteHTML: (html: string, plain: string) => void;
+  setSpellcheck: (enabled: boolean) => void;
   /** pdf 保留离线 KaTeX 样式，其他值导出独立 HTML；失败时拒绝 Promise。 */
   exportHTML: (mode?: string) => Promise<string>;
 }
@@ -88,10 +88,17 @@ export type HostRequest = { requestId: number } & (
   | { method: 'command'; name: string }
   | { method: 'pastePlainText'; text: string }
   | { method: 'setAppearance'; dark: boolean }
-  | { method: 'navigateHeading'; id: number }
+  | { method: 'preferences'; fonts: EditorFonts; editing: PairingPreferences & { remoteImages: boolean; indent: number }; modes: { focus: boolean; typewriter: boolean }; spellcheck: boolean; zoom: number; zoomWithControlScroll: boolean }
   | { method: 'setFonts'; fonts: EditorFonts }
   | { method: 'setDisplayModes'; modes: { focus: boolean; typewriter: boolean } }
   | { method: 'setEditingPreferences'; preferences: PairingPreferences & { remoteImages: boolean; indent: number } }
+  | { method: 'navigateHeading'; id: number }
+  | { method: 'navigateFragment'; fragment: string }
+  | { method: 'selectMatch'; line: number; column: number; length: number }
+  | { method: 'insertImage'; path: string }
+  | { method: 'refreshImages' | 'selectedMarkdown' }
+  | { method: 'pasteHTML'; html: string; plain: string }
+  | { method: 'exportHTML'; mode: string }
 );
 
 type HostChannel = { postMessage: (message: HostMessage) => void };
@@ -114,26 +121,28 @@ export function postToHost(message: HostMessage) {
 /** 只接受明确列出的宿主操作；错误返回给请求方，保存失败不会伪装为成功。 */
 export function listenToHost(api: InkpotAPI) {
   let generation = 0;
+  let zoomWithControlScroll = false;
   if (window.chrome?.webview?.addEventListener === undefined) return;
+  document.addEventListener('wheel', event => {
+    if (!event.ctrlKey) return;
+    event.preventDefault();
+    if (zoomWithControlScroll && event.deltaY !== 0) postToHost({ shortcut: event.deltaY < 0 ? 'zoomIn' : 'zoomOut', generation });
+  }, { passive: false });
   document.addEventListener('keydown', event => {
-    if (event.isComposing || event.metaKey) return;
+    if (event.isComposing) return;
     const key = event.key.toLowerCase();
-    let shortcut: HostShortcut | undefined;
-    if (event.ctrlKey && event.altKey && !event.shiftKey && key === 'o') shortcut = 'openFolder';
-    else if (event.ctrlKey && !event.altKey) {
-      const shortcuts: Partial<Record<string, HostShortcut>> = event.shiftKey
-        ? { s: 'saveAs', e: 'sidebar', o: 'outline' }
-        : { n: 'new', o: 'open', s: 'save', w: 'close', ',': 'settings' };
-      shortcut = shortcuts[key];
-    } else if (!event.ctrlKey && !event.altKey && !event.shiftKey) {
-      if (key === 'f8') shortcut = 'focusMode';
-      if (key === 'f9') shortcut = 'typewriterMode';
-    }
+    const plain: Record<string, string> = { F8: 'focus', F9: 'typewriter', F11: 'fullscreen', F3: event.shiftKey ? 'findPrevious' : 'findNext' };
+    const control: Record<string, string> = { n: event.altKey ? 'newTab' : 'new', o: event.altKey ? 'openFolder' : event.shiftKey ? 'outline' : 'open',
+      s: event.shiftKey ? 'saveAs' : 'save', w: 'close', ',': 'settings', f: 'folderSearch', e: 'files', m: 'source',
+      tab: event.shiftKey ? 'previousTab' : 'nextTab', p: event.shiftKey ? 'pageSetup' : 'print', v: 'pastePlain',
+      '0': 'resetZoom', '=': 'zoomIn', '+': 'zoomIn', '-': 'zoomOut' };
+    const shiftOnly = ['f', 'e', 'm', 'v'];
+    const shortcut = event.ctrlKey ? (shiftOnly.includes(key) && !event.shiftKey ? undefined : control[key]) : plain[event.key];
     if (shortcut === undefined) return;
     event.preventDefault();
     postToHost({ shortcut, generation });
   });
-  window.chrome.webview.addEventListener('message', ({ data }) => {
+  window.chrome.webview.addEventListener('message', async ({ data }) => {
     if (typeof data !== 'object' || data === null || !('requestId' in data)
       || typeof data.requestId !== 'number' || !Number.isSafeInteger(data.requestId) || data.requestId < 1) return;
     const request = data as Partial<HostRequest>;
@@ -162,10 +171,20 @@ export function listenToHost(api: InkpotAPI) {
           if (typeof request.dark !== 'boolean') throw new Error('无效的外观消息。');
           api.setAppearance(request.dark);
           break;
-        case 'navigateHeading':
-          if (typeof request.id !== 'number' || !Number.isSafeInteger(request.id) || request.id < 0) throw new Error('无效的标题标识。');
-          api.navigateHeading(request.id);
+        case 'preferences': {
+          const { fonts, editing, modes } = request;
+          if (fonts === undefined || typeof fonts.bodyFamily !== 'string' || typeof fonts.codeFamily !== 'string'
+            || !Number.isFinite(fonts.bodySize) || !Number.isFinite(fonts.codeSize)
+            || editing === undefined || typeof editing.brackets !== 'boolean' || typeof editing.markdown !== 'boolean'
+            || typeof editing.remoteImages !== 'boolean' || ![2, 4].includes(editing.indent)
+            || modes === undefined || typeof modes.focus !== 'boolean' || typeof modes.typewriter !== 'boolean'
+            || typeof request.spellcheck !== 'boolean' || typeof request.zoom !== 'number' || !Number.isFinite(request.zoom) || request.zoom < .5 || request.zoom > 2
+            || typeof request.zoomWithControlScroll !== 'boolean') throw new Error('无效的偏好设置。');
+          api.setFonts(fonts); api.setEditingPreferences(editing); api.setDisplayModes(modes); api.setSpellcheck(request.spellcheck);
+          document.body.style.zoom = String(request.zoom);
+          zoomWithControlScroll = request.zoomWithControlScroll;
           break;
+        }
         case 'setFonts': {
           const fonts = request.fonts as EditorFonts | null | undefined;
           if (fonts === undefined || fonts === null || typeof fonts.bodyFamily !== 'string' || typeof fonts.codeFamily !== 'string'
@@ -184,6 +203,28 @@ export function listenToHost(api: InkpotAPI) {
           api.setEditingPreferences(preferences);
           break;
         }
+        case 'navigateHeading':
+          if (typeof request.id !== 'number' || !Number.isSafeInteger(request.id) || request.id < 0) throw new Error('无效的标题。');
+          api.navigateHeading(request.id as number); break;
+        case 'navigateFragment':
+          if (typeof request.fragment !== 'string') throw new Error('无效的锚点。');
+          api.navigateFragment(request.fragment); break;
+        case 'selectMatch':
+          if (![request.line, request.column, request.length].every(value => Number.isSafeInteger(value) && (value as number) >= 0)) throw new Error('无效的位置。');
+          api.selectMatch(request.line as number, request.column as number, request.length as number); break;
+        case 'insertImage':
+          if (typeof request.path !== 'string') throw new Error('无效的图片路径。');
+          api.insertImage(request.path); break;
+        case 'refreshImages': api.refreshImages(); break;
+        case 'selectedMarkdown':
+          postToHost({ response: true, requestId: data.requestId, value: api.selectedMarkdown() }); return;
+        case 'pasteHTML':
+          if (typeof request.html !== 'string' || typeof request.plain !== 'string') throw new Error('无效的剪贴板内容。');
+          api.pasteHTML(request.html, request.plain); break;
+        case 'exportHTML':
+          if (!['html', 'pdf'].includes(request.mode ?? '')) throw new Error('无效的导出格式。');
+          postToHost({ response: true, requestId: data.requestId, value: await api.exportHTML(request.mode) });
+          return;
         case undefined:
         default: throw new Error('未知的宿主操作。');
       }

@@ -3,6 +3,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Web.WebView2.Core;
 using Windows.UI;
+using Inkpot.Storage;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 
 namespace Inkpot.Bridge;
 
@@ -19,8 +22,12 @@ internal sealed class EditorSession : IDisposable
     internal PublishMessage? State { get; private set; }
     internal event Action<PublishMessage>? Published;
     internal event Action<string>? ShortcutRequested;
-    internal event Action? OutlineChanged;
-    internal IReadOnlyList<OutlineHeading> Headings { get; private set; } = [];
+    internal event Action? PasteImageRequested;
+    internal event Action<string>? LinkRequested;
+    internal event Action<OutlineMessage>? OutlineChanged;
+    internal string? DocumentPath { get; set; }
+    internal bool RemoteImages { get; set; }
+    internal Heading[] Headings { get; private set; } = [];
     internal int? ActiveHeading { get; private set; }
     private int outlineRevision;
     internal double ReadyMilliseconds { get; private set; }
@@ -33,7 +40,7 @@ internal sealed class EditorSession : IDisposable
         return CoreWebView2Environment.CreateWithOptionsAsync(
             browserExecutableFolder: null,
             userDataFolder: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Inkpot", "WebView2"),
+                App.Data.DirectoryPath, "WebView2"),
             options: null).AsTask();
     }
 
@@ -52,9 +59,8 @@ internal sealed class EditorSession : IDisposable
         await Control.EnsureCoreWebView2Async(await environment);
         var core = Control.CoreWebView2;
         core.SetVirtualHostNameToFolderMapping("editor.inkpot.local", Path.Combine(AppContext.BaseDirectory, "Editor"), CoreWebView2HostResourceAccessKind.DenyCors);
-        // 第一期不读取图片，在本机返回失败，避免把文档路径发到网络。
         core.AddWebResourceRequestedFilter("https://images.inkpot.local/*", CoreWebView2WebResourceContext.All);
-        core.WebResourceRequested += (_, args) => args.Response = core.Environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain");
+        core.WebResourceRequested += ServeImage;
         core.Settings.AreDevToolsEnabled = false;
         core.Settings.IsStatusBarEnabled = false;
         core.Settings.AreBrowserAcceleratorKeysEnabled = false;
@@ -79,11 +85,17 @@ internal sealed class EditorSession : IDisposable
                 case ShortcutMessage shortcut when shortcut.Generation == generation:
                     ShortcutRequested?.Invoke(shortcut.Shortcut);
                     break;
+                case PasteImageMessage paste when paste.Generation == generation:
+                    PasteImageRequested?.Invoke();
+                    break;
+                case LinkMessage link when link.Generation == generation:
+                    LinkRequested?.Invoke(link.OpenLink);
+                    break;
                 case OutlineMessage outline when outline.Generation == generation && outline.Revision >= Math.Max(outlineRevision, State?.Revision ?? 0):
                     if (outline.Headings is not null) Headings = outline.Headings;
                     ActiveHeading = outline.Active;
                     outlineRevision = outline.Revision;
-                    OutlineChanged?.Invoke();
+                    OutlineChanged?.Invoke(outline);
                     break;
             }
         };
@@ -106,7 +118,6 @@ internal sealed class EditorSession : IDisposable
         Headings = [];
         ActiveHeading = null;
         outlineRevision = 0;
-        OutlineChanged?.Invoke();
         return SendAsync(new JsonObject
         {
             ["method"] = "open", ["text"] = text, ["generation"] = generation,
@@ -117,19 +128,77 @@ internal sealed class EditorSession : IDisposable
 
     internal Task CommandAsync(string name) => SendAsync(new JsonObject { ["method"] = "command", ["name"] = name });
     internal Task PasteAsync(string text) => SendAsync(new JsonObject { ["method"] = "pastePlainText", ["text"] = text });
-    internal Task NavigateHeadingAsync(int id) => SendAsync(new JsonObject { ["method"] = "navigateHeading", ["id"] = id });
-
-    internal async Task ApplyPreferencesAsync(AppPreferences preferences, bool initial = false)
+    internal Task NavigateHeadingAsync(int id) => RequestAsync("navigateHeading", new JsonObject { ["id"] = id });
+    internal Task RequestAsync(string method, JsonObject? arguments = null)
     {
-        await SendAsync(new JsonObject { ["method"] = "setFonts", ["fonts"] = new JsonObject {
-            ["bodyFamily"] = preferences.BodyFamily, ["bodySize"] = preferences.BodySize,
-            ["codeFamily"] = preferences.CodeFamily, ["codeSize"] = preferences.CodeSize } });
-        await SendAsync(new JsonObject { ["method"] = "setEditingPreferences", ["preferences"] = new JsonObject {
-            ["brackets"] = preferences.PairBrackets, ["markdown"] = preferences.PairMarkdown,
-            ["remoteImages"] = false, ["indent"] = preferences.IndentWidth } });
-        await SendAsync(new JsonObject { ["method"] = "setDisplayModes", ["modes"] = new JsonObject {
-            ["focus"] = preferences.FocusMode, ["typewriter"] = preferences.TypewriterMode } });
-        if (initial && preferences.DefaultSourceMode) await CommandAsync("toggleSourceMode");
+        arguments ??= new();
+        arguments["method"] = method;
+        return SendAsync(arguments);
+    }
+    internal async Task<string> TextAsync(string method, JsonObject? arguments = null)
+    {
+        arguments ??= new();
+        arguments["method"] = method;
+        return (await SendAsync(arguments)).Value ?? throw new IOException("Missing editor response.");
+    }
+    internal async Task ApplyPreferencesAsync(Preferences preferences)
+    {
+        RemoteImages = preferences.RemoteImages;
+        await RequestAsync("preferences", new JsonObject
+        {
+            ["fonts"] = new JsonObject { ["bodyFamily"] = preferences.BodyFont, ["bodySize"] = preferences.BodySize, ["codeFamily"] = preferences.CodeFont, ["codeSize"] = preferences.CodeSize },
+            ["editing"] = new JsonObject { ["brackets"] = preferences.PairBrackets, ["markdown"] = preferences.PairMarkdown, ["remoteImages"] = preferences.RemoteImages, ["indent"] = preferences.Indent },
+            ["modes"] = new JsonObject { ["focus"] = preferences.Focus, ["typewriter"] = preferences.Typewriter },
+            ["spellcheck"] = preferences.Spellcheck,
+            ["zoom"] = preferences.Zoom,
+            ["zoomWithControlScroll"] = preferences.ZoomWithControlScroll,
+        });
+    }
+
+    private async void ServeImage(object? sender, CoreWebView2WebResourceRequestedEventArgs args)
+    {
+        var deferral = args.GetDeferral();
+        int requestedGeneration = generation;
+        try
+        {
+            var uri = new Uri(args.Request.Uri);
+            var query = new global::Windows.Foundation.WwwFormUrlDecoder(uri.Query);
+            if (!uri.AbsolutePath.StartsWith("/local/", StringComparison.Ordinal) || query.GetFirstValueByName("document") != generation.ToString(System.Globalization.CultureInfo.InvariantCulture)) throw new IOException("Stale document image.");
+            string path = Uri.UnescapeDataString(uri.AbsolutePath[7..]);
+            var image = await NormalizeBitmapAsync((await ImageStorage.ReadAsync(path, DocumentPath, RemoteImages)).Bytes);
+            if (disposed || generation != requestedGeneration) throw new IOException("Document changed.");
+            args.Response = Control.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(image.Bytes).AsRandomAccessStream(), 200, "OK",
+                $"Content-Type: {image.Mime}\r\nAccess-Control-Allow-Origin: https://editor.inkpot.local\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff");
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or HttpRequestException or OperationCanceledException or System.Runtime.InteropServices.COMException)
+        {
+            if (!disposed) args.Response = Control.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain\r\nAccess-Control-Allow-Origin: https://editor.inkpot.local");
+        }
+        finally { deferral.Complete(); }
+    }
+
+    internal static async Task ValidateImageAsync(byte[] bytes)
+    {
+        using var stream = new InMemoryRandomAccessStream();
+        using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); }
+        var decoder = await BitmapDecoder.CreateAsync(stream);
+        if ((ulong)decoder.PixelWidth * decoder.PixelHeight > 40_000_000) throw new IOException("Image exceeds 40 million pixels.");
+    }
+    internal static async Task<ImageBytes> NormalizeBitmapAsync(byte[] bytes)
+    {
+        await ValidateImageAsync(bytes);
+        string mime = ImageStorage.Mime(bytes);
+        if (mime is not ("image/bmp" or "image/tiff")) return new(bytes, mime);
+        using var input = new InMemoryRandomAccessStream();
+        using (var writer = new DataWriter(input.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); }
+        var decoder = await BitmapDecoder.CreateAsync(input);
+        using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
+        using var output = new InMemoryRandomAccessStream();
+        var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, output);
+        encoder.SetSoftwareBitmap(bitmap); await encoder.FlushAsync();
+        if (output.Size > ImageStorage.MaximumBytes) throw new IOException("Converted image exceeds 20 MB.");
+        using var reader = new DataReader(output.GetInputStreamAt(0)); await reader.LoadAsync((uint)output.Size);
+        byte[] png = new byte[output.Size]; reader.ReadBytes(png); return new(png, "image/png");
     }
 
     internal async Task<EditorSnapshot> SnapshotAsync()
@@ -158,7 +227,7 @@ internal sealed class EditorSession : IDisposable
         try
         {
             Control.CoreWebView2.PostWebMessageAsJson(request.ToJsonString());
-            return await completion.Task.WaitAsync(TimeSpan.FromSeconds(20));
+            return await completion.Task.WaitAsync(TimeSpan.FromSeconds(request["method"]?.GetValue<string>() == "exportHTML" ? 90 : 20));
         }
         finally { pending.Remove(id); }
     }

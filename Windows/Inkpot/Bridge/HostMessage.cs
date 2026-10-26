@@ -17,7 +17,8 @@ internal abstract record HostMessage
                 var snapshot = root.TryGetProperty("snapshot", out var value)
                     ? new EditorSnapshot(value.GetProperty("text").GetString()!, value.GetProperty("revision").GetInt32()) : null;
                 return new ResponseMessage(root.GetProperty("requestId").GetInt32(), snapshot,
-                    root.TryGetProperty("error", out var error) ? error.GetString() : null);
+                    root.TryGetProperty("error", out var error) ? error.GetString() : null,
+                    root.TryGetProperty("value", out var result) ? result.GetString() : null);
             }
             int generation = root.GetProperty("generation").GetInt32();
             if (generation < 0) return null;
@@ -28,14 +29,46 @@ internal abstract record HostMessage
             if (revision < 0) return null;
             if (root.TryGetProperty("outline", out var outline) && outline.GetBoolean())
             {
-                var headings = root.TryGetProperty("headings", out var items) ? items.EnumerateArray().Select(item =>
-                    new OutlineHeading(item.GetProperty("id").GetInt32(), item.GetProperty("from").GetInt32(),
-                        item.GetProperty("to").GetInt32(), item.GetProperty("level").GetInt32(), item.GetProperty("title").GetString()!)).ToArray() : null;
-                if (headings?.Any(item => item.Id < 0 || item.From < 0 || item.To < item.From || item.Level is < 1 or > 6 || item.Title is null) == true
-                    || headings is not null && headings.Select(item => item.Id).Distinct().Count() != headings.Length) return null;
-                var activeValue = root.GetProperty("active");
-                int? active = activeValue.ValueKind == JsonValueKind.Null ? null : activeValue.GetInt32();
-                return active < 0 ? null : new OutlineMessage(generation, revision, headings, active);
+                Heading[]? headingsList = null;
+                if (root.TryGetProperty("headings", out var headings) && headings.ValueKind == JsonValueKind.Array)
+                {
+                    var items = new List<Heading>();
+                    foreach (var heading in headings.EnumerateArray())
+                    {
+                        if (!heading.TryGetProperty("id", out var idProp) || idProp.ValueKind != JsonValueKind.Number || idProp.GetInt32() < 0) return null;
+                        if (!heading.TryGetProperty("level", out var levelProp) || levelProp.ValueKind != JsonValueKind.Number || levelProp.GetInt32() is < 1 or > 6) return null;
+                        if (!heading.TryGetProperty("title", out var titleProp) || titleProp.ValueKind != JsonValueKind.String || titleProp.GetString() is not { } title) return null;
+                        if (heading.TryGetProperty("from", out var fromProp) && heading.TryGetProperty("to", out var toProp))
+                        {
+                            if (fromProp.ValueKind != JsonValueKind.Number || toProp.ValueKind != JsonValueKind.Number) return null;
+                            int from = fromProp.GetInt32();
+                            int to = toProp.GetInt32();
+                            if (from < 0 || to < from) return null;
+                        }
+                        else if (heading.TryGetProperty("from", out _) || heading.TryGetProperty("to", out _))
+                        {
+                            return null;
+                        }
+                        items.Add(new Heading(idProp.GetInt32(), levelProp.GetInt32(), title));
+                    }
+                    if (items.Select(item => item.Id).Distinct().Count() != items.Count) return null;
+                    headingsList = items.ToArray();
+                }
+                int? activeId = null;
+                if (root.TryGetProperty("active", out var active))
+                {
+                    if (active.ValueKind == JsonValueKind.Number)
+                    {
+                        int val = active.GetInt32();
+                        if (val < 0) return null;
+                        activeId = val;
+                    }
+                    else if (active.ValueKind != JsonValueKind.Null)
+                    {
+                        return null;
+                    }
+                }
+                return new OutlineMessage(generation, revision, headingsList, activeId);
             }
             var stats = root.GetProperty("stats");
             return new PublishMessage(generation, revision, root.GetProperty("changed").GetBoolean(),
@@ -57,11 +90,12 @@ internal sealed record ReadyMessage : HostMessage;
 internal sealed record PasteImageMessage(int Generation) : HostMessage;
 internal sealed record ShortcutMessage(int Generation, string Shortcut) : HostMessage;
 internal sealed record LinkMessage(int Generation, string OpenLink) : HostMessage;
+internal sealed record Heading(int Id, int Level, string Title);
 internal sealed record OutlineHeading(int Id, int From, int To, int Level, string Title);
-internal sealed record OutlineMessage(int Generation, int Revision, OutlineHeading[]? Headings, int? Active) : HostMessage;
+internal sealed record OutlineMessage(int Generation, int Revision, Heading[]? Headings, int? Active) : HostMessage;
 internal sealed record EditorSnapshot(string Text, int Revision);
 internal sealed record DocumentStats(int Words, int Characters, int Lines);
-internal sealed record ResponseMessage(int RequestId, EditorSnapshot? Snapshot, string? Error) : HostMessage;
+internal sealed record ResponseMessage(int RequestId, EditorSnapshot? Snapshot, string? Error, string? Value = null) : HostMessage;
 internal sealed record PublishMessage(int Generation, int Revision, bool Changed, bool CanUndo, bool CanRedo,
     bool SearchInputFocused, bool TableCellFocused, bool EditorFocused, bool SourceMode, bool Composing,
     string[] TableActions, DocumentStats Stats) : HostMessage;

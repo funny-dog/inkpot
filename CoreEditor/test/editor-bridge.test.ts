@@ -23,6 +23,42 @@ const messages: HostMessage[] = [
 ];
 
 describe('Inkpot 宿主桥接', () => {
+  test('Windows 偏好、导航与异步导出通过结构化消息传递，失败返回错误', async () => {
+    const postMessage = jest.fn();
+    let receive: ((event: { data: unknown }) => void) | undefined;
+    window.webkit = undefined;
+    window.chrome = { webview: { postMessage, addEventListener: (_type, listener) => { receive = listener; } } };
+    const api = { setFonts: jest.fn(), setEditingPreferences: jest.fn(), setDisplayModes: jest.fn(), setSpellcheck: jest.fn(),
+      navigateHeading: jest.fn(), navigateFragment: jest.fn(), selectMatch: jest.fn(), insertImage: jest.fn(),
+      selectedMarkdown: jest.fn(() => '**选区**'), exportHTML: jest.fn(async () => '<html>内嵌资源</html>') };
+    listenToHost(api as unknown as InkpotAPI);
+    if (receive === undefined) throw new Error('未安装监听器');
+    const preferences = { method: 'preferences', fonts: { bodyFamily: '等线', bodySize: 16, codeFamily: 'Consolas', codeSize: 14 },
+      editing: { brackets: false, markdown: true, remoteImages: false, indent: 4 }, modes: { focus: true, typewriter: true },
+      spellcheck: false, zoom: 1.2, zoomWithControlScroll: true };
+    await receive({ data: { requestId: 11, ...preferences } });
+    expect(api.setFonts).toHaveBeenCalledWith(preferences.fonts);
+    expect(api.setSpellcheck).toHaveBeenCalledWith(false);
+    expect(document.body.style.zoom).toBe('1.2');
+    await receive({ data: { requestId: 12, ...preferences, zoom: 'bad' } });
+    expect(postMessage).toHaveBeenLastCalledWith(expect.objectContaining({ requestId: 12, error: expect.any(String) }));
+    expect(api.setFonts).toHaveBeenCalledTimes(1);
+    await receive({ data: { requestId: 13, method: 'selectMatch', line: 2, column: 5, length: 6 } });
+    expect(api.selectMatch).toHaveBeenCalledWith(2, 5, 6);
+    await receive({ data: { requestId: 14, method: 'selectedMarkdown' } });
+    expect(postMessage).toHaveBeenLastCalledWith({ response: true, requestId: 14, value: '**选区**' });
+    await receive({ data: { requestId: 15, method: 'exportHTML', mode: 'html' } });
+    expect(postMessage).toHaveBeenLastCalledWith({ response: true, requestId: 15, value: '<html>内嵌资源</html>' });
+    api.exportHTML.mockImplementation(async () => { throw new Error('图片读取失败'); });
+    await receive({ data: { requestId: 16, method: 'exportHTML', mode: 'pdf' } });
+    expect(postMessage).toHaveBeenLastCalledWith({ response: true, requestId: 16, error: '图片读取失败' });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: ',', ctrlKey: true }));
+    expect(postMessage).toHaveBeenLastCalledWith({ shortcut: 'settings', generation: 0 });
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F8' }));
+    expect(postMessage).toHaveBeenLastCalledWith({ shortcut: 'focus', generation: 0 });
+    document.body.style.removeProperty('zoom');
+  });
+
   test('WebView2 结构化请求传递大文本、返回快照、报告错误并拒绝非法操作', () => {
     const postMessage = jest.fn();
     let receive: ((event: { data: unknown }) => void) | undefined;
@@ -78,8 +114,8 @@ describe('Inkpot 宿主桥接', () => {
     expect(postMessage).toHaveBeenLastCalledWith({ shortcut: 'saveAs', generation: 9 });
     for (const [key, modifiers, shortcut] of [
       [',', { ctrlKey: true }, 'settings'], ['o', { ctrlKey: true, altKey: true }, 'openFolder'],
-      ['e', { ctrlKey: true, shiftKey: true }, 'sidebar'], ['o', { ctrlKey: true, shiftKey: true }, 'outline'],
-      ['F8', {}, 'focusMode'], ['F9', {}, 'typewriterMode'],
+      ['e', { ctrlKey: true, shiftKey: true }, 'files'], ['o', { ctrlKey: true, shiftKey: true }, 'outline'],
+      ['F8', {}, 'focus'], ['F9', {}, 'typewriter'],
     ] as const) {
       document.dispatchEvent(new KeyboardEvent('keydown', { key, ...modifiers }));
       expect(postMessage).toHaveBeenLastCalledWith({ shortcut, generation: 9 });

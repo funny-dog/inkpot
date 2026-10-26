@@ -1,5 +1,5 @@
 import { setEditorLanguage, t } from './localization';
-import { EditorState } from '@codemirror/state';
+import { Compartment, EditorState } from '@codemirror/state';
 import { Command, EditorView, keymap, placeholder } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap, redo, redoDepth, selectAll, undo, undoDepth, isolateHistory } from '@codemirror/commands';
 import { sourceDocument } from './source';
@@ -19,7 +19,8 @@ import { applyDisplayModes, displayExtensions } from './focus';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
 import { applyFonts } from './fonts';
-import { richPaste } from './paste';
+import { htmlToMarkdown, richPaste } from './paste';
+import { syntaxTree } from '@codemirror/language';
 import { searchPanelTheme } from './search';
 import { pairingCompartment, pairingPreferences } from './typing';
 import { indentBindings, indentCompartment, indentWidth } from './indent';
@@ -29,6 +30,7 @@ let view: EditorView | undefined;
 let source = sourceDocument('');
 let revision = 0;
 let generation = 0;
+const spellcheck = new Compartment();
 const outline = documentOutline((headings, active) => {
   postToHost({ outline: true, headings, active, revision, generation });
 });
@@ -100,7 +102,8 @@ window.inkpot = {
           keymap.of([...indentBindings, ...historyKeymap, ...defaultKeymap]),
           EditorView.lineWrapping,
           // 拼写检查的开关由原生“输入时检查拼写”控制；自动纠正、首字母大写保持 CodeMirror 默认关闭，不改写原文。
-          EditorView.contentAttributes.of({ 'aria-label': t('Markdown 文本编辑器'), spellcheck: 'true' }),
+          EditorView.contentAttributes.of({ 'aria-label': t('Markdown 文本编辑器') }),
+          spellcheck.of(EditorView.contentAttributes.of({ spellcheck: 'true' })),
           spellingExclusions,
           placeholder(t('开始写作…')),
           EditorView.updateListener.of(update => {
@@ -188,6 +191,19 @@ window.inkpot = {
     view.dispatch(view.state.update({ ...view.state.replaceSelection(text), annotations: isolateHistory.of('full'), userEvent: 'input.paste', scrollIntoView: true }));
     view.focus();
   },
+  pasteHTML(html, plain) {
+    if (view === undefined) return;
+    let node = syntaxTree(view.state).resolveInner(view.state.selection.main.from, 1);
+    let code = false;
+    while (node.parent !== null) { code ||= ['InlineCode', 'FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name); node = node.parent; }
+    const isInput = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
+    let text = plain;
+    if (!code && !isInput && !view.state.field(sourceMode) && html !== '') {
+      try { text = htmlToMarkdown(html) || plain; } catch { /* Fall back to clipboard text. */ }
+    }
+    window.inkpot.pastePlainText(text);
+  },
+  setSpellcheck(enabled) { view?.dispatch({ effects: spellcheck.reconfigure(EditorView.contentAttributes.of({ spellcheck: String(enabled) })) }); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
   setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {

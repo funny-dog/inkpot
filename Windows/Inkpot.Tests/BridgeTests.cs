@@ -25,12 +25,20 @@ public sealed class BridgeTests
     public void InvalidMessagesCannotUpdateState(string json) => Assert.Null(HostMessage.Parse(json));
 
     [Fact]
+    public void ParsesOutlineAndExportResponsesWithoutLosingHeadingHierarchy()
+    {
+        var outline = Assert.IsType<OutlineMessage>(HostMessage.Parse("{\"outline\":true,\"generation\":2,\"revision\":4,\"headings\":[{\"id\":7,\"level\":2,\"title\":\"中文标题\"}],\"active\":7}"));
+        Assert.Equal(new Heading(7, 2, "中文标题"), Assert.Single(outline.Headings!)); Assert.Equal(7, outline.Active);
+        Assert.Equal("<html>中文</html>", Assert.IsType<ResponseMessage>(HostMessage.Parse("{\"response\":true,\"requestId\":4,\"value\":\"<html>中文</html>\"}")).Value);
+    }
+
+    [Fact]
     public void ParsesOutlineAndActiveOnlyUpdatesWithoutLosingHeadings()
     {
         var message = Assert.IsType<OutlineMessage>(HostMessage.Parse("""
             {"outline":true,"generation":2,"revision":3,"headings":[{"id":0,"from":0,"to":5,"level":1,"title":"标题"}],"active":0}
             """));
-        Assert.Equal(new OutlineHeading(0, 0, 5, 1, "标题"), Assert.Single(message.Headings!));
+        Assert.Equal(new Heading(0, 1, "标题"), Assert.Single(message.Headings!));
         Assert.Equal(0, message.Active);
         var update = Assert.IsType<OutlineMessage>(HostMessage.Parse("""
             {"outline":true,"generation":2,"revision":3,"active":null}

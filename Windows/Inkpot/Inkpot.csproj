@@ -13,6 +13,7 @@
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
     <Nullable>enable</Nullable>
+    <Version>0.1.1</Version>
     <ImplicitUsings>enable</ImplicitUsings>
     <PublishTrimmed>true</PublishTrimmed>
     <TrimMode>partial</TrimMode>
@@ -23,6 +24,7 @@
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <Content Include="../../CoreEditor/editor/dist/**/*" Link="Editor/%(RecursiveDir)%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../../App/Resources/ThirdPartyNotices.md" Link="ThirdPartyNotices.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
   <Target Name="VerifyEditorResources" BeforeTargets="PrepareForBuild">
     <Error Condition="!Exists('../../CoreEditor/editor/dist/index.html')" Text="请先构建 CoreEditor。" />
