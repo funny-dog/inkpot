@@ -178,10 +178,10 @@
     <value>Outline</value>
   </data>
   <data name="NoFolder" xml:space="preserve">
-    <value>Please open a folder first</value>
+    <value>No Folder Opened Yet</value>
   </data>
   <data name="NoHeadings" xml:space="preserve">
-    <value>No headings in this document</value>
+    <value>No Headings Yet</value>
   </data>
   <data name="FocusMode" xml:space="preserve">
     <value>Focus Mode</value>
@@ -257,5 +257,41 @@
   </data>
   <data name="DisplayModesSection" xml:space="preserve">
     <value>Display Modes</value>
+  </data>
+  <data name="NoFolderMessage" xml:space="preserve">
+    <value>Open a folder to browse and switch between Markdown files here.</value>
+  </data>
+  <data name="NoHeadingsMessage" xml:space="preserve">
+    <value>Lines starting with # will appear here as headings. Click to jump.</value>
+  </data>
+  <data name="SidebarContent" xml:space="preserve">
+    <value>Sidebar Content</value>
+  </data>
+  <data name="EditingMode" xml:space="preserve">
+    <value>Editing Mode</value>
+  </data>
+  <data name="SaveStatus" xml:space="preserve">
+    <value>Save Status</value>
+  </data>
+  <data name="WordCount" xml:space="preserve">
+    <value>Word Count</value>
+  </data>
+  <data name="UnsavedState" xml:space="preserve">
+    <value>Unsaved</value>
+  </data>
+  <data name="SavedState" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="ChangeFolderTip" xml:space="preserve">
+    <value>Open or switch folder (Ctrl+Alt+O)</value>
+  </data>
+  <data name="SidebarTip" xml:space="preserve">
+    <value>Sidebar (Ctrl+Shift+E): Show or hide file tree and outline</value>
+  </data>
+  <data name="FocusTip" xml:space="preserve">
+    <value>Focus Mode (F8): Dim content other than the current block</value>
+  </data>
+  <data name="SourceTip" xml:space="preserve">
+    <value>Source Mode (Ctrl+Shift+M): Toggle between Markdown source and live preview</value>
   </data>
 </root>

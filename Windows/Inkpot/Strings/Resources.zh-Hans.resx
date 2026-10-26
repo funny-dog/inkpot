@@ -178,10 +178,10 @@
     <value>大纲</value>
   </data>
   <data name="NoFolder" xml:space="preserve">
-    <value>请先打开文件夹</value>
+    <value>还没有打开文件夹</value>
   </data>
   <data name="NoHeadings" xml:space="preserve">
-    <value>当前文档没有标题</value>
+    <value>还没有标题</value>
   </data>
   <data name="FocusMode" xml:space="preserve">
     <value>专注模式</value>
@@ -257,5 +257,41 @@
   </data>
   <data name="DisplayModesSection" xml:space="preserve">
     <value>显示模式</value>
+  </data>
+  <data name="NoFolderMessage" xml:space="preserve">
+    <value>打开一个文件夹，就能在这里浏览和切换其中的 Markdown 文件。</value>
+  </data>
+  <data name="NoHeadingsMessage" xml:space="preserve">
+    <value>以 # 开头的行会作为标题列在这里，点击即可跳转。</value>
+  </data>
+  <data name="SidebarContent" xml:space="preserve">
+    <value>侧栏内容</value>
+  </data>
+  <data name="EditingMode" xml:space="preserve">
+    <value>编辑模式</value>
+  </data>
+  <data name="SaveStatus" xml:space="preserve">
+    <value>保存状态</value>
+  </data>
+  <data name="WordCount" xml:space="preserve">
+    <value>字数统计</value>
+  </data>
+  <data name="UnsavedState" xml:space="preserve">
+    <value>未保存</value>
+  </data>
+  <data name="SavedState" xml:space="preserve">
+    <value>已保存</value>
+  </data>
+  <data name="ChangeFolderTip" xml:space="preserve">
+    <value>打开或更换文件夹（Ctrl+Alt+O）</value>
+  </data>
+  <data name="SidebarTip" xml:space="preserve">
+    <value>侧栏（Ctrl+Shift+E）：显示或隐藏文件树和标题大纲</value>
+  </data>
+  <data name="FocusTip" xml:space="preserve">
+    <value>专注模式（F8）：淡化当前段落以外的内容</value>
+  </data>
+  <data name="SourceTip" xml:space="preserve">
+    <value>源码模式（Ctrl+Shift+M）：在 Markdown 源码与实时预览之间切换</value>
   </data>
 </root>

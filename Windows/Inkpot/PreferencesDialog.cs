@@ -1,10 +1,15 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Shapes;
 
 namespace Inkpot;
 
 internal static class PreferencesDialog
 {
+    // 代码创建的对话框须显式套用 WinUI 默认样式，否则按钮区与圆角不是当前 Fluent 外观。
+    internal static Style DialogStyle => (Style)Application.Current.Resources["DefaultContentDialogStyle"];
+
     internal static async Task<AppPreferences?> ShowAsync(XamlRoot root, AppPreferences current)
     {
         AppPreferences? acceptedResult = null;
@@ -20,6 +25,7 @@ internal static class PreferencesDialog
         var dialog = new ContentDialog
         {
             XamlRoot = root,
+            Style = DialogStyle,
             RequestedTheme = root.Content is FrameworkElement element ? element.ActualTheme : ElementTheme.Default,
             Title = L10n.Text("Preferences"),
             PrimaryButtonText = L10n.Text("Save"),
@@ -27,18 +33,7 @@ internal static class PreferencesDialog
             DefaultButton = ContentDialogButton.Primary,
         };
 
-        var panel = new StackPanel
-        {
-            Spacing = 16,
-            MinWidth = 360,
-            Margin = new Thickness(0, 8, 12, 8),
-        };
-
-        var appearanceCombo = new ComboBox
-        {
-            Header = L10n.Text("Appearance"),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
+        var appearanceCombo = new ComboBox { MinWidth = 200 };
         var systemItem = new ComboBoxItem { Content = L10n.Text("AppearanceSystem"), Tag = "system" };
         var lightItem = new ComboBoxItem { Content = L10n.Text("AppearanceLight"), Tag = "light" };
         var darkItem = new ComboBoxItem { Content = L10n.Text("AppearanceDark"), Tag = "dark" };
@@ -51,21 +46,8 @@ internal static class PreferencesDialog
             "dark" => darkItem,
             _ => systemItem,
         };
-        panel.Children.Add(appearanceCombo);
 
-        var fontSectionHeader = new TextBlock
-        {
-            Text = L10n.Text("FontSection"),
-            Margin = new Thickness(0, 8, 0, 0),
-        };
-        panel.Children.Add(fontSectionHeader);
-
-        var bodyFamilyCombo = new ComboBox
-        {
-            Header = L10n.Text("BodyFont"),
-            IsEditable = true,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
+        var bodyFamilyCombo = new ComboBox { IsEditable = true, MinWidth = 200 };
         var bodyDefaultItem = new ComboBoxItem { Content = L10n.Text("DefaultFont"), Tag = "" };
         bodyFamilyCombo.Items.Add(bodyDefaultItem);
         string[] commonBodyFonts = ["Segoe UI", "Microsoft YaHei UI", "Arial", "Calibri", "Times New Roman", "Georgia"];
@@ -91,27 +73,10 @@ internal static class PreferencesDialog
                 bodyFamilyCombo.Text = draft.BodyFamily;
             }
         }
-        panel.Children.Add(bodyFamilyCombo);
 
-        var bodySizeBox = new NumberBox
-        {
-            Header = L10n.Text("BodyFontSize"),
-            Value = draft.BodySize,
-            Minimum = 8,
-            Maximum = 72,
-            SmallChange = 1,
-            LargeChange = 2,
-            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(bodySizeBox);
+        var bodySizeBox = SizeBox(draft.BodySize);
 
-        var codeFamilyCombo = new ComboBox
-        {
-            Header = L10n.Text("CodeFont"),
-            IsEditable = true,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
+        var codeFamilyCombo = new ComboBox { IsEditable = true, MinWidth = 200 };
         string[] commonCodeFonts = ["Consolas", "Cascadia Code", "Courier New", "Lucida Console", "Fira Code", "JetBrains Mono"];
         foreach (var font in commonCodeFonts)
         {
@@ -128,86 +93,37 @@ internal static class PreferencesDialog
         {
             codeFamilyCombo.Text = draft.CodeFamily;
         }
-        panel.Children.Add(codeFamilyCombo);
 
-        var codeSizeBox = new NumberBox
-        {
-            Header = L10n.Text("CodeFontSize"),
-            Value = draft.CodeSize,
-            Minimum = 8,
-            Maximum = 72,
-            SmallChange = 1,
-            LargeChange = 2,
-            SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(codeSizeBox);
+        var codeSizeBox = SizeBox(draft.CodeSize);
 
-        var editingSectionHeader = new TextBlock
-        {
-            Text = L10n.Text("EditingSection"),
-            Margin = new Thickness(0, 8, 0, 0),
-        };
-        panel.Children.Add(editingSectionHeader);
+        var defaultSourceSwitch = Switch(draft.DefaultSourceMode);
 
-        var defaultSourceSwitch = new ToggleSwitch
-        {
-            Header = L10n.Text("DefaultSourceMode"),
-            IsOn = draft.DefaultSourceMode,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(defaultSourceSwitch);
-
-        var indentCombo = new ComboBox
-        {
-            Header = L10n.Text("IndentWidth"),
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
+        var indentCombo = new ComboBox { MinWidth = 120 };
         var indent2 = new ComboBoxItem { Content = string.Format(L10n.Text("SpacesFormat"), 2), Tag = 2 };
         var indent4 = new ComboBoxItem { Content = string.Format(L10n.Text("SpacesFormat"), 4), Tag = 4 };
         indentCombo.Items.Add(indent2);
         indentCombo.Items.Add(indent4);
         indentCombo.SelectedItem = draft.IndentWidth == 4 ? indent4 : indent2;
-        panel.Children.Add(indentCombo);
 
-        var pairBracketsSwitch = new ToggleSwitch
-        {
-            Header = L10n.Text("PairBrackets"),
-            IsOn = draft.PairBrackets,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(pairBracketsSwitch);
+        var pairBracketsSwitch = Switch(draft.PairBrackets);
+        var pairMarkdownSwitch = Switch(draft.PairMarkdown);
+        var focusModeSwitch = Switch(draft.FocusMode);
+        var typewriterModeSwitch = Switch(draft.TypewriterMode);
 
-        var pairMarkdownSwitch = new ToggleSwitch
+        // 与 macOS 设置窗口相同的分组：每组一个标题和一张卡片，卡片内每行左侧说明、右侧控件。
+        var panel = new StackPanel
         {
-            Header = L10n.Text("PairMarkdown"),
-            IsOn = draft.PairMarkdown,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
+            Spacing = 4,
+            MinWidth = 420,
+            Margin = new Thickness(0, 4, 12, 8),
         };
-        panel.Children.Add(pairMarkdownSwitch);
-
-        var displaySectionHeader = new TextBlock
-        {
-            Text = L10n.Text("DisplayModesSection"),
-            Margin = new Thickness(0, 8, 0, 0),
-        };
-        panel.Children.Add(displaySectionHeader);
-
-        var focusModeSwitch = new ToggleSwitch
-        {
-            Header = L10n.Text("FocusMode"),
-            IsOn = draft.FocusMode,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(focusModeSwitch);
-
-        var typewriterModeSwitch = new ToggleSwitch
-        {
-            Header = L10n.Text("TypewriterMode"),
-            IsOn = draft.TypewriterMode,
-            HorizontalAlignment = HorizontalAlignment.Stretch,
-        };
-        panel.Children.Add(typewriterModeSwitch);
+        panel.Children.Add(Card(Row("Appearance", appearanceCombo)));
+        AddSection(panel, "FontSection",
+            Row("BodyFont", bodyFamilyCombo), Row("BodyFontSize", bodySizeBox),
+            Row("CodeFont", codeFamilyCombo), Row("CodeFontSize", codeSizeBox));
+        AddSection(panel, "EditingSection", Row("DefaultSourceMode", defaultSourceSwitch), Row("IndentWidth", indentCombo));
+        AddSection(panel, "PairingSection", Row("PairBrackets", pairBracketsSwitch), Row("PairMarkdown", pairMarkdownSwitch));
+        AddSection(panel, "DisplayModesSection", Row("FocusMode", focusModeSwitch), Row("TypewriterMode", typewriterModeSwitch));
 
         var scrollViewer = new ScrollViewer
         {
@@ -248,6 +164,58 @@ internal static class PreferencesDialog
         };
 
         return dialog;
+    }
+
+    private static NumberBox SizeBox(double value) => new()
+    {
+        Value = value,
+        Minimum = 8,
+        Maximum = 72,
+        SmallChange = 1,
+        LargeChange = 2,
+        MinWidth = 120,
+        SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
+    };
+
+    // 开关放在行尾，不显示“开／关”文字，状态由开关本身表达。
+    private static ToggleSwitch Switch(bool isOn) => new() { IsOn = isOn, OnContent = "", OffContent = "", MinWidth = 0 };
+
+    private static Grid Row(string key, FrameworkElement control)
+    {
+        var row = new Grid { MinHeight = 48, ColumnSpacing = 16 };
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+        row.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        var label = new TextBlock { Text = L10n.Text(key), TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+        control.VerticalAlignment = VerticalAlignment.Center;
+        control.HorizontalAlignment = HorizontalAlignment.Right;
+        // 控件没有自带标题，读屏名称取自本行说明文字。
+        AutomationProperties.SetName(control, label.Text);
+        Grid.SetColumn(control, 1);
+        row.Children.Add(label);
+        row.Children.Add(control);
+        return row;
+    }
+
+    private static Border Card(params Grid[] rows)
+    {
+        var stack = new StackPanel();
+        for (int index = 0; index < rows.Length; index++)
+        {
+            if (index > 0) stack.Children.Add(new Rectangle { Style = (Style)Application.Current.Resources["InkpotSettingsDividerStyle"] });
+            stack.Children.Add(rows[index]);
+        }
+        return new Border { Style = (Style)Application.Current.Resources["InkpotSettingsCardStyle"], Child = stack };
+    }
+
+    private static void AddSection(StackPanel panel, string titleKey, params Grid[] rows)
+    {
+        panel.Children.Add(new TextBlock
+        {
+            Text = L10n.Text(titleKey),
+            Style = (Style)Application.Current.Resources["BodyStrongTextBlockStyle"],
+            Margin = new Thickness(2, 16, 0, 4),
+        });
+        panel.Children.Add(Card(rows));
     }
 
     private static string ReadFont(ComboBox combo, string fallback)

@@ -1,5 +1,6 @@
 using System.Globalization;
 using Inkpot.Workspace;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -32,12 +33,28 @@ public sealed partial class MainWindow
         catch (IOException error) { preferencesError = error; }
         FilesButton.Content = L10n.Text("Files");
         OutlineButton.Content = L10n.Text("Outline");
-        OpenFolderButton.Content = L10n.Text("OpenFolder");
-        FolderLabel.Text = L10n.Text("NoFolder");
-        EmptyOutline.Text = L10n.Text("NoHeadings");
+        EmptyOpenFolderButton.Content = L10n.Text("OpenFolder");
+        EmptyFilesTitle.Text = L10n.Text("NoFolder");
+        EmptyFilesMessage.Text = L10n.Text("NoFolderMessage");
+        EmptyOutlineTitle.Text = L10n.Text("NoHeadings");
+        EmptyOutlineMessage.Text = L10n.Text("NoHeadingsMessage");
+        AutomationProperties.SetName(SidebarSwitcher, L10n.Text("SidebarContent"));
         AutomationProperties.SetName(FilesTree, L10n.Text("Files"));
         AutomationProperties.SetName(OutlineList, L10n.Text("Outline"));
         AutomationProperties.SetName(SidebarDivider, L10n.Text("ResizeSidebar"));
+        AutomationProperties.SetName(ModeLabel, L10n.Text("EditingMode"));
+        AutomationProperties.SetName(SaveLabel, L10n.Text("SaveStatus"));
+        AutomationProperties.SetName(StatisticsLabel, L10n.Text("WordCount"));
+        // 顶栏图标按钮没有文字，名称供读屏使用，提示说明用途与快捷键。
+        foreach (var (button, name, tip) in new (FrameworkElement, string, string)[] {
+            (OpenFolderButton, "OpenFolder", "ChangeFolderTip"),
+            (SidebarToggle, "Sidebar", "SidebarTip"),
+            (FocusToggle, "FocusMode", "FocusTip"),
+            (SourceToggle, "SourceMode", "SourceTip") })
+        {
+            AutomationProperties.SetName(button, L10n.Text(name));
+            ToolTipService.SetToolTip(button, L10n.Text(tip));
+        }
         ApplyWorkspaceAppearance();
         RefreshSidebar();
     }
@@ -56,8 +73,15 @@ public sealed partial class MainWindow
         SidebarPanel.Visibility = SidebarDivider.Visibility = preferences.SidebarVisible ? Visibility.Visible : Visibility.Collapsed;
         FilesPanel.Visibility = showingOutline ? Visibility.Collapsed : Visibility.Visible;
         OutlinePanel.Visibility = showingOutline ? Visibility.Visible : Visibility.Collapsed;
-        FilesButton.IsEnabled = !busy && showingOutline;
-        OutlineButton.IsEnabled = !busy && !showingOutline;
+        FilesButton.IsChecked = !showingOutline;
+        OutlineButton.IsChecked = showingOutline;
+        FilesButton.FontWeight = showingOutline ? FontWeights.Normal : FontWeights.SemiBold;
+        OutlineButton.FontWeight = showingOutline ? FontWeights.SemiBold : FontWeights.Normal;
+        bool hasFolder = folderPath is not null;
+        FolderHeader.Visibility = FilesTree.Visibility = hasFolder ? Visibility.Visible : Visibility.Collapsed;
+        EmptyFiles.Visibility = hasFolder ? Visibility.Collapsed : Visibility.Visible;
+        SidebarToggle.IsChecked = preferences.SidebarVisible;
+        FocusToggle.IsChecked = preferences.FocusMode;
         foreach (var (key, item) in viewMenus)
             item.IsChecked = key switch
             {
@@ -72,9 +96,9 @@ public sealed partial class MainWindow
 
     private void SetSidebarEnabled(bool enabled)
     {
-        FilesTree.IsEnabled = OutlineList.IsEnabled = OpenFolderButton.IsEnabled = SidebarDivider.IsEnabled = enabled;
-        FilesButton.IsEnabled = enabled && showingOutline;
-        OutlineButton.IsEnabled = enabled && !showingOutline;
+        FilesTree.IsEnabled = OutlineList.IsEnabled = OpenFolderButton.IsEnabled = EmptyOpenFolderButton.IsEnabled = SidebarDivider.IsEnabled = enabled;
+        FilesButton.IsEnabled = OutlineButton.IsEnabled = enabled;
+        SidebarToggle.IsEnabled = FocusToggle.IsEnabled = SourceToggle.IsEnabled = enabled;
     }
 
     private async Task ChangePreferencesAsync(AppPreferences next)
@@ -119,13 +143,26 @@ public sealed partial class MainWindow
 
     private Task ToggleOutlineAsync() => showingOutline && preferences.SidebarVisible ? ToggleSidebarAsync() : ShowOutlineAsync();
 
-    private async void ShowFiles(object sender, RoutedEventArgs args) => await RunAsync(async () =>
+    private async void ShowFiles(object sender, RoutedEventArgs args)
     {
-        showingOutline = false;
-        await SaveSidebarAsync(preferences with { SidebarVisible = true });
-    });
+        await RunAsync(async () =>
+        {
+            showingOutline = false;
+            await SaveSidebarAsync(preferences with { SidebarVisible = true });
+        });
+        RefreshSidebar();
+    }
 
-    private async void ShowOutline(object sender, RoutedEventArgs args) => await RunAsync(ShowOutlineAsync);
+    // 切换按钮点击时会先自行翻转选中状态；无论操作是否执行，结束后都按实际状态复位。
+    private async void ShowOutline(object sender, RoutedEventArgs args) { await RunAsync(ShowOutlineAsync); RefreshSidebar(); }
+    private async void ToggleSidebarFromToolbar(object sender, RoutedEventArgs args) { await RunAsync(ToggleSidebarAsync); RefreshSidebar(); }
+    private async void ToggleFocusFromToolbar(object sender, RoutedEventArgs args) { await RunAsync(ToggleFocusAsync); RefreshSidebar(); }
+
+    private async void ToggleSourceFromToolbar(object sender, RoutedEventArgs args)
+    {
+        await RunAsync(async () => { if (Current?.Editor is { } editor) await editor.CommandAsync("toggleSourceMode"); });
+        RefreshStatus();
+    }
     private async void OpenFolder(object sender, RoutedEventArgs args) => await RunAsync(OpenFolderPickerAsync);
 
     private async Task OpenFolderPickerAsync()
@@ -188,8 +225,11 @@ public sealed partial class MainWindow
             if (headings is not null)
                 foreach (var heading in headings)
                 {
+                    // 与 macOS 大纲一致：一级标题加粗，三级及以下用次要层次显示。
                     var item = new ListViewItem { Tag = heading.Id, Content = new TextBlock {
-                        Text = heading.Title, Margin = new Thickness((heading.Level - 1) * 14, 4, 0, 4), TextTrimming = TextTrimming.CharacterEllipsis } };
+                        Text = heading.Title, Margin = new Thickness((heading.Level - 1) * 14, 4, 0, 4), TextTrimming = TextTrimming.CharacterEllipsis,
+                        FontWeight = heading.Level == 1 ? FontWeights.SemiBold : FontWeights.Normal, Opacity = heading.Level >= 3 ? 0.72 : 1 } };
+                    ToolTipService.SetToolTip(item, $"H{heading.Level} · {heading.Title}");
                     AutomationProperties.SetName(item, heading.Title);
                     OutlineList.Items.Add(item);
                     outlineItems.Add(heading.Id, item);
@@ -209,6 +249,11 @@ public sealed partial class MainWindow
     {
         var state = Current?.Editor?.State;
         ModeLabel.Text = L10n.Text(state?.SourceMode == true ? "SourceLabel" : "LiveMode");
+        SourceToggle.IsChecked = state?.SourceMode == true;
+        // 保存状态：有未保存修改或已保存；从未保存过的空白文档不显示。
+        var document = Current;
+        SaveLabel.Text = document is null ? "" : document.Dirty ? L10n.Text("UnsavedState") : document.Path is not null ? L10n.Text("SavedState") : "";
+        SaveDivider.Visibility = SaveLabel.Text.Length == 0 ? Visibility.Collapsed : Visibility.Visible;
         StatisticsLabel.Text = string.Format(CultureInfo.CurrentCulture, L10n.Text("StatsFormat"), state?.Stats.Words ?? 0,
             state?.Stats.Characters ?? 0, state?.Stats.Lines ?? 0);
     }

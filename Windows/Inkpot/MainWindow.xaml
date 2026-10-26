@@ -4,40 +4,185 @@
  xmlns:primitives="using:Microsoft.UI.Xaml.Controls.Primitives">
   <Grid x:Name="Root">
     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-    <MenuBar x:Name="Menus" />
+    <!-- 顶栏：左侧菜单，右侧对应 macOS 工具栏的侧栏、专注模式与源码模式按钮。 -->
+    <Grid x:Name="TopBar">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <MenuBar x:Name="Menus" />
+      <StackPanel x:Name="Toolbar" Grid.Column="1" Orientation="Horizontal" Spacing="2" Margin="0,0,8,0" VerticalAlignment="Center">
+        <StackPanel.Resources>
+          <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+              <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#09000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="#06000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#0F000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#15000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#0C000000"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="Transparent"/>
+              </ResourceDictionary>
+              <ResourceDictionary x:Key="Default">
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#0FFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="#0AFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#15FFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#1FFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#12FFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="Transparent"/>
+              </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+          </ResourceDictionary>
+        </StackPanel.Resources>
+        <ToggleButton x:Name="SidebarToggle" Style="{StaticResource InkpotToolbarToggleStyle}" Click="ToggleSidebarFromToolbar">
+          <FontIcon Glyph="&#xE8A0;" FontSize="14"/>
+        </ToggleButton>
+        <ToggleButton x:Name="FocusToggle" Style="{StaticResource InkpotToolbarToggleStyle}" Click="ToggleFocusFromToolbar">
+          <FontIcon Glyph="&#xE890;" FontSize="14"/>
+        </ToggleButton>
+        <ToggleButton x:Name="SourceToggle" Style="{StaticResource InkpotToolbarToggleStyle}" Click="ToggleSourceFromToolbar">
+          <FontIcon Glyph="&#xE943;" FontSize="14"/>
+        </ToggleButton>
+      </StackPanel>
+    </Grid>
     <Grid Grid.Row="1" x:Name="WorkspaceGrid">
       <Grid.ColumnDefinitions>
         <ColumnDefinition x:Name="SidebarColumn" Width="260"/>
-        <ColumnDefinition x:Name="DividerColumn" Width="6"/>
+        <ColumnDefinition x:Name="DividerColumn" Width="4"/>
         <ColumnDefinition Width="*"/>
       </Grid.ColumnDefinitions>
-      <Grid x:Name="SidebarPanel" Padding="8,0,8,8" Background="{ThemeResource LayerFillColorDefaultBrush}">
+      <Grid x:Name="SidebarPanel" Padding="8,0,6,8" Background="{ThemeResource LayerFillColorDefaultBrush}"
+        BorderThickness="0,0,1,0" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+        <!-- 文件树与大纲的选中行：浅色强调底配强调色文字，与 macOS 侧栏选中样式一致。 -->
+        <Grid.Resources>
+          <ResourceDictionary>
+            <ResourceDictionary.ThemeDictionaries>
+              <ResourceDictionary x:Key="Light">
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="#1F2B5A8C"/>
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="#292B5A8C"/>
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="#172B5A8C"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelected" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPointerOver" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPressed" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#1F2B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#292B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#172B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemForegroundSelected" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="#FF2B5A8C"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="#FF2B5A8C"/>
+                <!-- 分段切换：选中段为白色滑块，未选中段只显示文字。 -->
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#0A000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="#06000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#FFF5F5F5"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#E4000000"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#E4000000"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#E4000000"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="Transparent"/>
+              </ResourceDictionary>
+              <ResourceDictionary x:Key="Default">
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelected" Color="#297CB0E8"/>
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPointerOver" Color="#337CB0E8"/>
+                <SolidColorBrush x:Key="TreeViewItemBackgroundSelectedPressed" Color="#217CB0E8"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelected" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPointerOver" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="TreeViewItemForegroundSelectedPressed" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelected" Color="#297CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="#337CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPressed" Color="#217CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemForegroundSelected" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorBrush" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPointerOverBrush" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ListViewItemSelectionIndicatorPressedBrush" Color="#FF7CB0E8"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPointerOver" Color="#0FFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundPressed" Color="#0AFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundChecked" Color="#FF3D3D3D"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPointerOver" Color="#FF454545"/>
+                <SolidColorBrush x:Key="ToggleButtonBackgroundCheckedPressed" Color="#FF363636"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundChecked" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPointerOver" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonForegroundCheckedPressed" Color="#FFFFFFFF"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushPressed" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushChecked" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPointerOver" Color="Transparent"/>
+                <SolidColorBrush x:Key="ToggleButtonBorderBrushCheckedPressed" Color="Transparent"/>
+              </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+          </ResourceDictionary>
+        </Grid.Resources>
         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Spacing="4" Margin="0,0,0,8">
-          <Button x:Name="FilesButton" Click="ShowFiles"/>
-          <Button x:Name="OutlineButton" Click="ShowOutline"/>
-        </StackPanel>
+        <Border x:Name="SidebarSwitcher" Background="{ThemeResource InkpotSegmentTrackBrush}" CornerRadius="7" Padding="2" Margin="4,8,4,6">
+          <Grid ColumnSpacing="2">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <ToggleButton x:Name="FilesButton" Style="{StaticResource InkpotSegmentStyle}" Click="ShowFiles"/>
+            <ToggleButton x:Name="OutlineButton" Grid.Column="1" Style="{StaticResource InkpotSegmentStyle}" Click="ShowOutline"/>
+          </Grid>
+        </Border>
         <Grid Grid.Row="1" x:Name="FilesPanel">
-          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-          <Button x:Name="OpenFolderButton" Click="OpenFolder" HorizontalAlignment="Stretch"/>
-          <TextBlock x:Name="FolderLabel" Grid.Row="1" Margin="4,8" TextTrimming="CharacterEllipsis"/>
-          <TreeView x:Name="FilesTree" Grid.Row="2" SelectionMode="Single" Expanding="ExpandDirectory" ItemInvoked="InvokeFile"/>
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+          <!-- 已打开文件夹时显示名称与更换按钮；未打开时由空状态说明。 -->
+          <Grid x:Name="FolderHeader" Margin="8,2,0,4" Visibility="Collapsed">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <TextBlock x:Name="FolderLabel" Style="{StaticResource InkpotSecondaryTextStyle}" FontWeight="SemiBold"
+              VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+            <Button x:Name="OpenFolderButton" Grid.Column="1" Click="OpenFolder" Background="Transparent" BorderThickness="0" Padding="7,5">
+              <FontIcon Glyph="&#xE838;" FontSize="14"/>
+            </Button>
+          </Grid>
+          <TreeView x:Name="FilesTree" Grid.Row="1" SelectionMode="Single" Expanding="ExpandDirectory" ItemInvoked="InvokeFile" Visibility="Collapsed"/>
+          <StackPanel x:Name="EmptyFiles" Grid.Row="1" VerticalAlignment="Center" Margin="12,0,12,80" Spacing="4">
+            <FontIcon Glyph="&#xE8B7;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,0,0,8"/>
+            <TextBlock x:Name="EmptyFilesTitle" Style="{StaticResource BodyStrongTextBlockStyle}" TextAlignment="Center" TextWrapping="Wrap"/>
+            <TextBlock x:Name="EmptyFilesMessage" Style="{StaticResource InkpotSecondaryTextStyle}" TextAlignment="Center" TextWrapping="Wrap"/>
+            <Button x:Name="EmptyOpenFolderButton" Click="OpenFolder" HorizontalAlignment="Center" Margin="0,10,0,0"/>
+          </StackPanel>
         </Grid>
         <Grid Grid.Row="1" x:Name="OutlinePanel" Visibility="Collapsed">
           <ListView x:Name="OutlineList" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="InvokeHeading"/>
-          <TextBlock x:Name="EmptyOutline" Margin="8" TextWrapping="Wrap"/>
+          <StackPanel x:Name="EmptyOutline" VerticalAlignment="Center" Margin="12,0,12,80" Spacing="4">
+            <FontIcon Glyph="&#xE8FD;" FontSize="28" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Margin="0,0,0,8"/>
+            <TextBlock x:Name="EmptyOutlineTitle" Style="{StaticResource BodyStrongTextBlockStyle}" TextAlignment="Center" TextWrapping="Wrap"/>
+            <TextBlock x:Name="EmptyOutlineMessage" Style="{StaticResource InkpotSecondaryTextStyle}" TextAlignment="Center" TextWrapping="Wrap"/>
+          </StackPanel>
         </Grid>
       </Grid>
-      <primitives:Thumb x:Name="SidebarDivider" Grid.Column="1" Background="{ThemeResource DividerStrokeColorDefaultBrush}"
+      <!-- 分隔条只保留拖动区域，可见的细线由侧栏右边框绘制。 -->
+      <primitives:Thumb x:Name="SidebarDivider" Grid.Column="1" Background="Transparent"
         DragDelta="ResizeSidebar" DragCompleted="FinishResizeSidebar" KeyDown="ResizeSidebarWithKeyboard" IsTabStop="True"/>
       <!-- TabView 与 WebView2 均须拉伸，避免正文区域塌缩成标签条。 -->
-      <TabView x:Name="Tabs" Grid.Column="2" VerticalAlignment="Stretch" IsAddTabButtonVisible="True"
+      <TabView x:Name="Tabs" Grid.Column="2" VerticalAlignment="Stretch" IsAddTabButtonVisible="True" CloseButtonOverlayMode="OnPointerOver"
         AddTabButtonClick="AddTab" TabCloseRequested="CloseTab" SelectionChanged="SelectTab" />
     </Grid>
-    <Grid Grid.Row="2" Padding="12,5" Background="{ThemeResource LayerFillColorDefaultBrush}">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <TextBlock x:Name="ModeLabel"/>
-      <TextBlock x:Name="StatisticsLabel" Grid.Column="1" HorizontalAlignment="Right"/>
+    <!-- 状态栏：左侧编辑模式与保存状态，右侧字数统计，与 macOS 底栏排布一致。 -->
+    <Grid Grid.Row="2" x:Name="StatusBar" Height="28" Padding="14,0" Background="{ThemeResource LayerFillColorDefaultBrush}"
+      BorderThickness="0,1,0,0" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/>
+      </Grid.ColumnDefinitions>
+      <TextBlock x:Name="ModeLabel" Style="{StaticResource InkpotSecondaryTextStyle}" VerticalAlignment="Center"/>
+      <Rectangle x:Name="SaveDivider" Grid.Column="1" Width="1" Height="11" Margin="10,0" VerticalAlignment="Center"
+        Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Visibility="Collapsed"/>
+      <TextBlock x:Name="SaveLabel" Grid.Column="2" Style="{StaticResource InkpotSecondaryTextStyle}" VerticalAlignment="Center"/>
+      <TextBlock x:Name="StatisticsLabel" Grid.Column="3" Style="{StaticResource InkpotSecondaryTextStyle}" VerticalAlignment="Center"
+        HorizontalAlignment="Right" Margin="12,0,0,0" TextTrimming="CharacterEllipsis"/>
     </Grid>
   </Grid>
 </Window>

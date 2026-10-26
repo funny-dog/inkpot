@@ -93,8 +93,12 @@ public sealed partial class MainWindow
         const string markdown = "# 第一章\r\n中文正文\n\n## 第二章\n更多文字\n";
         await File.WriteAllTextAsync(path, markdown);
         await File.WriteAllTextAsync(Path.Combine(directory, "子目录", "子文档.txt"), "子目录内容");
+        if (EmptyFiles.Visibility != Visibility.Visible || FilesTree.Visibility != Visibility.Collapsed)
+            throw new IOException("未打开文件夹时没有显示文件树空状态。");
         await OpenFolderAsync(directory);
         Root.UpdateLayout();
+        if (EmptyFiles.Visibility != Visibility.Collapsed || FolderHeader.Visibility != Visibility.Visible || FilesButton.IsChecked != true)
+            throw new IOException("打开文件夹后侧栏仍显示空状态或未切到文件页。");
         if (SidebarPanel.ActualWidth < 180 || SidebarPanel.ActualHeight < 100 || FilesTree.RootNodes.Count != 2)
             throw new IOException("文件树侧栏未显示或未列出测试文件。");
         var directoryNode = FilesTree.RootNodes.First(node => node.Content is FileTreeEntry { IsDirectory: true });
@@ -132,6 +136,8 @@ public sealed partial class MainWindow
         var fixture = Current!;
         if (fixture == initial || fixture.Editor?.State?.SourceMode != true || (await fixture.Editor!.SnapshotAsync()).Text != markdown)
             throw new IOException("文件树打开流程或默认源码模式没有生效。");
+        if (SaveLabel.Text != L10n.Text("SavedState") || SourceToggle.IsChecked != true)
+            throw new IOException("状态栏保存状态或顶栏源码模式按钮不正确。");
         await ShowOutlineAsync();
         var outlineDeadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
         while (fixture.Editor.Headings.Count != 2)
@@ -140,7 +146,7 @@ public sealed partial class MainWindow
             await Task.Delay(50);
         }
         RefreshOutline();
-        if (OutlineList.Items.Count != 2 || EmptyOutline.Visibility != Visibility.Collapsed)
+        if (OutlineList.Items.Count != 2 || EmptyOutline.Visibility != Visibility.Collapsed || OutlineButton.IsChecked != true)
             throw new IOException("大纲未显示标题。");
         await fixture.Editor.NavigateHeadingAsync(fixture.Editor.Headings[1].Id);
         // 通过编辑操作验证光标已到第二个标题；撤销后正文必须完全一致。
@@ -157,7 +163,8 @@ public sealed partial class MainWindow
         if ((await initial.Editor.SnapshotAsync()) != before || outlineItems.Keys.Except(initial.Editor.Headings.Select(item => item.Id)).Any())
             throw new IOException("切换标签丢失原文或保留了其他文档的大纲。");
         await ToggleSidebarAsync();
-        if (SidebarPanel.Visibility != Visibility.Collapsed || SidebarColumn.Width.Value != 0) throw new IOException("侧栏不能隐藏。");
+        if (SidebarPanel.Visibility != Visibility.Collapsed || SidebarColumn.Width.Value != 0 || SidebarToggle.IsChecked != false)
+            throw new IOException("侧栏不能隐藏，或顶栏侧栏按钮状态未同步。");
         await ChangePreferencesAsync(originalPreferences);
         showingOutline = false;
         RefreshSidebar();

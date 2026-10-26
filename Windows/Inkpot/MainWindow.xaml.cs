@@ -313,7 +313,8 @@ public sealed partial class MainWindow : Window
     }
 
     private Task<ContentDialogResult> DialogAsync(string title, string content, string? primary = null, string? secondary = null, string? close = null)
-        => new ContentDialog { XamlRoot = Root.XamlRoot, Title = title, Content = content, PrimaryButtonText = primary ?? "",
+        => new ContentDialog { XamlRoot = Root.XamlRoot, Style = PreferencesDialog.DialogStyle, RequestedTheme = Root.ActualTheme,
+            Title = title, Content = content, PrimaryButtonText = primary ?? "",
             SecondaryButtonText = secondary ?? "", CloseButtonText = close ?? L10n.Text("OK"), DefaultButton = ContentDialogButton.Close }.ShowAsync().AsTask();
 
     private async Task RunAsync(Func<Task> action)
