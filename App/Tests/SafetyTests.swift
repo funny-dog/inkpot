@@ -61,8 +61,8 @@ final class SafetyTests: XCTestCase {
     let document = try await document(original, url: url, store: store)
     defer { document.close() }
     let editor = try XCTUnwrap(document.editor)
-    let web = try XCTUnwrap(editor.view as? WKWebView)
-    _ = try await web.evaluateJavaScript("document.execCommand('insertText', false, '修改'); null")
+    _ = try XCTUnwrap(editor.view as? WKWebView)
+    _ = try await editor.evaluateScript("document.execCommand('insertText', false, '修改'); null")
     try await waitUntil { editor.latestRevision > 0 }
     try await document.safety.persist()
     let draft = try XCTUnwrap(store.drafts().first)
@@ -96,7 +96,7 @@ final class SafetyTests: XCTestCase {
     let document = try await document(original, url: url, store: store)
     defer { document.close() }
     let editor = try XCTUnwrap(document.editor)
-    let web = try XCTUnwrap(editor.view as? WKWebView)
+    _ = try XCTUnwrap(editor.view as? WKWebView)
     let external = Data("\u{FEFF}# 外部\n".utf8)
     try external.write(to: url)
     try await document.safety.refreshFromDisk()
@@ -104,7 +104,7 @@ final class SafetyTests: XCTestCase {
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), external)
     XCTAssertFalse(document.isDocumentEdited)
-    _ = try await web.evaluateJavaScript("document.execCommand('insertText', false, '本地'); null")
+    _ = try await editor.evaluateScript("document.execCommand('insertText', false, '本地'); null")
     try await waitUntil { editor.latestRevision > 0 }
     try await document.synchronize()
     let local = try document.data(ofType: "net.daringfireball.markdown")
@@ -128,12 +128,12 @@ final class SafetyTests: XCTestCase {
     let document = try await document(Data("原文".utf8), url: nil, store: store)
     defer { document.close() }
     let editor = try XCTUnwrap(document.editor)
-    let web = try XCTUnwrap(editor.view as? WKWebView)
-    _ = try await web.evaluateJavaScript("document.execCommand('insertText', false, '新'); null")
+    _ = try XCTUnwrap(editor.view as? WKWebView)
+    _ = try await editor.evaluateScript("document.execCommand('insertText', false, '新'); null")
     try await waitUntil { editor.latestRevision > 0 }
     try await document.safety.persist()
     let bytes = try XCTUnwrap(store.drafts().first?.data)
-    _ = try await web.evaluateJavaScript("window.inkpot.snapshot = () => { throw new Error('测试读取失败'); }; null")
+    _ = try await editor.evaluateScript("window.inkpot.snapshot = () => { throw new Error('测试读取失败'); }; null")
     do { try await document.safety.persist(); XCTFail("失败的快照不能写入恢复文件") } catch {}
     XCTAssertEqual(try store.drafts().first?.data, bytes)
     let other = UUID()
@@ -151,8 +151,8 @@ extension SafetyTests {
     let document = try await document(Data("原文".utf8), url: nil, store: store)
     defer { document.close() }
     let editor = try XCTUnwrap(document.editor)
-    let web = try XCTUnwrap(editor.view as? WKWebView)
-    _ = try await web.evaluateJavaScript("""
+    _ = try XCTUnwrap(editor.view as? WKWebView)
+    _ = try await editor.evaluateScript("""
       document.execCommand('insertText', false, '新');
       document.querySelector('.cm-content').dispatchEvent(new CompositionEvent('compositionstart', {bubbles: true})); null
       """)
@@ -160,7 +160,7 @@ extension SafetyTests {
     do { _ = try await editor.snapshot(); XCTFail("候选刚开始时也不能采集快照") } catch {}
     try await Task.sleep(for: .milliseconds(1100))
     XCTAssertTrue(try store.drafts().isEmpty)
-    _ = try await web.evaluateJavaScript("""
+    _ = try await editor.evaluateScript("""
       document.querySelector('.cm-content').dispatchEvent(new CompositionEvent('compositionend', {bubbles: true})); null
       """)
     try await waitUntil { !editor.isComposing }

@@ -31,20 +31,20 @@ final class MathTests: XCTestCase {
   }
 
   func testMathRendersFromBundleAssetsAndPreservesOriginalBytes() async throws {
-    let (document, editor, web) = try await makeDocument(original)
+    let (document, editor, _) = try await makeDocument(original)
     defer { document.close() }
     // 真实 WKWebView 中从应用包加载 KaTeX（scheme 资源、跨域模块与字体）并渲染两个公式。
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-math').length === 2 && document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true
+      try await editor.evaluateScript("document.querySelectorAll('.cm-inkpot-math').length === 2 && document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true
     }
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
     XCTAssertTrue(editor.validateMenuItem(menu("insertMathBlock")))
     editor.performCommand("toggleSourceMode")
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-math') === null") as? Bool == true }
+    try await waitUntil { try await editor.evaluateScript("document.querySelector('.cm-inkpot-math') === null") as? Bool == true }
     editor.performCommand("toggleSourceMode")
     try await waitUntil {
-      try await web.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true
+      try await editor.evaluateScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true
     }
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
@@ -56,13 +56,13 @@ final class MathTests: XCTestCase {
   }
 
   func testInsertMathBlockCommandInsertsEditableBlockWithIndependentUndo() async throws {
-    let (document, editor, web) = try await makeDocument("正文\r\n尾\n")
+    let (document, editor, _) = try await makeDocument("正文\r\n尾\n")
     defer { document.close() }
     editor.performCommand("insertMathBlock")
     try await settle()
-    let snapshot = try await web.evaluateJavaScript("window.inkpot.snapshot().text") as? String
+    let snapshot = try await editor.evaluateScript("window.inkpot.snapshot().text") as? String
     XCTAssertEqual(snapshot, "$$\r\n\r\n$$\r\n\r\n正文\r\n尾\n")
-    let focus = try await web.evaluateJavaScript("document.activeElement.className") as? String
+    let focus = try await editor.evaluateScript("document.activeElement.className") as? String
     XCTAssertEqual(focus, "cm-content cm-lineWrapping")
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data("$$\r\n\r\n$$\r\n\r\n正文\r\n尾\n".utf8))
@@ -74,14 +74,14 @@ final class MathTests: XCTestCase {
   }
 
   func testClickMathRevealsSourceAndPreservesBytes() async throws {
-    let (document, editor, web) = try await makeDocument(original)
+    let (document, editor, _) = try await makeDocument(original)
     defer { document.close() }
-    try await waitUntil { try await web.evaluateJavaScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true }
-    _ = try await web.evaluateJavaScript("""
+    try await waitUntil { try await editor.evaluateScript("document.querySelectorAll('.cm-inkpot-math .katex').length === 2") as? Bool == true }
+    _ = try await editor.evaluateScript("""
       document.querySelector('.cm-inkpot-math-block').dispatchEvent(new MouseEvent('mousedown', {bubbles: true, cancelable: true})); null
       """)
     try await settle()
-    let revealed = try await web.evaluateJavaScript("document.querySelector('.cm-inkpot-math-block') === null") as? Bool
+    let revealed = try await editor.evaluateScript("document.querySelector('.cm-inkpot-math-block') === null") as? Bool
     XCTAssertTrue(try XCTUnwrap(revealed), "点击公式后应展开显示源码")
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
