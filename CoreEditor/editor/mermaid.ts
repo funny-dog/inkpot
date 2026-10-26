@@ -75,18 +75,9 @@ class MermaidPreview extends WidgetType {
         if (element.isConnected) {
           element.innerHTML = svg;
           const drawing = element.querySelector('svg');
-          const parts = drawing?.getAttribute('viewBox')?.split(/\s+/).map(Number) ?? [];
-          const [, , svgW, svgH] = parts;
-          if (drawing !== null && svgW > 0) {
-            // 以容器实际像素宽度为上限，超宽时按比例缩小；
-            // 不依赖百分比 CSS（contain:inline-size 下基准异常）。
-            const containerW = element.clientWidth;
-            if (containerW > 0 && svgW > containerW) {
-              drawing.setAttribute('width', String(containerW));
-              if (svgH > 0) drawing.setAttribute('height', String(Math.round(containerW / svgW * svgH)));
-            } else {
-              drawing.setAttribute('width', String(svgW));
-            }
+          const width = Number(drawing?.getAttribute('viewBox')?.split(/\s+/)[2]);
+          if (drawing !== null && Number.isFinite(width) && width > 0) {
+            drawing.setAttribute('width', String(width));
             drawing.style.maxWidth = 'none';
           }
         }
