@@ -76,9 +76,10 @@ class MermaidPreview extends WidgetType {
           element.innerHTML = svg;
           const drawing = element.querySelector('svg');
           const width = Number(drawing?.getAttribute('viewBox')?.split(/\s+/)[2]);
+          // 保留原始尺寸属性供浏览器计算，但不覆盖 maxWidth；
+          // CSS 的 max-width: 100% 负责将超宽图表缩放适配容器。
           if (drawing !== null && Number.isFinite(width) && width > 0) {
             drawing.setAttribute('width', String(width));
-            drawing.style.maxWidth = 'none';
           }
         }
       } catch {
