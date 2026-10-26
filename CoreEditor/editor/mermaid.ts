@@ -74,12 +74,6 @@ class MermaidPreview extends WidgetType {
         const svg = await render(this.source, this.dark, element);
         if (element.isConnected) {
           element.innerHTML = svg;
-          const drawing = element.querySelector('svg');
-          const width = Number(drawing?.getAttribute('viewBox')?.split(/\s+/)[2]);
-          if (drawing !== null && Number.isFinite(width) && width > 0) {
-            drawing.setAttribute('width', String(width));
-            drawing.style.maxWidth = 'none';
-          }
         }
       } catch {
         if (element.isConnected) {
