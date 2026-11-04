@@ -32,7 +32,8 @@ final class AppearanceTests: XCTestCase {
     try await waitUntil {
       try await editor.evaluateScript("getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Kaiti SC') && getComputedStyle(document.querySelector('.cm-inkpot-heading2')).borderRadius === '8px'") as? Bool == true
     }
-    XCTAssertEqual(EditorFonts.shared.font(code: false).familyName, "Kaiti SC")
+    let hasKaiti = NSFontManager.shared.font(withFamily: "Kaiti SC", traits: [], weight: 5, size: 15) != nil
+    XCTAssertEqual(EditorFonts.shared.font(code: false).familyName, hasKaiti ? "Kaiti SC" : NSFont.systemFont(ofSize: 15).familyName)
     EditorFonts.shared.setFamily("Helvetica", code: false)
     settings.theme = .lapis
     try await waitUntil {

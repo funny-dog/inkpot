@@ -67,16 +67,27 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   }
 
   /// WebKit 会拒绝与进行中的求值并发的调用（InvalidTransition），编辑器的全部脚本按序排队。
-  private var scriptTail: Task<Any?, Error> = Task { nil }
+  private var scriptTail: Task<Any?, Error> = Task { @MainActor in nil }
 
+  @MainActor
   func evaluateScript(_ javaScript: String, awaitPromise: Bool = false) async throws -> Any? {
     let previous = scriptTail
-    let task = Task<Any?, Error> { [weak self] in
+    let task = Task<Any?, Error> { @MainActor [weak self] in
       _ = try? await previous.value
       guard let self else { return nil }
       guard let web = self.view as? WKWebView else { return nil }
-      if awaitPromise { return try await web.callAsyncJavaScript("return await (\(javaScript));", arguments: [:], in: nil, contentWorld: .page) }
-      return try await web.evaluateJavaScript(javaScript)
+      do {
+        if awaitPromise { return try await web.callAsyncJavaScript("return await (\(javaScript));", arguments: [:], in: nil, contentWorld: .page) }
+        return try await web.evaluateJavaScript(javaScript)
+      } catch {
+        // WebKit 在密集求值交替时可能偶发抛出 InvalidTransition，稍作退避后重试一次。
+        if String(describing: error).contains("InvalidTransition") {
+          try await Task.sleep(for: .milliseconds(50))
+          if awaitPromise { return try await web.callAsyncJavaScript("return await (\(javaScript));", arguments: [:], in: nil, contentWorld: .page) }
+          return try await web.evaluateJavaScript(javaScript)
+        }
+        throw error
+      }
     }
     scriptTail = task
     return try await task.value
