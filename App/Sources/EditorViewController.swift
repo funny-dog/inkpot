@@ -203,7 +203,9 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   @objc func undo(_ sender: Any?) { performCommand("undo") }
   @objc func redo(_ sender: Any?) { performCommand("redo") }
   override func selectAll(_ sender: Any?) { performCommand("selectAll") }
+}
 
+extension EditorViewController {
   fileprivate func receive(_ message: WKScriptMessage) {
     guard message.frameInfo.isMainFrame,
           let body = message.body as? [String: Any] else { return }
