@@ -94,6 +94,9 @@ const descriptions = [
   } })),
 ];
 
+/** 语言选择器与着色共用同一份语言表。 */
+export const codeLanguageOptions = descriptions.map(({ name, alias }) => ({ name, value: alias[0] }));
+
 // 每次增量解析都会为可见范围外的代码块重新查找语言，按名称与别名建索引，避免逐项比较。
 const byName = new Map(descriptions.flatMap(description => [description.name.toLowerCase(), ...description.alias].map(name => [name, description] as const)));
 

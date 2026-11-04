@@ -51,6 +51,18 @@ async function flushed() {
 }
 
 describe('Inkpot 导出', () => {
+  test.each(['html', 'pdf'] as const)('%s 导出将代码语言下拉框替换为普通标签，结束后恢复下拉框', async mode => {
+    const original = '```js\r\nconst n = 1;\r\n```';
+    const { view, read } = editor(original);
+    const html = await documentHTML(view, mode);
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    expect(doc.querySelector('select, option')).toBeNull();
+    expect(doc.querySelector('.cm-inkpot-code-language')?.textContent).toBe('js');
+    expect(view.dom.querySelector('select.cm-inkpot-code-language')).not.toBeNull();
+    expect(read()).toBe(original);
+    expect(undoDepth(view.state)).toBe(0);
+  });
+
   test.each(['lapis', 'dracula'])('主题 %s 导出固定浅色，完成或失败都恢复主题与编辑状态', async name => {
     const { view, read } = editor('# 标题\r\n\r\n正文 `code`');
     view.dispatch({ selection: { anchor: 5 } });

@@ -4,6 +4,8 @@ import { indentUnit, syntaxTree } from '@codemirror/language';
 import { cursorLineDown, cursorLineUp, isolateHistory } from '@codemirror/commands';
 import { Decoration, EditorView, KeyBinding, WidgetType } from '@codemirror/view';
 import { SyntaxNode } from '@lezer/common';
+import { codeLanguageFor, codeLanguageOptions } from './code-languages';
+import { previewExport } from './mode';
 
 const editLanguage = StateEffect.define<number | null>();
 export const editingCodeLanguage = StateField.define<number | null>({
@@ -93,26 +95,48 @@ function exitCode(view: EditorView, createParagraph = true) {
 }
 
 class LanguageLabel extends WidgetType {
-  constructor(private readonly from: number, private readonly language: string) { super(); }
-  eq(other: LanguageLabel) { return this.from === other.from && this.language === other.language; }
+  constructor(private readonly from: number, private readonly language: string, private readonly exporting: boolean) { super(); }
+  eq(other: LanguageLabel) { return this.from === other.from && this.language === other.language && this.exporting === other.exporting; }
   toDOM(view: EditorView) {
-    const button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'cm-inkpot-code-language';
-    button.textContent = this.language || t('纯文本');
-    button.setAttribute('aria-label', t('代码语言：{0}，点击修改', this.language || t('纯文本')));
-    button.title = t('修改代码语言；代码中按 ⌘Enter 返回正文');
-    button.disabled = view.state.readOnly;
-    button.addEventListener('click', () => {
+    if (this.exporting) {
+      const label = document.createElement('span');
+      label.className = 'cm-inkpot-code-language';
+      label.textContent = this.language || t('纯文本');
+      return label;
+    }
+    const select = document.createElement('select');
+    select.className = 'cm-inkpot-code-language cm-inkpot-code-language-select';
+    const current = codeLanguageFor(this.language)?.alias[0]
+      ?? (/^(?:text|txt|plaintext)(?:\s|\{|$)/i.test(this.language) ? '' : this.language);
+    select.add(new Option(t('纯文本'), ''));
+    for (const { name, value } of codeLanguageOptions) select.add(new Option(name, value));
+    if (![...select.options].some(option => option.value === current)) select.add(new Option(this.language, current));
+    select.add(new Option(t('自定义…'), '__custom__'));
+    select.value = current;
+    select.setAttribute('aria-label', t('代码语言'));
+    select.title = t('修改代码语言；代码中按 ⌘Enter 返回正文');
+    select.disabled = view.state.readOnly;
+    select.addEventListener('change', () => {
+      const value = select.value;
+      select.value = current;
       if (view.compositionStarted || view.state.readOnly) return;
       const node = syntaxTree(view.state).resolveInner(this.from + 1);
       const code = fences(node.name === 'CodeMark' && node.parent !== null ? node.parent : node, view.state);
       if (code === undefined) return;
       const from = code.info?.from ?? code.opening.to;
-      view.dispatch({ selection: EditorSelection.single(from, code.info?.to ?? from), effects: editLanguage.of(code.opening.from) });
+      if (value === '__custom__') {
+        view.dispatch({ selection: EditorSelection.single(from, code.info?.to ?? from), effects: editLanguage.of(code.opening.from) });
+      } else if (value !== current) {
+        // 切换语言保留围栏属性；有属性的纯文本使用 text 标记，避免把属性当作语言。
+        const suffix = this.language.replace(/^\s*[^\s{]+/, '');
+        const insert = (value || (suffix.trim() ? 'text' : '')) + suffix;
+        const changes = view.state.changes({ from, to: code.info?.to ?? from, insert });
+        view.dispatch({ changes, selection: view.state.selection.map(changes),
+          annotations: isolateHistory.of('full'), userEvent: 'input.code' });
+      }
       view.focus();
     });
-    return button;
+    return select;
   }
 }
 
@@ -136,7 +160,7 @@ export function codeDecorations(node: SyntaxNode, view: EditorView, revealSearch
     decorations.push(Decoration.line({ class: classes.join(' ') }).range(state.doc.line(number).from));
   }
   if (!revealOpening) {
-    const range = Decoration.replace({ widget: new LanguageLabel(code.opening.from, code.info === null ? '' : state.sliceDoc(code.info.from, code.info.to)) }).range(code.opening.from, code.first.to);
+    const range = Decoration.replace({ widget: new LanguageLabel(code.opening.from, code.info === null ? '' : state.sliceDoc(code.info.from, code.info.to), state.field(previewExport, false) ?? false) }).range(code.opening.from, code.first.to);
     decorations.push(range);
     atoms.push(range);
   }
@@ -238,7 +262,7 @@ export const codeBindings: KeyBinding[] = [
     if (view.state.field(editingCodeLanguage) === code.opening.from) {
       if (code.last?.number === code.first.number + 1) {
         view.dispatch({ effects: editLanguage.of(null) });
-        view.contentDOM.querySelector<HTMLButtonElement>('.cm-inkpot-code-language')?.focus();
+        view.contentDOM.querySelector<HTMLSelectElement>('.cm-inkpot-code-language')?.focus();
         return true;
       }
       return enterBody(view, code);
@@ -282,4 +306,6 @@ export const codeTheme = EditorView.theme({
   '.cm-inkpot-code-header': { borderTopLeftRadius: '6px', borderTopRightRadius: '6px', paddingTop: '6px', fontSize: '13px' },
   '.cm-inkpot-code-footer': { height: '6px', minHeight: '0', lineHeight: '0', fontSize: '0', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' },
   '.cm-inkpot-code-language': { appearance: 'none', border: '0', backgroundColor: 'transparent', color: '#6e6e73', font: 'inherit', padding: '0 0 4px', cursor: 'pointer' },
+  '.cm-inkpot-code-language-select': { appearance: 'auto', colorScheme: 'light', maxWidth: '100%' },
+  '&.cm-inkpot-dark .cm-inkpot-code-language-select': { colorScheme: 'dark' },
 });

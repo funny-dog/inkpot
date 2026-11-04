@@ -9,6 +9,16 @@ import { liveEditing, toggleSourceMode } from '../editor/live';
 import { searchCommands } from '../editor/search';
 
 const views: EditorView[] = [];
+function languageSelect(view: EditorView) {
+  const select = view.contentDOM.querySelector<HTMLSelectElement>('.cm-inkpot-code-language');
+  if (select === null) throw new Error('缺少代码语言选择器');
+  return select;
+}
+function selectLanguage(view: EditorView, value: string) {
+  const select = languageSelect(view);
+  select.value = value;
+  select.dispatchEvent(new Event('change', { bubbles: true }));
+}
 function editor(text: string, position = 0, readOnly = false) {
   const source = sourceDocument(text);
   const view = new EditorView({ parent: document.body, state: EditorState.create({
@@ -31,11 +41,59 @@ function editor(text: string, position = 0, readOnly = false) {
 afterEach(() => { for (const view of views.splice(0)) view.destroy(); });
 
 describe('Inkpot 代码块', () => {
+  test('下拉框列出受支持语言，选择后只改变语言且可独立撤销重做', () => {
+    const original = '```\r\n\t正文  \n```\r尾';
+    const { view, read } = editor(original, 7);
+    const select = languageSelect(view);
+    expect(select.value).toBe('');
+    expect(select.getAttribute('aria-label')).toBe('代码语言');
+    expect([...select.options].map(option => option.text)).toEqual(expect.arrayContaining(['纯文本', 'JavaScript', 'Python', 'C++', 'Markdown', '自定义…']));
+    selectLanguage(view, 'python');
+    expect(read()).toBe('```python\r\n\t正文  \n```\r尾');
+    expect(view.state.doc.sliceString(view.state.selection.main.head - 1, view.state.selection.main.head)).toBe('文');
+    expect(languageSelect(view).value).toBe('python');
+    undo(view);
+    expect(read()).toBe(original);
+    redo(view);
+    expect(languageSelect(view).value).toBe('python');
+    selectLanguage(view, '');
+    expect(read()).toBe(original);
+  });
+
+  test('已有别名与未知语言不会因展示下拉框而改写，切换语言保留属性', () => {
+    const original = '~~~py{.numberLines} title="中文"\r\n代码\n~~~';
+    const { view, read } = editor(original);
+    expect(languageSelect(view).value).toBe('python');
+    expect(read()).toBe(original);
+    selectLanguage(view, 'javascript');
+    expect(read()).toBe('~~~javascript{.numberLines} title="中文"\r\n代码\n~~~');
+    selectLanguage(view, '');
+    expect(read()).toBe('~~~text{.numberLines} title="中文"\r\n代码\n~~~');
+    expect(languageSelect(view).value).toBe('');
+    const unknown = editor('```custom title=x\n代码\n```');
+    expect(languageSelect(unknown.view).value).toBe('custom title=x');
+    expect(undoDepth(unknown.view.state)).toBe(0);
+  });
+
+  test('只读或组合输入时下拉框不会修改文档', () => {
+    const original = '```js\n代码\n```';
+    const locked = editor(original, 0, true);
+    expect(languageSelect(locked.view).disabled).toBe(true);
+    selectLanguage(locked.view, 'python');
+    expect(locked.read()).toBe(original);
+    const composing = editor(original);
+    composing.view.contentDOM.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    selectLanguage(composing.view, 'python');
+    expect(composing.read()).toBe(original);
+    expect(languageSelect(composing.view).value).toBe('javascript');
+    composing.view.contentDOM.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+  });
+
   test.each(['```', '````', '~~~'])('闭合的 %s 显示代码区域，光标进入不展开整块，切换模式保留原始字节', fence => {
     const original = `${fence}unknown title=x\r\n\t**中文**  \n# 字面\r\n${fence}\n尾`;
     const { view, read } = editor(original);
     expect(view.contentDOM.querySelectorAll('.cm-inkpot-code')).toHaveLength(4);
-    expect(view.contentDOM.querySelector('.cm-inkpot-code-language')?.textContent).toBe('unknown title=x');
+    expect(languageSelect(view).selectedOptions[0].textContent).toBe('unknown title=x');
     expect(view.contentDOM.textContent).not.toContain(fence);
     view.dispatch({ selection: { anchor: view.state.doc.line(2).from + 3 } });
     expect(view.contentDOM.querySelector('.cm-inkpot-code-language')).not.toBeNull();
@@ -51,17 +109,17 @@ describe('Inkpot 代码块', () => {
     expect(read()).toBe(original);
   });
 
-  test('点击语言仅展开首行，修改后回车回到代码，撤销保留正文与行尾', () => {
+  test('选择自定义仅展开首行，修改后回车回到代码，撤销保留正文与行尾', () => {
     const original = '```old title=x\r\n\t代码\n```';
     const { view, read, press } = editor(original);
-    view.contentDOM.querySelector<HTMLButtonElement>('.cm-inkpot-code-language')?.click();
+    selectLanguage(view, '__custom__');
     expect(view.state.sliceDoc(view.state.selection.main.from, view.state.selection.main.to)).toBe('old title=x');
     expect(view.contentDOM.querySelector('.cm-inkpot-code-language')).toBeNull();
     expect(view.contentDOM.querySelectorAll('.cm-inkpot-code')).toHaveLength(3);
     view.dispatch({ ...view.state.replaceSelection('new title=x'), userEvent: 'input.type' });
     press('Enter');
     expect(view.state.selection.main.head).toBe(view.state.doc.line(2).from);
-    expect(view.contentDOM.querySelector('.cm-inkpot-code-language')?.textContent).toBe('new title=x');
+    expect(languageSelect(view).selectedOptions[0].textContent).toBe('new title=x');
     expect(read()).toBe('```new title=x\r\n\t代码\n```');
     undo(view);
     expect(read()).toBe(original);
@@ -70,21 +128,21 @@ describe('Inkpot 代码块', () => {
   test.each(['Enter', 'Escape'])('语言仍处于选中状态时按 %s 返回代码，不替换或删除语言', key => {
     const original = '```python\n代码\n```';
     const { view, read, press } = editor(original);
-    view.contentDOM.querySelector<HTMLButtonElement>('.cm-inkpot-code-language')?.click();
+    selectLanguage(view, '__custom__');
     press(key);
     expect(read()).toBe(original);
     expect(view.state.selection.main.head).toBe(view.state.doc.line(2).from);
-    expect(view.contentDOM.querySelector('.cm-inkpot-code-language')?.textContent).toBe('python');
+    expect(languageSelect(view).selectedOptions[0].textContent).toBe('Python');
     expect(undoDepth(view.state)).toBe(0);
   });
 
   test('没有正文行的空代码块退出语言编辑时不自动插入空行', () => {
     const original = '```js\n```';
     const { view, read, press } = editor(original);
-    view.contentDOM.querySelector<HTMLButtonElement>('.cm-inkpot-code-language')?.click();
+    selectLanguage(view, '__custom__');
     press('Escape');
     expect(read()).toBe(original);
-    expect(view.contentDOM.querySelector('.cm-inkpot-code-language')?.textContent).toBe('js');
+    expect(languageSelect(view).selectedOptions[0].textContent).toBe('JavaScript');
     expect(undoDepth(view.state)).toBe(0);
   });
 

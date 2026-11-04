@@ -271,26 +271,29 @@ extension DocumentTests {
     _ = NSApplication.shared
     let document = InkpotDocument()
     defer { document.close() }
-    let original = "\u{FEFF}```js\r\n\t原文  \n```\r尾"
+    let original = "\u{FEFF}```js\r\n\treturn 1  \n```\r尾"
     try document.read(from: Data(original.utf8), ofType: "net.daringfireball.markdown")
     let editor = document.makeEditor()
     let webView = try XCTUnwrap(editor.view as? WKWebView)
     try await waitUntil { editor.isReady }
     let rendered = try await webView.evaluateQueued("""
-      document.querySelector('.cm-inkpot-code-language')?.textContent === 'js' &&
+      document.querySelector('.cm-inkpot-code-language')?.value === 'javascript' &&
       !document.querySelector('.cm-content').textContent.includes('```') &&
       getComputedStyle(document.querySelectorAll('.cm-inkpot-code')[1]).fontFamily.includes('Menlo')
       """) as? Bool
     XCTAssertTrue(try XCTUnwrap(rendered))
     _ = try await webView.evaluateQueued("""
-      document.querySelector('.cm-inkpot-code-language').click();
-      document.execCommand('insertText', false, 'python');
-      document.querySelector('.cm-content').dispatchEvent(new KeyboardEvent('keydown', {key: 'Enter', keyCode: 13, bubbles: true, cancelable: true})); null
+      const select = document.querySelector('.cm-inkpot-code-language');
+      select.value = 'python';
+      select.dispatchEvent(new Event('change', {bubbles: true})); null
       """)
     let changed = try await editor.snapshot()
-    XCTAssertEqual(changed.text, "```python\r\n\t原文  \n```\r尾")
-    let labelUpdated = try await webView.evaluateQueued("document.querySelector('.cm-inkpot-code-language')?.textContent === 'python'") as? Bool
+    XCTAssertEqual(changed.text, "```python\r\n\treturn 1  \n```\r尾")
+    let labelUpdated = try await webView.evaluateQueued("document.querySelector('.cm-inkpot-code-language')?.value === 'python'") as? Bool
     XCTAssertTrue(try XCTUnwrap(labelUpdated))
+    try await waitUntil {
+      try await webView.evaluateQueued("document.querySelector('.cm-inkpot-token-keyword')?.textContent === 'return'") as? Bool == true
+    }
     editor.undo(nil)
     try await waitUntil { editor.latestRevision > changed.revision }
     try await document.synchronize()

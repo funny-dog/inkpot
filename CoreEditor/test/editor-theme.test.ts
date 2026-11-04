@@ -100,6 +100,9 @@ describe('Inkpot 外观', () => {
       swatch.style.backgroundColor = palette.background;
       expect(getComputedStyle(view.dom).backgroundColor).toBe(swatch.style.backgroundColor);
       expect(view.state.facet(EditorView.darkTheme)).toBe(effectiveDark);
+      const language = view.dom.querySelector('select.cm-inkpot-code-language');
+      if (language === null) throw new Error('缺少代码语言选择器');
+      expect(getComputedStyle(language).colorScheme).toBe(effectiveDark ? 'dark' : 'light');
       expect(view.dom.dataset.theme).toBe(name);
       expect(document.documentElement.style.getPropertyValue('--inkpot-theme-background')).toBe(palette.background);
       expect(view.state.selection.main.head).toBe(4);
@@ -168,7 +171,7 @@ describe('Inkpot 外观', () => {
     expect(view.dom.querySelector('.cm-inkpot-table table')).not.toBeNull();
     expect(view.dom.querySelectorAll('.cm-inkpot-table th')).toHaveLength(2);
     expect(view.dom.querySelector('.cm-inkpot-code')).not.toBeNull();
-    expect(view.dom.querySelector('.cm-inkpot-code-language')?.textContent).toBe('js');
+    expect(view.dom.querySelector<HTMLSelectElement>('.cm-inkpot-code-language')?.value).toBe('javascript');
     expect(view.dom.querySelector('.cm-inkpot-inline-code')).not.toBeNull();
     expect(view.dom.querySelector('.cm-inkpot-math.fake-katex')).not.toBeNull();
     expect(view.dom.querySelector('.cm-inkpot-quote')).not.toBeNull();

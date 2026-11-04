@@ -92,6 +92,23 @@ describe('Inkpot 代码块语法着色', () => {
     expect(tokens(view, 'keyword')).not.toContain('const');
   });
 
+  test('下拉选择语言后加载着色，切回纯文本移除着色', async () => {
+    const original = '```\r\ndef hello():\r\n    return 1\r\n```';
+    const { view, read } = editor(original);
+    const select = view.contentDOM.querySelector<HTMLSelectElement>('select.cm-inkpot-code-language');
+    if (select === null) throw new Error('缺少代码语言选择器');
+    select.value = 'python';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await highlighted(view);
+    expect(tokens(view, 'keyword')).toEqual(expect.arrayContaining(['def', 'return']));
+    const plain = view.contentDOM.querySelector<HTMLSelectElement>('select.cm-inkpot-code-language');
+    if (plain === null) throw new Error('缺少代码语言选择器');
+    plain.value = '';
+    plain.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(tokens(view, 'keyword')).toEqual([]);
+    expect(read()).toBe(original);
+  });
+
   test('代码块中的 Markdown 只着色，不触发列表续写，也不进入大纲层级', async () => {
     const text = '```markdown\n# 标题\n- 项目\n```';
     const { view } = editor(text, text.indexOf('项目') + 2);

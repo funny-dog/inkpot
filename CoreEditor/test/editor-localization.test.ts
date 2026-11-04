@@ -24,6 +24,19 @@ function editor(text: string) {
 
 describe('编辑器双语界面', () => {
   test.each([
+    ['zh-Hans', '代码语言', '纯文本', '自定义…'],
+    ['en', 'Code language', 'Plain Text', 'Custom…'],
+  ])('%s 的代码语言下拉框使用对应界面语言', (language, label, plain, custom) => {
+    setEditorLanguage(language);
+    const view = editor('```\n代码\n```');
+    const select = view.dom.querySelector<HTMLSelectElement>('select.cm-inkpot-code-language');
+    expect(select?.getAttribute('aria-label')).toBe(label);
+    expect(select?.options[0].text).toBe(plain);
+    expect(select?.options[select.options.length - 1].text).toBe(custom);
+    expect(view.state.doc.toString()).toBe('```\n代码\n```');
+  });
+
+  test.each([
     ['zh-Hans', '开始写作…', '查找文本', '完成', 'Markdown 表格', '第 1 行，第 1 列'],
     ['en', 'Start writing…', 'Find', 'Done', 'Markdown table', 'Row 1, column 1'],
   ])('%s 的查找栏和表格无障碍文案', (language, placeholder, find, done, table, cell) => {
