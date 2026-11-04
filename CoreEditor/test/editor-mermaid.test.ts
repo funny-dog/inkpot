@@ -44,7 +44,7 @@ describe('Inkpot Mermaid', () => {
       view.dom.querySelector('.cm-inkpot-mermaid')?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
       const button = view.dom.querySelector<HTMLButtonElement>('.cm-inkpot-mermaid-show');
       expect(button?.textContent).toBe('显示 Mermaid 图');
-      expect(view.dom.querySelector('.cm-inkpot-code-language')?.textContent).toBe('mermaid');
+      expect(view.dom.querySelector<HTMLSelectElement>('.cm-inkpot-code-language')?.value).toBe('mermaid');
       button?.click();
       await flushed();
       expect(view.dom.querySelector('.cm-inkpot-mermaid svg')).not.toBeNull();

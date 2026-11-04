@@ -1,4 +1,4 @@
-import { syntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { EditorSelection, EditorState, Text, Transaction } from '@codemirror/state';
 import { SyntaxNode, Tree } from '@lezer/common';
 import { blockMathTagName } from './math-parser';
@@ -15,7 +15,7 @@ export interface TopBlocks {
 const cache = new WeakMap<Tree, { doc: Text; blocks: TopBlocks }>();
 
 export function topBlocks(state: EditorState): TopBlocks {
-  const tree = syntaxTree(state);
+  const tree = ensureSyntaxTree(state, state.doc.length, 10) ?? syntaxTree(state);
   const cached = cache.get(tree);
   if (cached?.doc === state.doc) return cached.blocks;
   const blocks: TopBlocks = { math: [], toc: [], mermaid: [], table: [] };
