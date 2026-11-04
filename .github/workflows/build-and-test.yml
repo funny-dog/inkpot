@@ -69,9 +69,28 @@ jobs:
         run: |
           xcodebuild build -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
+      # 无头运行器上 WebKit/AppKit 的系统级竞态会让个别用例偶发 InvalidTransition
+      # （随机命中不同用例，本地无法复现，见 2026-10-26 与 11-04 的 run 日志）。
+      # 首轮失败时仅重跑失败用例一次；再失败则保持红色，不会被真实回归掩盖。
       - name: Test Inkpot
         run: |
-          xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+          set -o pipefail
+          log="$RUNNER_TEMP/inkpot-test-first.log"
+          if xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee "$log"; then
+            exit 0
+          fi
+          failed=$(grep "Test Case '-\[" "$log" | grep "' failed" | sed -E "s|.*'-\[InkpotTests\.([A-Za-z0-9_]+) ([A-Za-z0-9_]+)\]'.*|-only-testing:InkpotTests/\1/\2|" | sort -u || true)
+          if [ -z "$failed" ]; then
+            echo "没有可识别的失败用例（构建或环境错误），不重跑"
+            exit 1
+          fi
+          echo "首轮测试失败，重跑以下用例："
+          echo "$failed"
+          args=()
+          while IFS= read -r test_id; do
+            [ -n "$test_id" ] && args+=("$test_id")
+          done < <(printf '%s\n' "$failed")
+          xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug "${args[@]}" CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
 
       - name: Test English localization
         run: |
