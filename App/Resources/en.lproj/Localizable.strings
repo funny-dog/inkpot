@@ -1,3 +1,5 @@
+"主题包含字体与排版，手动选择的字体优先。Dracula 固定使用深色外观。" = "Themes include fonts and layout; your custom fonts take priority. Dracula always uses dark appearance.";
+"主题默认" = "Theme Default";
 "Inkpot" = "Inkpot";
 "设置…" = "Settings…";
 "检查更新…" = "Check for Updates…";
@@ -289,3 +291,5 @@
 "正在检查更新…" = "Checking for updates…";
 "正在下载新版本 %@…" = "Downloading update %@…";
 "自动更新失败：%@" = "Automatic update failed: %@";
+"编辑器主题" = "Editor theme";
+"Inkpot 默认" = "Inkpot Default";

@@ -174,11 +174,11 @@ export const liveEditing = [
   ]),
   EditorView.editorAttributes.of(view => ({ class: view.state.field(sourceMode) ? 'cm-inkpot-source' : 'cm-inkpot-live' })),
   EditorView.theme({
-    '&.cm-inkpot-live .cm-scroller': { fontFamily: 'var(--inkpot-body-font, system-ui, sans-serif)', fontSize: 'var(--inkpot-body-size, 15px)' },
+    '&.cm-inkpot-live .cm-scroller': { fontFamily: 'var(--inkpot-body-font, var(--inkpot-theme-body-font, system-ui, sans-serif))', fontSize: 'var(--inkpot-body-size, 15px)' },
     '.cm-inkpot-hidden-inline, .cm-inkpot-hidden-inline *': { fontSize: '0 !important' },
     '.cm-inkpot-image': { display: 'inline-block', maxWidth: '100%', verticalAlign: 'middle', margin: '6px 0' },
     '.cm-inkpot-image img': { display: 'block', maxWidth: '100%', maxHeight: '420px', objectFit: 'contain' },
-    '.cm-inkpot-inline-code': { fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', backgroundColor: '#f1f1f4', borderRadius: '4px' },
+    '.cm-inkpot-inline-code': { fontFamily: 'var(--inkpot-code-font, var(--inkpot-theme-code-font, Menlo, monospace))', fontSize: 'var(--inkpot-code-size, 15px)', backgroundColor: '#f1f1f4', borderRadius: '4px' },
     '.cm-inkpot-link': { color: '#2b5a8c', textDecoration: 'underline', textUnderlineOffset: '3px', cursor: 'text' },
     '.cm-inkpot-rule': { display: 'inline-block', width: '100%', borderTop: '1px solid #d2d2d7', verticalAlign: 'middle' },
     '.cm-inkpot-setext-mark': { height: '0', minHeight: '0', lineHeight: '0', paddingTop: '0', paddingBottom: '0' },

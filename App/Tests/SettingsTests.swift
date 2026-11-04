@@ -70,6 +70,22 @@ final class SettingsTests: XCTestCase {
     XCTAssertTrue(AppSettings(defaults: defaults).restorePreviousSession)
   }
 
+  func testThemePreferencePersistsAndUnknownNamesUseDefault() {
+    let settings = AppSettings(defaults: defaults)
+    defer { AppSettings.shared.applyAppearance() }
+    XCTAssertEqual(settings.theme, .default)
+    settings.theme = .lapis
+    XCTAssertEqual(AppSettings(defaults: defaults).theme, .lapis)
+    settings.appearanceMode = .light
+    settings.theme = .dracula
+    XCTAssertEqual(NSApp.appearance?.name, .darkAqua)
+    settings.theme = .notion
+    XCTAssertEqual(NSApp.appearance?.name, .aqua)
+    defaults.set("unknown", forKey: "appearance.theme")
+    XCTAssertEqual(settings.theme, .default)
+    XCTAssertEqual(EditorTheme.allCases.map(\.rawValue), ["default", "lapis", "ursine", "notion", "pie", "drake", "phycat", "dracula"])
+  }
+
   func testPairingAndImagePreferencesPersistWithSafeDefaults() {
     let settings = AppSettings(defaults: defaults)
     XCTAssertTrue(settings.pairBrackets)

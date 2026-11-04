@@ -8,7 +8,8 @@ export function applyFonts(view: EditorView, fonts: EditorFonts) {
     const family = fonts[`${kind}Family`];
     const size = fonts[`${kind}Size`];
     const fallback = kind === 'body' ? 'system-ui, sans-serif' : 'Menlo, monospace';
-    view.dom.style.setProperty(`--inkpot-${kind}-font`, family === '' ? fallback : `${JSON.stringify(family)}, ${fallback}`);
+    if (family === '') view.dom.style.removeProperty(`--inkpot-${kind}-font`);
+    else view.dom.style.setProperty(`--inkpot-${kind}-font`, `${JSON.stringify(family)}, ${fallback}`);
     view.dom.style.setProperty(`--inkpot-${kind}-size`, `${Number.isFinite(size) && size >= 8 && size <= 72 ? size : 15}px`);
   }
   view.requestMeasure();

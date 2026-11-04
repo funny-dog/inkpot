@@ -17,7 +17,9 @@ final class EditorFonts: NSObject {
     let storedSize = defaults.double(forKey: prefix + "Size")
     let size = storedSize.isFinite && (8...72).contains(storedSize) ? storedSize : 15
     if let name = defaults.string(forKey: prefix + "Name"), let font = NSFont(name: name, size: size) { return font }
-    return code ? NSFont(name: "Menlo", size: size) ?? .monospacedSystemFont(ofSize: size, weight: .regular) : .systemFont(ofSize: size)
+    let family = code ? AppSettings.shared.theme.codeFontFamily : AppSettings.shared.theme.bodyFontFamily
+    if let family, let font = NSFontManager.shared.font(withFamily: family, traits: [], weight: 5, size: size) { return font }
+    return code ? .monospacedSystemFont(ofSize: size, weight: .regular) : .systemFont(ofSize: size)
   }
 
   func setFont(_ font: NSFont, code: Bool) {
@@ -32,15 +34,15 @@ final class EditorFonts: NSObject {
     let body = font(code: false)
     let code = font(code: true)
     let values: [String: Any] = [
-      "bodyFamily": body.familyName == NSFont.systemFont(ofSize: 15).familyName ? "" : body.familyName ?? body.fontName,
-      "bodySize": body.pointSize, "codeFamily": code.familyName ?? code.fontName, "codeSize": code.pointSize,
+      "bodyFamily": family(code: false) ?? "",
+      "bodySize": body.pointSize, "codeFamily": family(code: true) ?? "", "codeSize": code.pointSize,
     ]
     let data = try JSONSerialization.data(withJSONObject: values)
     guard let json = String(data: data, encoding: .utf8) else { throw CocoaError(.fileReadInapplicableStringEncoding) }
     return "window.inkpot.setFonts(\(json))"
   }
 
-  /// 已保存的字体家族；nil 表示默认（正文为系统字体，代码为 Menlo）。
+  /// 已保存的自定义字体家族；nil 表示跟随主题默认字体。
   func family(code: Bool) -> String? {
     guard let name = defaults.string(forKey: (code ? "editor.codeFont" : "editor.bodyFont") + "Name"),
           NSFont(name: name, size: 13) != nil else { return nil }

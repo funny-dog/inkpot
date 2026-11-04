@@ -29,12 +29,12 @@ test('正文与代码字体独立更新，切换模式保留字体、原文和�
   expect(undoDepth(view.state)).toBe(0);
 });
 
-test('空字体名使用系统回退，无效字号回退到默认值', () => {
+test('空字体名移除用户覆盖以跟随主题，无效字号回退到默认值', () => {
   const view = new EditorView({ parent: document.body });
   views.push(view);
   applyFonts(view, { bodyFamily: '', bodySize: NaN, codeFamily: '', codeSize: 1000 });
-  expect(view.dom.style.getPropertyValue('--inkpot-body-font')).toBe('system-ui, sans-serif');
-  expect(view.dom.style.getPropertyValue('--inkpot-code-font')).toBe('Menlo, monospace');
+  expect(view.dom.style.getPropertyValue('--inkpot-body-font')).toBe('');
+  expect(view.dom.style.getPropertyValue('--inkpot-code-font')).toBe('');
   expect(view.dom.style.getPropertyValue('--inkpot-body-size')).toBe('15px');
   expect(view.dom.style.getPropertyValue('--inkpot-code-size')).toBe('15px');
 });

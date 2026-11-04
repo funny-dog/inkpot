@@ -318,6 +318,7 @@ for (const pkg of packages) {
 }
 lines.push('');
 
+lines.push(readTextFile(join(coreDir, 'themes', 'NOTICES.md')).trimEnd());
 const content = `${lines.join('\n')}\n`;
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, content);

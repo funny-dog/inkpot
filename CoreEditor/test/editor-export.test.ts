@@ -8,6 +8,8 @@ import { liveEditing, toggleSourceMode } from '../editor/live';
 import { documentHTML } from '../editor/export';
 import { useKatexForTests } from '../editor/math';
 import { assetBase, imageBase, configureResources } from '../editor/bridge';
+import { applyAppearance, appearanceExtensionsFor } from '../editor/theme';
+import { documentTheme } from '../editor/document-theme';
 
 useKatexForTests({
   render(tex, element) {
@@ -22,12 +24,15 @@ afterEach(() => {
   for (const view of views.splice(0)) view.destroy();
   globalThis.fetch = originalFetch;
   configureResources(defaultResources);
+  document.documentElement.classList.remove('inkpot-dark');
+  document.documentElement.style.removeProperty('--inkpot-theme-background');
+  document.documentElement.style.removeProperty('--inkpot-theme-text');
 });
 
 function editor(text: string) {
   const source = sourceDocument(text);
   const view = new EditorView({ parent: document.body, state: EditorState.create({ doc: source.doc,
-    extensions: [...source.extensions, ...writingExtensions, ...liveEditing, history()],
+    extensions: [...source.extensions, ...writingExtensions, ...liveEditing, ...appearanceExtensionsFor(false), history()],
   }) });
   views.push(view);
   return { view, read: () => source.read(view.state) };
@@ -46,6 +51,28 @@ async function flushed() {
 }
 
 describe('Inkpot 导出', () => {
+  test.each(['lapis', 'dracula'])('主题 %s 导出固定浅色，完成或失败都恢复主题与编辑状态', async name => {
+    const { view, read } = editor('# 标题\r\n\r\n正文 `code`');
+    view.dispatch({ selection: { anchor: 5 } });
+    toggleSourceMode(view);
+    applyAppearance(view, name === 'dracula', name);
+    const html = await documentHTML(view);
+    expect(html).toContain('background: #fff');
+    expect(view.state.facet(documentTheme)).toBe(name);
+    expect(view.state.facet(EditorView.darkTheme)).toBe(name === 'dracula');
+    expect(view.dom.matches('.cm-inkpot-source')).toBe(true);
+    expect(view.state.selection.main.head).toBe(5);
+    const cloneNode = jest.spyOn(view.contentDOM, 'cloneNode').mockImplementation(() => { throw new Error('模拟导出失败'); });
+    await expect(documentHTML(view)).rejects.toThrow('模拟导出失败');
+    cloneNode.mockRestore();
+    expect(view.state.facet(documentTheme)).toBe(name);
+    expect(view.state.facet(EditorView.darkTheme)).toBe(name === 'dracula');
+    expect(view.dom.matches('.cm-inkpot-source')).toBe(true);
+    expect(view.state.selection.main.head).toBe(5);
+    expect(read()).toBe('# 标题\r\n\r\n正文 `code`');
+    expect(undoDepth(view.state)).toBe(0);
+  });
+
   test('导出读取配置后的图片入口和 PDF 样式，拒绝入口外的图片', async () => {
     configureResources({ assetBase: 'https://editor.inkpot.local/math/', imageBase: 'https://images.inkpot.local/local/' });
     const loader = jest.fn<typeof fetch>().mockResolvedValue({ ok: true, blob: async () => new Blob(['png'], { type: 'image/png' }) } as Response);

@@ -6,7 +6,7 @@
   <!-- Windows 宿主把编辑器目录映射为 editor.inkpot.local，需允许按需加载其中的脚本、样式与字体。 -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' inkpot-asset: https://editor.inkpot.local; style-src 'unsafe-inline' inkpot-asset: https://editor.inkpot.local; font-src inkpot-asset: https://editor.inkpot.local; img-src inkpot-image: https://images.inkpot.local; connect-src inkpot-image: https://images.inkpot.local">
   <title>Inkpot</title>
-  <style>html,body{height:100%;margin:0;background:#fff;color:#1d1d1f}html.inkpot-dark{color-scheme:dark}html.inkpot-dark,html.inkpot-dark body{background:#1e1f22;color:#dfe1e5}</style>
+  <style>html,body{height:100%;margin:0;background:var(--inkpot-theme-background,#fff);color:var(--inkpot-theme-text,#1d1d1f)}html.inkpot-dark{color-scheme:dark}html.inkpot-dark,html.inkpot-dark body{background:var(--inkpot-theme-background,#1e1f22);color:var(--inkpot-theme-text,#dfe1e5)}</style>
 </head>
 <body><script type="module" src="./editor.ts"></script></body>
 </html>

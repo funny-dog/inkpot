@@ -70,6 +70,7 @@ export interface InkpotAPI {
   snapshot: () => { text: string; revision: number };
   command: (name: string) => void;
   setAppearance: (dark: boolean) => void;
+  setTheme: (name: string) => void;
   setDisplayModes: (modes: { focus?: boolean; typewriter?: boolean }) => void;
   setFonts: (fonts: EditorFonts) => void;
   setEditingPreferences: (preferences: PairingPreferences & { remoteImages: boolean; indent?: number }) => void;

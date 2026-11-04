@@ -278,7 +278,7 @@ export const codeBindings: KeyBinding[] = [
 ];
 
 export const codeTheme = EditorView.theme({
-  '.cm-inkpot-code': { backgroundColor: '#f6f6f8', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', color: '#2c2c30', paddingLeft: '12px', paddingRight: '12px' },
+  '.cm-inkpot-code': { backgroundColor: '#f6f6f8', fontFamily: 'var(--inkpot-code-font, var(--inkpot-theme-code-font, Menlo, monospace))', fontSize: 'var(--inkpot-code-size, 15px)', color: '#2c2c30', paddingLeft: '12px', paddingRight: '12px' },
   '.cm-inkpot-code-header': { borderTopLeftRadius: '6px', borderTopRightRadius: '6px', paddingTop: '6px', fontSize: '13px' },
   '.cm-inkpot-code-footer': { height: '6px', minHeight: '0', lineHeight: '0', fontSize: '0', borderBottomLeftRadius: '6px', borderBottomRightRadius: '6px' },
   '.cm-inkpot-code-language': { appearance: 'none', border: '0', backgroundColor: 'transparent', color: '#6e6e73', font: 'inherit', padding: '0 0 4px', cursor: 'pointer' },

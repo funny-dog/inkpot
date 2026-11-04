@@ -47,6 +47,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     NotificationCenter.default.addObserver(self, selector: #selector(updateDisplayModes), name: DisplayModes.didChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateEditingPreferences), name: AppSettings.editingDidChange, object: nil)
     NotificationCenter.default.addObserver(self, selector: #selector(updateZoom), name: EditorZoom.didChange, object: nil)
+    NotificationCenter.default.addObserver(self, selector: #selector(updateTheme), name: AppSettings.themeDidChange, object: nil)
   }
 
   @available(*, unavailable)
@@ -121,7 +122,12 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
         // 设置中选择默认源码模式时，打开后立即切换；切换不改动文档与撤销历史。
         let mode = AppSettings.shared.defaultSourceMode ? "window.inkpot.command('toggleSourceMode'); " : ""
         imageHandler.allowRemoteImages = AppSettings.shared.loadRemoteImages
-        _ = try await evaluateScript("window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark), \(try encodedArgument(L10n.language))); \(try EditorFonts.shared.script()); \(try DisplayModes.shared.script()); \(try AppSettings.shared.editingScript()); \(mode)null")
+        let scripts = [
+          "window.inkpot.open(\(argument), \(documentGeneration), \(Appearance.isDark), \(try encodedArgument(L10n.language)))",
+          try EditorFonts.shared.script(), try DisplayModes.shared.script(), try AppSettings.shared.editingScript(),
+          AppSettings.shared.themeScript(), mode + "null",
+        ]
+        _ = try await evaluateScript(scripts.joined(separator: "; "))
         guard generation == documentGeneration else { return }
         isReady = true
         if let pendingFragment { self.pendingFragment = nil; navigateFragment(pendingFragment) }
@@ -296,6 +302,13 @@ extension EditorViewController {
     guard isReady else { return }
     Task { @MainActor in
       do { _ = try await evaluateScript(AppSettings.shared.editingScript() + "; null") } catch { presentError(error) }
+    }
+  }
+
+  @objc func updateTheme() {
+    guard isReady else { return }
+    Task { @MainActor in
+      do { _ = try await evaluateScript(AppSettings.shared.themeScript() + "; null") } catch { presentError(error) }
     }
   }
 

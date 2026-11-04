@@ -3,6 +3,7 @@ import { ensureSyntaxTree, syntaxParserRunning, syntaxTree } from '@codemirror/l
 import { EditorView } from '@codemirror/view';
 import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
 import { applyAppearance } from './theme';
+import { documentTheme } from './document-theme';
 import { loadDocumentLanguages } from './code-languages';
 import { assetBase, imageBase } from './bridge';
 
@@ -118,13 +119,14 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
   const wasSource = view.state.field(sourceMode);
   const selection = view.state.selection;
   const wasDark = view.dom.matches('.cm-inkpot-dark');
+  const theme = view.state.facet(documentTheme);
   let clone: HTMLElement;
   // shortcut: CodeMirror 尚无公开的全篇 DOM 导出接口，升级编辑器依赖时需复验内部打印布局。
   const printLayout = () => (view as unknown as { observer: { onPrint(event: Event): void } }).observer.onPrint(new Event('beforeprint'));
   const timer = setInterval(printLayout, 250);
   try {
     if (wasSource) toggleSourceMode(view);
-    if (wasDark) applyAppearance(view, false);
+    if (wasDark || theme !== 'default') applyAppearance(view, false, 'default');
     view.dispatch({ selection: { anchor: 0 }, effects: setPreviewExport.of(true) });
     printLayout();
     const deadline = Date.now() + 10000;
@@ -219,7 +221,7 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     clearInterval(timer);
     if (view.dom.isConnected) {
       view.dispatch({ effects: setPreviewExport.of(false), ...(view.state.doc === original ? { selection } : {}) });
-      if (wasDark) applyAppearance(view, true);
+      if (wasDark || theme !== 'default') applyAppearance(view, wasDark, theme);
       if (wasSource && !view.state.field(sourceMode)) toggleSourceMode(view);
     }
   }

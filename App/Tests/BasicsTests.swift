@@ -113,6 +113,9 @@ final class BasicsTests: XCTestCase {
     XCTAssertTrue(text.string.contains("Copyright (c) 2023 MarkEdit.app"))
     XCTAssertTrue(text.string.contains("EPL-2.0"))
     XCTAssertTrue(text.string.contains("Apache License"))
+    for name in ["Lapis", "Ursine", "Notion", "Pie", "Drake", "Phycat", "Dracula"] {
+      XCTAssertTrue(text.string.contains(name), name)
+    }
     XCTAssertThrowsError(try ThirdPartyNotices.makeWindow(bundle: Bundle(for: NSObject.self)))
   }
 

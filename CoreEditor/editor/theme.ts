@@ -4,6 +4,8 @@ import { EditorView, ViewPlugin } from '@codemirror/view';
 import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { highlightTag } from './gfm';
+import { documentTheme, documentThemeExtensions, validTheme } from './document-theme';
+import { themePalettes } from './theme-palettes';
 
 // 深色语法高亮：与 writing.ts 浅色版相同的 tag 集合，themeType 'dark' 使其只在深色主题激活时生效。
 const darkHighlightStyle = HighlightStyle.define([
@@ -85,6 +87,7 @@ const appearanceWatch = ViewPlugin.fromClass(class {
   private readonly listener: () => void;
 
   constructor(view: EditorView) {
+    syncPageAppearance(view);
     this.listener = () => { if (this.media !== null) applyAppearance(view, this.media.matches); };
     if (typeof matchMedia === 'function') {
       this.media = matchMedia('(prefers-color-scheme: dark)');
@@ -103,7 +106,21 @@ export function appearanceExtensionsFor(dark: boolean): Extension[] {
 }
 
 /** 跟随系统的深浅色外观切换：重配置编辑器外观，并同步页面根类供 body 背景切换。 */
-export function applyAppearance(view: EditorView, dark: boolean): void {
-  view.dispatch({ effects: appearanceCompartment.reconfigure(dark ? darkAppearance : []) });
+export function applyAppearance(view: EditorView, dark: boolean, theme = view.state.facet(documentTheme)): void {
+  theme = validTheme(theme);
+  dark ||= theme === 'dracula';
+  view.dispatch({ effects: appearanceCompartment.reconfigure([
+    ...(dark ? darkAppearance : []), documentTheme.of(theme), ...documentThemeExtensions(theme, dark),
+  ]) });
+  syncPageAppearance(view);
+}
+
+function syncPageAppearance(view: EditorView): void {
+  const dark = view.state.facet(EditorView.darkTheme);
   document.documentElement.classList.toggle('inkpot-dark', dark);
+  const palette = themePalettes[view.state.facet(documentTheme)]?.[dark ? 'dark' : 'light'];
+  for (const [property, value] of [['--inkpot-theme-background', palette?.background], ['--inkpot-theme-text', palette?.text]] as const) {
+    if (value === undefined) document.documentElement.style.removeProperty(property);
+    else document.documentElement.style.setProperty(property, value);
+  }
 }

@@ -4,6 +4,92 @@ import XCTest
 
 @MainActor
 final class AppearanceTests: XCTestCase {
+  func testThemeTypographyChangesAndCustomFontsCanBeCleared() async throws {
+    _ = NSApplication.shared
+    let settings = AppSettings.shared
+    let previousTheme = settings.theme
+    let previousMode = settings.appearanceMode
+    let keys = ["editor.bodyFontName", "editor.codeFontName"]
+    let saved = keys.map { UserDefaults.standard.object(forKey: $0) }
+    defer {
+      for (key, value) in zip(keys, saved) {
+        if let value { UserDefaults.standard.set(value, forKey: key) } else { UserDefaults.standard.removeObject(forKey: key) }
+      }
+      settings.theme = previousTheme
+      settings.appearanceMode = previousMode
+    }
+    EditorFonts.shared.setFamily(nil, code: false)
+    EditorFonts.shared.setFamily(nil, code: true)
+    settings.appearanceMode = .light
+    settings.theme = .lapis
+    let original = "# 标题\r\n\r\n## 小标题\r\n\r\n正文 `code`"
+    let (document, editor, _) = try await makeDocument(original)
+    defer { document.close() }
+    try await waitUntil {
+      try await editor.evaluateScript("getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Songti SC') && getComputedStyle(document.querySelector('.cm-inkpot-heading1')).textAlign === 'center'") as? Bool == true
+    }
+    settings.theme = .phycat
+    try await waitUntil {
+      try await editor.evaluateScript("getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Kaiti SC') && getComputedStyle(document.querySelector('.cm-inkpot-heading2')).borderRadius === '8px'") as? Bool == true
+    }
+    XCTAssertEqual(EditorFonts.shared.font(code: false).familyName, "Kaiti SC")
+    EditorFonts.shared.setFamily("Helvetica", code: false)
+    settings.theme = .lapis
+    try await waitUntil {
+      try await editor.evaluateScript("getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Helvetica') && !getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Songti SC')") as? Bool == true
+    }
+    EditorFonts.shared.setFamily(nil, code: false)
+    try await waitUntil {
+      try await editor.evaluateScript("getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Songti SC')") as? Bool == true
+    }
+    editor.performCommand("toggleSourceMode")
+    try await waitUntil {
+      try await editor.evaluateScript("document.querySelector('.cm-editor').classList.contains('cm-inkpot-source') && getComputedStyle(document.querySelector('.cm-scroller')).fontFamily.includes('Menlo')") as? Bool == true
+    }
+    try await document.synchronize()
+    XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
+    XCTAssertFalse(document.isDocumentEdited)
+  }
+
+  func testThemeChangesReachAllEditorsAndNewDocumentsWithoutChangingBytes() async throws {
+    _ = NSApplication.shared
+    let settings = AppSettings.shared
+    let previousTheme = settings.theme
+    let previousAppearance = settings.appearanceMode
+    defer { settings.theme = previousTheme; settings.appearanceMode = previousAppearance }
+    settings.theme = .default
+    settings.appearanceMode = .light
+    let original = "\u{FEFF}标题\r\n\r\n正文 `代码`"
+    let (first, editor, _) = try await makeDocument(original)
+    let (second, other, _) = try await makeDocument(original)
+    defer { first.close(); second.close() }
+    let colors: [EditorTheme: String] = [.lapis: "rgb(64, 70, 79)", .dracula: "rgb(248, 248, 242)", .notion: "rgb(55, 53, 47)", .default: "rgb(29, 29, 31)"]
+    for theme in [EditorTheme.lapis, .dracula, .notion, .default] {
+      settings.theme = theme
+      for controller in [editor, other] {
+        try await waitUntil {
+          try await controller.evaluateScript("(document.querySelector('.cm-editor').dataset.theme || 'default') === '\(theme.rawValue)' && document.querySelector('.cm-editor').classList.contains('cm-inkpot-dark') === \(theme == .dracula)") as? Bool == true
+        }
+        let color = try await controller.evaluateScript("getComputedStyle(document.querySelector('.cm-editor')).color") as? String
+        XCTAssertEqual(color, colors[theme])
+        let snapshot = try await controller.snapshot()
+        // BOM 由文档保存层保留，编辑器快照只包含正文。
+        XCTAssertEqual(snapshot.text, String(original.dropFirst()))
+        XCTAssertEqual(snapshot.revision, 0)
+      }
+    }
+    settings.theme = .pie
+    let (third, newest, _) = try await makeDocument(original)
+    defer { third.close() }
+    let theme = try await newest.evaluateScript("document.querySelector('.cm-editor').dataset.theme") as? String
+    XCTAssertEqual(theme, "pie")
+    for document in [first, second, third] {
+      try await document.synchronize()
+      XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
+      XCTAssertFalse(document.isDocumentEdited)
+    }
+  }
+
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
     let deadline = Date.now.addingTimeInterval(5)
     while !(try await condition()) {

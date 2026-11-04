@@ -21,6 +21,7 @@ enum AppearanceMode: String, CaseIterable {
 final class AppSettings: ObservableObject {
   static let shared = AppSettings()
   static let editingDidChange = Notification.Name("InkpotEditingPreferencesDidChange")
+  static let themeDidChange = Notification.Name("InkpotEditorThemeDidChange")
   nonisolated static let defaultImageFolder = "assets"
   private let defaults: UserDefaults
   private lazy var displayModes = DisplayModes(defaults: defaults)
@@ -97,7 +98,19 @@ final class AppSettings: ObservableObject {
     }
   }
 
-  func applyAppearance() { NSApp.appearance = appearanceMode.appearance }
+  var theme: EditorTheme {
+    get { defaults.string(forKey: "appearance.theme").flatMap(EditorTheme.init) ?? .default }
+    set {
+      objectWillChange.send()
+      defaults.set(newValue.rawValue, forKey: "appearance.theme")
+      applyAppearance()
+      NotificationCenter.default.post(name: Self.themeDidChange, object: self)
+    }
+  }
+
+  func applyAppearance() { NSApp.appearance = theme == .dracula ? NSAppearance(named: .darkAqua) : appearanceMode.appearance }
+
+  func themeScript() -> String { "window.inkpot.setTheme('\(theme.rawValue)'); window.inkpot.setAppearance(\(Appearance.isDark))" }
 
   /// 编辑后自动保存：只对已保存过的文档生效，默认关闭（手动保存加本地恢复草稿）。
   var autosave: Bool {
@@ -397,6 +410,9 @@ struct AppearanceSettingsView: View {
   var body: some View {
     Form {
       Section(L10n.text("外观")) {
+        Picker(L10n.text("编辑器主题"), selection: $settings.theme) {
+          ForEach(EditorTheme.allCases, id: \.self) { theme in Text(theme.title).tag(theme) }
+        }
         HStack(spacing: 12) {
           ForEach(AppearanceMode.allCases, id: \.self) { mode in
             AppearanceSwatch(mode: mode, selected: settings.appearanceMode == mode) { settings.appearanceMode = mode }
@@ -405,6 +421,8 @@ struct AppearanceSettingsView: View {
         .padding(.vertical, 4)
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.text("外观"))
+        .disabled(settings.theme == .dracula)
+        Caption(L10n.text("主题包含字体与排版，手动选择的字体优先。Dracula 固定使用深色外观。"))
       }
       Section {
         HStack {
@@ -419,8 +437,8 @@ struct AppearanceSettingsView: View {
         Caption(L10n.text("也可使用 显示 → 实际大小 ⌘0／放大 ⌘+／缩小 ⌘−，所有窗口同步。"))
       }
       Section {
-        FontRow(title: L10n.text("正文"), defaultTitle: L10n.text("系统默认"), families: EditorFonts.bodyFamilies, family: $settings.bodyFontFamily, size: $settings.bodyFontSize)
-        FontRow(title: L10n.text("代码"), defaultTitle: L10n.text("默认（Menlo）"), families: EditorFonts.codeFamilies, family: $settings.codeFontFamily, size: $settings.codeFontSize)
+        FontRow(title: L10n.text("正文"), defaultTitle: L10n.text("主题默认"), families: EditorFonts.bodyFamilies, family: $settings.bodyFontFamily, size: $settings.bodyFontSize)
+        FontRow(title: L10n.text("代码"), defaultTitle: L10n.text("主题默认"), families: EditorFonts.codeFamilies, family: $settings.codeFontFamily, size: $settings.codeFontSize)
         VStack(alignment: .leading, spacing: 6) {
           Text(L10n.text("落笔成文，墨在纸上。")).font(Font(EditorFonts.shared.font(code: false)))
           Text("let ink = \"Inkpot\"").font(Font(EditorFonts.shared.font(code: true))).foregroundStyle(.secondary)

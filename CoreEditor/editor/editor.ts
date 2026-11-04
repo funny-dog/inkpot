@@ -116,7 +116,7 @@ window.inkpot = {
           }),
           EditorView.theme({
             '&': { height: '100%' },
-            '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--inkpot-code-font, Menlo, monospace)', fontSize: 'var(--inkpot-code-size, 15px)', lineHeight: '1.75' },
+            '.cm-scroller': { overflow: 'auto', fontFamily: 'var(--inkpot-code-font, var(--inkpot-theme-code-font, Menlo, monospace))', fontSize: 'var(--inkpot-code-size, 15px)', lineHeight: '1.75' },
             // 正文限制在约 45 个汉字宽并居中；em 随正文/代码字号缩放，窄窗口时退回铺满。
             '.cm-content': { padding: '44px 48px', minHeight: '100%', maxWidth: 'calc(45em + 96px)', margin: '0 auto' },
             '&.cm-focused': { outline: 'none' },
@@ -205,6 +205,7 @@ window.inkpot = {
   },
   setSpellcheck(enabled) { view?.dispatch({ effects: spellcheck.reconfigure(EditorView.contentAttributes.of({ spellcheck: String(enabled) })) }); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
+  setTheme(name) { if (view !== undefined) applyAppearance(view, view.state.facet(EditorView.darkTheme), name); },
   setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {
     if (view === undefined) throw new Error(t('编辑器尚未就绪。'));
