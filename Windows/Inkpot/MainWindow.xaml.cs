@@ -72,7 +72,7 @@ public sealed partial class MainWindow : Window
                 {
                     if (tab.Path is { } path)
                     {
-                        try { await OpenPathAsync(path, false); }
+                        try { await OpenPathAsync(path, activate: false, reuseOtherWindow: false); }
                         catch (Exception error) when (error is IOException or UnauthorizedAccessException) { missing.Add(path); continue; }
                     }
                     else CreateDocument();
@@ -226,13 +226,14 @@ public sealed partial class MainWindow : Window
         return document;
     }
 
-    private async Task OpenPathAsync(string path, bool activate = true)
+    private async Task OpenPathAsync(string path, bool activate = true, bool reuseOtherWindow = true)
     {
         path = Path.GetFullPath(path);
         if (!FolderIndex.IsText(path) && !App.Preferences.AllFiles)
             throw new IOException(L10n.Text("UnsupportedFile"));
-        // 跨全部窗口查重：若已在其他窗口打开则激活该窗口并切到对应标签，避免打开后保存必报错。
-        foreach (var window in App.Windows)
+        // 正常打开时跨全部窗口查重；会话恢复阶段仅在当前窗口内查重，避免把恢复窗口的标签劫持到已有窗口。
+        IEnumerable<MainWindow> scope = reuseOtherWindow ? App.Windows : [this];
+        foreach (var window in scope)
         {
             var existing = window.documents.FirstOrDefault(document => string.Equals(document.Path, path, StringComparison.OrdinalIgnoreCase));
             if (existing is null) continue;
