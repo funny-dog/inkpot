@@ -172,7 +172,7 @@ public sealed partial class MainWindow
         report["sessionRestore"] = true;
 
         byte[] png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=");
-        await EditorSession.ValidateImageAsync(png);
+        await EditorSession.NormalizeBitmapAsync(png);
         byte[] bmp = Convert.FromHexString("424D3A0000000000000036000000280000000100000001000000010018000000000004000000130B0000130B00000000000000000000FF000000");
         if ((await EditorSession.NormalizeBitmapAsync(bmp)).Mime != "image/png") throw new IOException("位图未转成可携带的 PNG。");
         string imagePath = await ImageStorage.ImportAsync(png, document.Path, App.Preferences);
