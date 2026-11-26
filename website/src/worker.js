@@ -2,6 +2,7 @@
 
 const GITHUB_API = "https://api.github.com";
 const CACHE_TTL_SECONDS = 600;
+const ERROR_CACHE_TTL_SECONDS = 60;
 
 async function fetchLatestRelease(env) {
   const repo = env.GITHUB_REPO || "funny-dog/inkpot";
@@ -11,7 +12,6 @@ async function fetchLatestRelease(env) {
       Accept: "application/vnd.github+json",
     },
     signal: AbortSignal.timeout(5000),
-    cf: { cacheTtl: CACHE_TTL_SECONDS, cacheEverything: true },
   });
   if (!response.ok) {
     throw new Error(`GitHub API ${response.status}`);
@@ -23,12 +23,19 @@ function pickDownloadAsset(release) {
   const assets = release.assets || [];
   return (
     assets.find((asset) => /\.dmg$/i.test(asset.name)) ||
+    assets.find((asset) => /\.zip$/i.test(asset.name) && !/windows/i.test(asset.name)) ||
     assets.find((asset) => /\.zip$/i.test(asset.name))
   );
 }
 
+function pickWindowsAsset(release) {
+  const assets = release.assets || [];
+  return assets.find((asset) => /windows.*\.zip$/i.test(asset.name));
+}
+
 function releaseSummary(release) {
   const asset = pickDownloadAsset(release);
+  const windowsAsset = pickWindowsAsset(release);
   return {
     tag_name: release.tag_name,
     name: release.name,
@@ -37,47 +44,69 @@ function releaseSummary(release) {
     download_url: asset ? asset.browser_download_url : null,
     asset_name: asset ? asset.name : null,
     asset_size: asset ? asset.size : null,
+    windows_download_url: windowsAsset ? windowsAsset.browser_download_url : null,
+    windows_asset_size: windowsAsset ? windowsAsset.size : null,
   };
 }
 
-async function handleRelease(request, env) {
+function securityHeaders(extra = {}) {
+  return {
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    ...extra,
+  };
+}
+
+async function handleRelease(request, env, ctx) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response(null, { status: 405, headers: securityHeaders({ Allow: "GET, HEAD" }) });
+  }
   const cache = caches.default;
   const cacheKey = new Request(new URL("/__release-cache", request.url), { method: "GET" });
   const cached = await cache.match(cacheKey);
   if (cached) {
-    return cached;
+    return request.method === "HEAD" ? new Response(null, { status: cached.status, headers: cached.headers }) : cached;
   }
   try {
     const release = await fetchLatestRelease(env);
     const response = new Response(JSON.stringify(releaseSummary(release)), {
-      headers: {
+      headers: securityHeaders({
         "Content-Type": "application/json; charset=utf-8",
         "Cache-Control": `public, max-age=${CACHE_TTL_SECONDS}`,
-      },
+      }),
     });
-    await cache.put(cacheKey, response.clone());
-    return response;
-  } catch (error) {
-    return new Response(JSON.stringify({ error: String(error) }), {
+    const putPromise = cache.put(cacheKey, response.clone());
+    if (ctx && typeof ctx.waitUntil === "function") ctx.waitUntil(putPromise);
+    else await putPromise;
+    return request.method === "HEAD" ? new Response(null, { status: response.status, headers: response.headers }) : response;
+  } catch {
+    const errorResponse = new Response(JSON.stringify({ error: "Release information unavailable" }), {
       status: 502,
-      headers: { "Content-Type": "application/json; charset=utf-8" },
+      headers: securityHeaders({
+        "Content-Type": "application/json; charset=utf-8",
+        "Cache-Control": `public, max-age=${ERROR_CACHE_TTL_SECONDS}`,
+      }),
     });
+    return request.method === "HEAD" ? new Response(null, { status: 502, headers: errorResponse.headers }) : errorResponse;
   }
 }
 
-function handleDownload(env) {
+function handleDownload(request, env) {
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response(null, { status: 405, headers: securityHeaders({ Allow: "GET, HEAD" }) });
+  }
   const repo = env.GITHUB_REPO || "funny-dog/inkpot";
   return Response.redirect(`https://github.com/${repo}/releases/latest`, 302);
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     switch (url.pathname) {
       case "/api/release":
-        return handleRelease(request, env);
+        return handleRelease(request, env, ctx);
       case "/download":
-        return handleDownload(env);
+        return handleDownload(request, env);
       default:
         return env.ASSETS.fetch(request);
     }

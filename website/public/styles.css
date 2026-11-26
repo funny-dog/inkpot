@@ -1,6 +1,7 @@
 /* Inkpot 官网样式 —— 纸面 + 墨蓝主题 */
 
 :root {
+  color-scheme: light dark;
   --paper: #f6f4ee;
   --card: #fffefb;
   --text: #23272c;
@@ -9,7 +10,6 @@
   --ink-strong: #1a3757;
   --ink-soft: rgba(34, 69, 106, 0.08);
   --line: rgba(24, 40, 60, 0.12);
-  --dl-bg: #f6f4ee;
   --tok-kw: #a626a4;
   --tok-fn: #4078f2;
   --tok-str: #50a14f;
@@ -31,7 +31,6 @@
     --ink-strong: #b7d1ec;
     --ink-soft: rgba(143, 180, 220, 0.1);
     --line: rgba(233, 229, 218, 0.13);
-    --dl-bg: #0f151c;
     --tok-kw: #c678dd;
     --tok-fn: #61afef;
     --tok-str: #98c379;
@@ -42,6 +41,12 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+:where(a, button):focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
 
 html {
   background: var(--paper);
@@ -426,6 +431,14 @@ body {
   background:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2322456a' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 13 5 5L20 7'/%3E%3C/svg%3E") center/10px no-repeat,
     var(--ink-soft);
+}
+
+@media (prefers-color-scheme: dark) {
+  .doc__check {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238fb4dc' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 13 5 5L20 7'/%3E%3C/svg%3E") center/10px no-repeat,
+      var(--ink-soft);
+  }
 }
 
 .doc__math {

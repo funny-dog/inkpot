@@ -128,6 +128,8 @@ build_main() {
   hdiutil create -volname "Inkpot" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH"
 
   (cd "$STAGE_DIR" && zip -ry "$ZIP_PATH" Inkpot.app)
+  # 打包完成后立即清理临时 Inkpot.app 副本，不在构建目录残留多余应用包。
+  rm -rf "$STAGE_DIR"
   (cd "$PROJECT_DIR/build" && shasum -a 256 "Inkpot-v$VERSION.zip" > "Inkpot-v$VERSION.zip.sha256")
   # 与 zip 对等：DMG 也要有自己的 .sha256，供下载页与用户校验
   (cd "$PROJECT_DIR/build" && shasum -a 256 "Inkpot-$VERSION.dmg" > "Inkpot.dmg.sha256")

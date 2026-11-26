@@ -5,11 +5,13 @@
 
   // 导航栏滚动状态
   var nav = document.querySelector(".nav");
-  var onScroll = function () {
-    nav.classList.toggle("is-scrolled", window.scrollY > 8);
-  };
-  window.addEventListener("scroll", onScroll, { passive: true });
-  onScroll();
+  if (nav) {
+    var onScroll = function () {
+      nav.classList.toggle("is-scrolled", window.scrollY > 8);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+  }
 
   // 中英文切换：默认中文，可翻译元素用 data-en 携带英文文案，aria-label 用 data-en-label
   var languageButton = document.querySelector("#language");
@@ -48,12 +50,16 @@
     });
     var meta = i18nMeta[locale];
     document.title = meta.title;
-    document.querySelector('meta[name="description"]').content = meta.description;
-    document.querySelector('meta[property="og:title"]').content = meta.ogTitle;
-    document.querySelector('meta[property="og:description"]').content = meta.ogDescription;
-    languageButton.innerHTML = (english ? "中文" : "EN") + ' <span aria-hidden="true">↔</span>';
-    languageButton.setAttribute("aria-label", english ? "切换到中文" : "Switch to English");
-    if (brewCopy) brewCopy.textContent = english ? "Copy" : "复制";
+    var descMeta = document.querySelector('meta[name="description"]');
+    if (descMeta) descMeta.content = meta.description;
+    var ogTitleMeta = document.querySelector('meta[property="og:title"]');
+    if (ogTitleMeta) ogTitleMeta.content = meta.ogTitle;
+    var ogDescMeta = document.querySelector('meta[property="og:description"]');
+    if (ogDescMeta) ogDescMeta.content = meta.ogDescription;
+    if (languageButton) {
+      languageButton.innerHTML = (english ? "中文" : "EN") + ' <span aria-hidden="true">↔</span>';
+      languageButton.setAttribute("aria-label", english ? "切换到中文" : "Switch to English");
+    }
     // 切换后动态填充的版本号与日期会随 innerHTML 一起被替换，重新按当前语言填一遍
     if (lastRelease) applyRelease(lastRelease);
   }
@@ -123,8 +129,11 @@
   // 复制 Homebrew 安装命令
   var brewCopy = document.querySelector(".dl__copy");
   if (brewCopy) {
+    var copyTimer = null;
     var resetCopy = function () {
-      setTimeout(function () {
+      if (copyTimer) clearTimeout(copyTimer);
+      copyTimer = setTimeout(function () {
+        copyTimer = null;
         brewCopy.textContent = locale === "en" ? "Copy" : "复制";
         brewCopy.classList.remove("is-copied");
       }, 1600);
@@ -143,10 +152,8 @@
       document.body.appendChild(textarea);
       textarea.select();
       try {
-        if (document.execCommand("copy")) { markCopied(); } else { textarea.setSelectionRange(0, textarea.value.length); }
-      } catch (err) {
-        textarea.setSelectionRange(0, textarea.value.length);
-      }
+        if (document.execCommand("copy")) markCopied();
+      } catch (err) { /* ignore */ }
       document.body.removeChild(textarea);
     };
     brewCopy.addEventListener("click", function () {

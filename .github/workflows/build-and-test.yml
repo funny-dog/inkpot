@@ -71,7 +71,7 @@ jobs:
 
       # 无头运行器上 WebKit/AppKit 的系统级竞态会让个别用例偶发 InvalidTransition
       # （随机命中不同用例，本地无法复现，见 2026-10-26 与 11-04 的 run 日志）。
-      # 首轮失败时仅重跑失败用例一次；再失败则保持红色，不会被真实回归掩盖。
+      # 仅在首轮完整执行完所有测试且失败数量有限时，才定向重跑失败用例一次；中途崩溃中止或二次失败均保持红色。
       - name: Test Inkpot
         run: |
           set -o pipefail
@@ -79,9 +79,18 @@ jobs:
           if xcodebuild test -project App/Inkpot.xcodeproj -scheme Inkpot -destination 'platform=macOS' -derivedDataPath build/Debug CODE_SIGN_IDENTITY="" CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee "$log"; then
             exit 0
           fi
+          if ! grep -q "Test Suite 'All tests' failed" "$log"; then
+            echo "首轮测试未完整执行完毕（构建或进程崩溃），不重跑"
+            exit 1
+          fi
           failed=$(grep "Test Case '-\[" "$log" | grep "' failed" | sed -E "s|.*'-\[InkpotTests\.([A-Za-z0-9_]+) ([A-Za-z0-9_]+)\]'.*|-only-testing:InkpotTests/\1/\2|" | sort -u || true)
           if [ -z "$failed" ]; then
             echo "没有可识别的失败用例（构建或环境错误），不重跑"
+            exit 1
+          fi
+          failed_count=$(printf '%s\n' "$failed" | wc -l | tr -d ' ')
+          if [ "$failed_count" -gt 5 ]; then
+            echo "失败用例过多（${failed_count} 个），判定为真实回归，不重跑"
             exit 1
           fi
           echo "首轮测试失败，重跑以下用例："
@@ -108,6 +117,7 @@ jobs:
   windows:
     runs-on: windows-latest
     timeout-minutes: 20
+    if: github.event_name != 'pull_request' || (!github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository)
     steps:
       - uses: actions/checkout@v5
         with:
@@ -144,16 +154,28 @@ jobs:
       - name: Install shared Windows runtimes
         shell: pwsh
         run: |
+          function Download-WithRetry([string]$Url, [string]$OutFile) {
+            for ($attempt = 1; $attempt -le 3; $attempt++) {
+              try {
+                Invoke-WebRequest $Url -OutFile $OutFile
+                return
+              } catch {
+                if ($attempt -eq 3) { throw }
+                Start-Sleep -Seconds (3 * $attempt)
+              }
+            }
+          }
           $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
-          Invoke-WebRequest 'https://aka.ms/windowsappsdk/2.5/2.5.1/windowsappruntimeinstall-x64.exe' -OutFile $installer
+          Download-WithRetry 'https://aka.ms/windowsappsdk/2.5/2.5.1/windowsappruntimeinstall-x64.exe' $installer
           $signature = Get-AuthenticodeSignature $installer
           if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'Windows App Runtime installer signature is invalid.' }
           $install = Start-Process $installer -ArgumentList '--quiet' -Wait -PassThru
           if ($install.ExitCode -ne 0) { throw "Windows App Runtime install failed: $($install.ExitCode)" }
           if (!(Test-Path "${env:ProgramFiles(x86)}\Microsoft\EdgeWebView\Application")) {
             $webview = Join-Path $env:RUNNER_TEMP 'MicrosoftEdgeWebview2Setup.exe'
-            Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $webview
-            if ((Get-AuthenticodeSignature $webview).Status -ne 'Valid') { throw 'WebView2 installer signature is invalid.' }
+            Download-WithRetry 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' $webview
+            $wvSignature = Get-AuthenticodeSignature $webview
+            if ($wvSignature.Status -ne 'Valid' -or $wvSignature.SignerCertificate.Subject -notmatch 'Microsoft Corporation') { throw 'WebView2 installer signature is invalid.' }
             $install = Start-Process $webview -ArgumentList '/silent /install' -Wait -PassThru
             if ($install.ExitCode -ne 0) { throw "WebView2 install failed: $($install.ExitCode)" }
           }

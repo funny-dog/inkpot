@@ -106,7 +106,7 @@ check_ci_state() {
 check_new_version() {
   local new="$1" current
   current="$(current_version)"
-  [[ "$new" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "版本号格式应为 x.y.z，收到：$new"
+  [[ "$new" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || fail "版本号格式应为不含前导零的 x.y.z，收到：$new"
   [ "$new" != "$current" ] || fail "新版本号与当前版本相同（${current}）"
   if [ "$(printf '%s\n%s\n' "$current" "$new" | sort -V | tail -1)" != "$new" ]; then
     fail "新版本号 $new 必须大于当前版本 $current"
@@ -121,6 +121,12 @@ bump_version() {
     plist_set "$file" CFBundleShortVersionString "$new"
     plist_set "$file" CFBundleVersion "$next_build"
   done
+  if [ -f "Windows/Inkpot/Inkpot.csproj" ]; then
+    sed -i '' -E "s|<Version>[^<]+</Version>|<Version>${new}</Version>|" Windows/Inkpot/Inkpot.csproj
+  fi
+  if [ -f "Windows/Inkpot/app.manifest" ]; then
+    sed -i '' -E "s|version=\"[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\"|version=\"${new}.0\"|" Windows/Inkpot/app.manifest
+  fi
   check_versions_consistent
 }
 
@@ -174,7 +180,10 @@ main() {
   verify_assets "$VERSION_ARG"
 
   echo "=== 提交并打 tag ==="
-  git add "${PLISTS[@]}"
+  local version_files=("${PLISTS[@]}")
+  if [ -f "Windows/Inkpot/Inkpot.csproj" ]; then version_files+=("Windows/Inkpot/Inkpot.csproj"); fi
+  if [ -f "Windows/Inkpot/app.manifest" ]; then version_files+=("Windows/Inkpot/app.manifest"); fi
+  git add "${version_files[@]}"
   git commit -m "chore: 发布 v${VERSION_ARG}（构建号 $(current_build)）"
   git tag -a "v$VERSION_ARG" -m "v$VERSION_ARG"
 
