@@ -17,6 +17,7 @@ public sealed class Preferences
     public bool Typewriter { get; set; }
     public int Indent { get; set; } = 2;
     public string Appearance { get; set; } = "system";
+    public string Theme { get; set; } = "default";
     public string BodyFont { get; set; } = "";
     public string CodeFont { get; set; } = "";
     public double BodySize { get; set; } = 15;
@@ -41,6 +42,7 @@ public sealed class Preferences
     {
         Indent = Indent == 4 ? 4 : 2;
         Appearance = Appearance is "light" or "dark" ? Appearance : "system";
+        Theme = Theme is "default" or "lapis" or "ursine" or "notion" or "pie" or "drake" or "phycat" or "dracula" ? Theme : "default";
         BodySize = Clamp(BodySize, 8, 72, 15);
         CodeSize = Clamp(CodeSize, 8, 72, 15);
         Zoom = Clamp(Zoom, .5, 2, 1);
@@ -64,7 +66,7 @@ public sealed class Preferences
 
 public sealed record SavedTab(string? Path, string? Folder, bool Sidebar, string SidebarPage, double SidebarWidth);
 public sealed record SavedWindow(List<SavedTab> Tabs, int Selected, int X, int Y, int Width, int Height);
-public sealed record RecoveryDraft(string Id, string? Path, string Text, bool HasBom, FileBaseline? Baseline, DateTime Updated);
+public sealed record RecoveryDraft(string Id, string? Path, string Text, bool HasBom, FileBaseline? Baseline, DateTime Updated, string Encoding = "utf-8");
 
 // Keep application metadata separate from user documents. Replace files atomically and preserve corrupt
 // metadata for diagnosis instead of overwriting it during startup.
@@ -84,7 +86,8 @@ public sealed class AppState(string directory)
     public void RemoveDraft(string id)
     {
         string path = Path.Combine(DirectoryPath, "drafts", SafeId(id) + ".json");
-        if (Directory.Exists(Path.GetDirectoryName(path))) File.Delete(path);
+        try { if (Directory.Exists(Path.GetDirectoryName(path))) File.Delete(path); }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException) { }
     }
     public List<RecoveryDraft> LoadDrafts()
     {
@@ -99,7 +102,15 @@ public sealed class AppState(string directory)
         string path = Path.Combine(DirectoryPath, name);
         if (!File.Exists(path)) return default;
         try { return JsonSerializer.Deserialize(File.ReadAllText(path), type); }
-        catch (JsonException) { File.Copy(path, path + ".invalid-" + DateTime.UtcNow.Ticks, false); return default; }
+        catch (JsonException)
+        {
+            try { File.Copy(path, path + ".invalid-" + DateTime.UtcNow.Ticks, false); } catch { }
+            return default;
+        }
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+        {
+            return default;
+        }
     }
     private void Write<T>(string name, T value, System.Text.Json.Serialization.Metadata.JsonTypeInfo<T> type)
     {

@@ -80,7 +80,15 @@ public sealed class ParityStorageTests : IDisposable
         Assert.Equal(png, (await ImageStorage.ReadAsync(path, document, false)).Bytes);
         Assert.Throws<IOException>(() => ImageStorage.Mime("<svg onload='alert(1)'/>"u8));
         Assert.Throws<IOException>(() => ImageStorage.ResolveLocal("https://example.com/img.png", document));
+        Assert.Throws<IOException>(() => ImageStorage.ResolveLocal(@"\\attacker\share\img.png", document));
+        Assert.Throws<IOException>(() => ImageStorage.ResolveLocal(@"\\?\C:\Windows\win.ini", document));
+        Assert.Throws<IOException>(() => ImageStorage.ResolveLocal("//attacker/share/img.png", document));
+        Assert.Throws<IOException>(() => ImageStorage.ResolveLocal("file://attacker/share/img.png", document));
         await Assert.ThrowsAsync<IOException>(() => ImageStorage.ReadAsync("https://example.com/img.png", document, false));
+        await Assert.ThrowsAsync<IOException>(() => ImageStorage.ReadAsync("https://127.0.0.1/img.png", document, true));
+        await Assert.ThrowsAsync<IOException>(() => ImageStorage.ReadAsync("https://localhost/img.png", document, true));
+        await Assert.ThrowsAsync<IOException>(() => ImageStorage.ReadAsync("https://169.254.169.254/latest/meta-data", document, true));
+        await Assert.ThrowsAsync<IOException>(() => ImageStorage.ReadAsync("https://[::1]/img.png", document, true));
     }
     [Theory]
     [InlineData("v0.2.0", "0.1.9", true)]

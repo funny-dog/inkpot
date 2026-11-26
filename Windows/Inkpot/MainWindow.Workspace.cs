@@ -34,10 +34,11 @@ public sealed partial class MainWindow
         EmptyFilesTitle.Text = Text("NoFolder"); EmptyFilesMessage.Text = Text("NoFolderMessage");
         EmptyOutlineTitle.Text = Text("NoHeadings"); EmptyOutlineMessage.Text = Text("NoHeadingsMessage");
         foreach (var (control, name) in new (FrameworkElement, string)[] {
-            (FilesTree, "Files"), (OutlineList, "Outline"), (SearchButton, "Search"),
+            (FilesTree, "Files"), (OutlineList, "Outline"),
             (SidebarSwitcher, "SidebarContent"), (SidebarDivider, "ResizeSidebar"),
             (ModeLabel, "EditingMode"), (SaveLabel, "SaveStatus"), (StatisticsLabel, "WordCount") })
             AutomationProperties.SetName(control, Text(name));
+        AutomationProperties.SetName(SearchButton, T("搜索", "Search"));
         foreach (var (button, name, tip) in new (FrameworkElement, string, string)[] {
             (OpenFolderButton, "OpenFolder", "ChangeFolderTip"), (SidebarToggle, "Sidebar", "SidebarTip"),
             (FocusToggle, "FocusMode", "FocusTip"), (SourceToggle, "SourceMode", "SourceTip") })
@@ -71,10 +72,10 @@ public sealed partial class MainWindow
 
     internal async Task ApplyPreferencesAsync()
     {
-        Root.RequestedTheme = App.Preferences.Appearance switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
+        Root.RequestedTheme = EffectiveTheme;
         foreach (var document in documents)
             if (document.Editor is { } editor)
-            { await editor.SetAppearanceAsync(Dark); await editor.ApplyPreferencesAsync(App.Preferences); }
+            { await editor.ApplyPreferencesAsync(App.Preferences); await editor.SetAppearanceAsync(Dark); }
         RefreshSidebar(); RefreshStatus();
     }
     private void RememberFile(string path)
@@ -193,7 +194,15 @@ public sealed partial class MainWindow
     private async void ExpandFolder(TreeView sender, TreeViewExpandingEventArgs args)
     {
         if (!args.Node.HasUnrealizedChildren || args.Node.Content is not FolderEntry entry) return;
-        await LoadFolderAsync(entry.Path, args.Node.Children); args.Node.HasUnrealizedChildren = false;
+        try
+        {
+            await LoadFolderAsync(entry.Path, args.Node.Children);
+            args.Node.HasUnrealizedChildren = false;
+        }
+        catch (Exception error)
+        {
+            App.RecordFailure(error, "ExpandFolder");
+        }
     }
     private async void InvokeFile(TreeView sender, TreeViewItemInvokedEventArgs args)
     {
@@ -267,12 +276,32 @@ public sealed partial class MainWindow
         try
         {
             await Task.Delay(250, token); SearchStatus.Text = T("正在搜索…", "Searching…");
-            await Task.Run(() => FolderIndex.SearchAsync(folder, query, App.Preferences.HiddenFiles, match => DispatcherQueue.TryEnqueue(() =>
+            // 批量投递结果至 UI 线程，避免命中密集关键词时触发上千次独立调度造成掉帧。
+            var batch = new List<FolderMatch>(24);
+            void FlushBatch()
             {
-                if (token.IsCancellationRequested) return;
-                var item = new TextBlock { Text = $"{Path.GetRelativePath(folder, match.Path)}:{match.Line}\n{match.Preview}", TextWrapping = TextWrapping.Wrap, Tag = match, MaxWidth = 400 };
-                SearchResults.Items.Add(item);
-            }), token), token);
+                if (batch.Count == 0) return;
+                var items = batch.ToArray();
+                batch.Clear();
+                DispatcherQueue.TryEnqueue(() =>
+                {
+                    if (token.IsCancellationRequested) return;
+                    foreach (var match in items)
+                    {
+                        var item = new TextBlock { Text = $"{Path.GetRelativePath(folder, match.Path)}:{match.Line}\n{match.Preview}", TextWrapping = TextWrapping.Wrap, Tag = match, MaxWidth = 400 };
+                        SearchResults.Items.Add(item);
+                    }
+                });
+            }
+            await Task.Run(async () =>
+            {
+                await FolderIndex.SearchAsync(folder, query, App.Preferences.HiddenFiles, match =>
+                {
+                    batch.Add(match);
+                    if (batch.Count >= 24) FlushBatch();
+                }, token);
+                FlushBatch();
+            }, token);
             if (!token.IsCancellationRequested) SearchStatus.Text = T("搜索完成，最多显示 1000 处匹配。", "Search complete. Showing up to 1,000 matches.");
         }
         catch (OperationCanceledException) { }
@@ -327,7 +356,7 @@ public sealed partial class MainWindow
         var snapshot = await editor.SnapshotAsync();
         if (snapshot.Revision != document.DraftRevision)
         {
-            var draft = new RecoveryDraft(document.RecoveryId, document.Path, snapshot.Text, document.HasBom, document.Baseline, DateTime.UtcNow);
+            var draft = new RecoveryDraft(document.RecoveryId, document.Path, snapshot.Text, document.HasBom, document.Baseline, DateTime.UtcNow, document.Encoding);
             await Task.Run(() => App.Data.SaveDraft(draft)); document.DraftRevision = snapshot.Revision;
         }
         if (App.Preferences.Autosave && document.Path is not null && !document.AutosaveBlocked)
@@ -343,7 +372,7 @@ public sealed partial class MainWindow
         var list = new ListView { SelectionMode = ListViewSelectionMode.Multiple, MaxHeight = 380 };
         foreach (var draft in drafts)
             list.Items.Add(new TextBlock { Text = $"{draft.Path ?? Text("Untitled")}\n{draft.Updated.ToLocalTime():g} · {draft.Text.Length:N0}", Tag = draft, TextWrapping = TextWrapping.Wrap });
-        var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, Title = T("恢复未保存草稿", "Recover unsaved drafts"), Content = list,
+        var dialog = new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme, Title = T("恢复未保存草稿", "Recover unsaved drafts"), Content = list,
             PrimaryButtonText = T("恢复选中草稿", "Recover selected"), SecondaryButtonText = T("删除选中草稿", "Delete selected"), CloseButtonText = Text("Cancel") };
         var answer = await dialog.ShowAsync();
         if (answer == ContentDialogResult.None) return;
@@ -358,7 +387,7 @@ public sealed partial class MainWindow
         {
             if (App.Windows.SelectMany(window => window.documents).Any(document => document.RecoveryId == draft.Id)) continue;
             // Recover as a separate dirty tab; never replace a document already open in a window.
-            var document = CreateDocument(null, new LoadedDocument(draft.Text, draft.HasBom, draft.Baseline ?? new(0, DateTime.MinValue, "")));
+            var document = CreateDocument(null, new LoadedDocument(draft.Text, draft.HasBom, draft.Baseline ?? new(0, DateTime.MinValue, ""), draft.Encoding ?? "utf-8"));
             document.RecoveryId = draft.Id; document.Recovered = true; document.SavedRevision = -1;
             if (draft.Path is not null && !App.Windows.SelectMany(window => window.documents).Any(tab => tab != document && string.Equals(tab.Path, draft.Path, StringComparison.OrdinalIgnoreCase)))
             { document.Path = draft.Path; document.Baseline = draft.Baseline; }
@@ -367,10 +396,12 @@ public sealed partial class MainWindow
     }
     internal SavedWindow CaptureSession()
     {
-        var ordered = Tabs.TabItems.OfType<TabViewItem>().Select(item => documents.First(document => document.Item == item)).ToList();
+        var ordered = Tabs.TabItems.OfType<TabViewItem>()
+            .Select(item => documents.FirstOrDefault(document => document.Item == item))
+            .OfType<DocumentTab>().ToList();
         var retained = ordered.Where(document => document.Path is not null || document.Folder is not null).ToList();
         return new(retained.Select(document => new SavedTab(document.Path, document.Folder, document.Sidebar, document.SidebarPage, document.SidebarWidth)).ToList(),
-            Math.Max(0, retained.IndexOf(Current!)), AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);
+            Current is null ? 0 : Math.Max(0, retained.IndexOf(Current)), AppWindow.Position.X, AppWindow.Position.Y, AppWindow.Size.Width, AppWindow.Size.Height);
     }
     private void RestoreWindowBounds(SavedWindow state)
     {

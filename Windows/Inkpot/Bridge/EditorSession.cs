@@ -128,7 +128,6 @@ internal sealed class EditorSession : IDisposable
 
     internal Task CommandAsync(string name) => SendAsync(new JsonObject { ["method"] = "command", ["name"] = name });
     internal Task PasteAsync(string text) => SendAsync(new JsonObject { ["method"] = "pastePlainText", ["text"] = text });
-    internal Task NavigateHeadingAsync(int id) => RequestAsync("navigateHeading", new JsonObject { ["id"] = id });
     internal Task RequestAsync(string method, JsonObject? arguments = null)
     {
         arguments ??= new();
@@ -152,6 +151,7 @@ internal sealed class EditorSession : IDisposable
             ["spellcheck"] = preferences.Spellcheck,
             ["zoom"] = preferences.Zoom,
             ["zoomWithControlScroll"] = preferences.ZoomWithControlScroll,
+            ["theme"] = preferences.Theme,
         });
     }
 
@@ -167,31 +167,27 @@ internal sealed class EditorSession : IDisposable
             string path = Uri.UnescapeDataString(uri.AbsolutePath[7..]);
             var image = await NormalizeBitmapAsync((await ImageStorage.ReadAsync(path, DocumentPath, RemoteImages)).Bytes);
             if (disposed || generation != requestedGeneration) throw new IOException("Document changed.");
-            args.Response = Control.CoreWebView2.Environment.CreateWebResourceResponse(new MemoryStream(image.Bytes).AsRandomAccessStream(), 200, "OK",
+            if (Control.CoreWebView2 is not { } core) return;
+            args.Response = core.Environment.CreateWebResourceResponse(new MemoryStream(image.Bytes).AsRandomAccessStream(), 200, "OK",
                 $"Content-Type: {image.Mime}\r\nAccess-Control-Allow-Origin: https://editor.inkpot.local\r\nCache-Control: no-store\r\nX-Content-Type-Options: nosniff");
         }
-        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or HttpRequestException or OperationCanceledException or System.Runtime.InteropServices.COMException)
+        catch (Exception error) when (error is IOException or UnauthorizedAccessException or ArgumentException or FormatException or HttpRequestException or OperationCanceledException or System.Runtime.InteropServices.COMException)
         {
-            if (!disposed) args.Response = Control.CoreWebView2.Environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain\r\nAccess-Control-Allow-Origin: https://editor.inkpot.local");
+            if (!disposed && Control.CoreWebView2 is { } core)
+                args.Response = core.Environment.CreateWebResourceResponse(null, 404, "Not Found", "Content-Type: text/plain\r\nAccess-Control-Allow-Origin: https://editor.inkpot.local");
         }
         finally { deferral.Complete(); }
     }
 
-    internal static async Task ValidateImageAsync(byte[] bytes)
-    {
-        using var stream = new InMemoryRandomAccessStream();
-        using (var writer = new DataWriter(stream.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); }
-        var decoder = await BitmapDecoder.CreateAsync(stream);
-        if ((ulong)decoder.PixelWidth * decoder.PixelHeight > 40_000_000) throw new IOException("Image exceeds 40 million pixels.");
-    }
     internal static async Task<ImageBytes> NormalizeBitmapAsync(byte[] bytes)
     {
-        await ValidateImageAsync(bytes);
         string mime = ImageStorage.Mime(bytes);
-        if (mime is not ("image/bmp" or "image/tiff")) return new(bytes, mime);
         using var input = new InMemoryRandomAccessStream();
         using (var writer = new DataWriter(input.GetOutputStreamAt(0))) { writer.WriteBytes(bytes); await writer.StoreAsync(); }
+        input.Seek(0);
         var decoder = await BitmapDecoder.CreateAsync(input);
+        if ((ulong)decoder.PixelWidth * decoder.PixelHeight > 40_000_000) throw new IOException("Image exceeds 40 million pixels.");
+        if (mime is not ("image/bmp" or "image/tiff")) return new(bytes, mime);
         using var bitmap = await decoder.GetSoftwareBitmapAsync(BitmapPixelFormat.Bgra8, BitmapAlphaMode.Premultiplied);
         using var output = new InMemoryRandomAccessStream();
         var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, output);

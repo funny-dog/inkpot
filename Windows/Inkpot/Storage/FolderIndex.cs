@@ -11,8 +11,13 @@ public sealed record FolderMatch(string Path, int Line, int Column, int Length, 
 
 public static partial class FolderIndex
 {
-    public static bool IsText(string path) => new[] { ".md", ".markdown", ".txt" }.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
-    public static bool IsImage(string path) => new[] { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tif", ".tiff" }.Contains(Path.GetExtension(path), StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> TextExtensions = new(StringComparer.OrdinalIgnoreCase) { ".md", ".markdown", ".txt" };
+    private static readonly HashSet<string> ImageExtensions = new(StringComparer.OrdinalIgnoreCase) { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp", ".tif", ".tiff" };
+    private static readonly HashSet<string> IgnoredSearchDirectories = new(StringComparer.OrdinalIgnoreCase) { "node_modules", "build", "DerivedData", "Pods", "target", "dist", "bin", "obj" };
+    private static readonly System.Text.UTF8Encoding StrictUtf8 = new(false, true);
+
+    public static bool IsText(string path) => TextExtensions.Contains(Path.GetExtension(path));
+    public static bool IsImage(string path) => ImageExtensions.Contains(Path.GetExtension(path));
     public static bool IsSafeEntry(string path) => (File.GetAttributes(path) & FileAttributes.ReparsePoint) == 0;
     public static List<FolderEntry> Children(string folder, bool allFiles, bool hidden)
     {
@@ -34,14 +39,26 @@ public static partial class FolderIndex
             List<FolderEntry> entries;
             try { entries = Children(current, false, hidden); }
             catch (Exception error) when (error is IOException or UnauthorizedAccessException) { continue; }
+            var subDirectories = new List<string>();
             foreach (var entry in entries)
             {
                 cancellation.ThrowIfCancellationRequested();
-                if (entry.IsDirectory) { pending.Push(entry.Path); continue; }
-                // Match the Mac search limit: skip huge files, stream results, stop at 1000 matches.
+                if (entry.IsDirectory)
+                {
+                    if (!IgnoredSearchDirectories.Contains(entry.Name)) subDirectories.Add(entry.Path);
+                    continue;
+                }
+                // Match the Mac search limit: skip huge files, avoid unnecessary SHA-256 hashing during search, stop at 1000 matches.
                 string text;
-                try { if (new FileInfo(entry.Path).Length > 20 * 1024 * 1024) continue; text = (await DocumentStorage.ReadAsync(entry.Path)).Text; }
+                try
+                {
+                    if (new FileInfo(entry.Path).Length > 5 * 1024 * 1024) continue;
+                    byte[] raw = await File.ReadAllBytesAsync(entry.Path, cancellation);
+                    int offset = raw.Length >= 3 && raw[0] == 0xEF && raw[1] == 0xBB && raw[2] == 0xBF ? 3 : 0;
+                    text = StrictUtf8.GetString(raw, offset, raw.Length - offset);
+                }
                 catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.Text.DecoderFallbackException) { continue; }
+                if (text.IndexOf(query, StringComparison.OrdinalIgnoreCase) < 0) continue;
                 int line = 0;
                 using var reader = new StringReader(text);
                 while (reader.ReadLine() is { } value)
@@ -56,6 +73,8 @@ public static partial class FolderIndex
                     }
                 }
             }
+            // 反向压栈使子目录保持与文件树一致的自然顺序遍历。
+            for (int index = subDirectories.Count - 1; index >= 0; index--) pending.Push(subDirectories[index]);
         }
     }
     public static string ChildPath(string folder, string name)

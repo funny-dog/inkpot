@@ -26,9 +26,7 @@ internal sealed class SettingsWindow : Window
         Activated += (_, args) =>
         {
             if (args.WindowActivationState == WindowActivationState.Deactivated) return;
-            int pane = Math.Max(0, tabs.SelectedIndex);
-            viewports.Clear(); tabs.TabItems.Clear(); General(); Editing(); Appearance(); About();
-            tabs.SelectedIndex = pane; ApplyTheme();
+            ApplyTheme();
         };
     }
     internal void SelectPane(int index) => tabs.SelectedIndex = index;
@@ -40,7 +38,9 @@ internal sealed class SettingsWindow : Window
         var position = panel.TransformToVisual(tabs).TransformPoint(new Windows.Foundation.Point(0, 0));
         if (position.X < -1 || position.X + panel.ActualWidth > tabs.ActualWidth + 1) throw new IOException($"Settings page exceeds the window width: x={position.X}, panel={panel.ActualWidth}, viewport={scroll.ActualWidth}, tabs={tabs.ActualWidth}.");
     }
-    private void ApplyTheme() => ((FrameworkElement)Content).RequestedTheme = preferences.Appearance switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
+    private void ApplyTheme() => ((FrameworkElement)Content).RequestedTheme = preferences.Theme == "dracula"
+        ? ElementTheme.Dark
+        : preferences.Appearance switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
     private StackPanel Page(string title)
     {
         var panel = new StackPanel { Spacing = 18, Padding = new Thickness(24), MaxWidth = 640, HorizontalAlignment = HorizontalAlignment.Left };
@@ -70,11 +70,12 @@ internal sealed class SettingsWindow : Window
         toggle.Toggled += async (_, _) => { set(toggle.IsOn); await ChangedAsync(); };
         panel.Children.Add(toggle);
     }
-    private void Choice(StackPanel panel, string label, string[] labels, int selected, Action<int> set)
+    private ComboBox Choice(StackPanel panel, string label, string[] labels, int selected, Action<int> set)
     {
         var combo = new ComboBox { Header = label, ItemsSource = labels, SelectedIndex = selected, HorizontalAlignment = HorizontalAlignment.Stretch };
         combo.SelectionChanged += async (_, _) => { if (combo.SelectedIndex >= 0) { set(combo.SelectedIndex); await ChangedAsync(); } };
         panel.Children.Add(combo);
+        return combo;
     }
     private void Number(StackPanel panel, string label, double value, double min, double max, Action<double> set)
     {
@@ -124,7 +125,18 @@ internal sealed class SettingsWindow : Window
     private void Appearance()
     {
         var page = Page(T("外观", "Appearance"));
-        Choice(page, T("外观", "Appearance"), [T("跟随系统", "System"), T("浅色", "Light"), T("深色", "Dark")], preferences.Appearance == "light" ? 1 : preferences.Appearance == "dark" ? 2 : 0, index => preferences.Appearance = new[] { "system", "light", "dark" }[index]);
+        string[] themeIds = ["default", "lapis", "ursine", "notion", "pie", "drake", "phycat", "dracula"];
+        string[] themeLabels = [T("Inkpot 默认", "Inkpot Default"), "Lapis", "Ursine", "Notion", "Pie", "Drake", "Phycat", "Dracula"];
+        int themeIndex = Math.Max(0, Array.IndexOf(themeIds, preferences.Theme));
+        ComboBox? appearanceChoice = null;
+        Choice(page, T("编辑器主题", "Editor theme"), themeLabels, themeIndex, index =>
+        {
+            preferences.Theme = themeIds[index];
+            if (appearanceChoice is not null) appearanceChoice.IsEnabled = preferences.Theme != "dracula";
+        });
+        appearanceChoice = Choice(page, T("外观", "Appearance"), [T("跟随系统", "System"), T("浅色", "Light"), T("深色", "Dark")], preferences.Appearance == "light" ? 1 : preferences.Appearance == "dark" ? 2 : 0, index => preferences.Appearance = new[] { "system", "light", "dark" }[index]);
+        appearanceChoice.IsEnabled = preferences.Theme != "dracula";
+        page.Children.Add(new TextBlock { Text = T("主题包含字体与排版，手动选择的字体优先。Dracula 固定使用深色外观。", "Themes include fonts and typography; custom fonts take precedence. Dracula always uses dark appearance."), TextWrapping = TextWrapping.Wrap });
         Number(page, T("缩放比例（0.5–2）", "Zoom (0.5–2)"), preferences.Zoom, .5, 2, value => preferences.Zoom = value);
         Toggle(page, T("按住 Ctrl 时使用滚轮缩放", "Zoom with Ctrl + mouse wheel"), preferences.ZoomWithControlScroll, value => preferences.ZoomWithControlScroll = value);
         Font(page, T("正文字体", "Body font"), false);
@@ -132,15 +144,30 @@ internal sealed class SettingsWindow : Window
         Font(page, T("代码字体（等宽）", "Code font (monospaced)"), true);
         Number(page, T("代码字号", "Code font size"), preferences.CodeSize, 8, 72, value => preferences.CodeSize = value);
         var reset = new Button { Content = T("恢复默认字体与缩放", "Reset fonts and zoom") };
-        reset.Click += async (_, _) => { preferences.BodyFont = ""; preferences.CodeFont = ""; preferences.BodySize = preferences.CodeSize = 15; preferences.Zoom = 1; await ChangedAsync(); tabs.TabItems.RemoveAt(2); Appearance(); var last = tabs.TabItems[^1]; tabs.TabItems.RemoveAt(tabs.TabItems.Count - 1); tabs.TabItems.Insert(2, last); tabs.SelectedIndex = 2; };
+        reset.Click += async (_, _) =>
+        {
+            preferences.BodyFont = ""; preferences.CodeFont = ""; preferences.BodySize = preferences.CodeSize = 15; preferences.Zoom = 1;
+            await ChangedAsync();
+            if (tabs.TabItems.Count <= 2) return;
+            if (tabs.TabItems[2] is TabViewItem { Content: ScrollViewer oldViewport }) viewports.Remove(oldViewport);
+            tabs.TabItems.RemoveAt(2);
+            Appearance();
+            var last = tabs.TabItems[^1];
+            tabs.TabItems.RemoveAt(tabs.TabItems.Count - 1);
+            tabs.TabItems.Insert(2, last);
+            tabs.SelectedIndex = 2;
+        };
         page.Children.Add(reset);
     }
     private void Font(StackPanel page, string label, bool code)
     {
         var families = FontCatalog.Families(code);
         string current = code ? preferences.CodeFont : preferences.BodyFont;
-        string[] names = [T("系统默认", "System default"), .. families];
-        int index = Math.Max(0, Array.IndexOf(names, current));
+        var list = new List<string> { T("系统默认", "System default") };
+        list.AddRange(families);
+        if (!string.IsNullOrEmpty(current) && !list.Contains(current, StringComparer.Ordinal)) list.Add(current);
+        string[] names = [.. list];
+        int index = string.IsNullOrEmpty(current) ? 0 : Math.Max(0, Array.IndexOf(names, current));
         Choice(page, label, names, index, selected => { if (code) preferences.CodeFont = selected == 0 ? "" : names[selected]; else preferences.BodyFont = selected == 0 ? "" : names[selected]; });
     }
     private void About()
@@ -173,7 +200,7 @@ internal sealed class SettingsWindow : Window
             try
             {
                 var text = new TextBlock { Text = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "ThirdPartyNotices.md")), IsTextSelectionEnabled = true, TextWrapping = TextWrapping.Wrap };
-                await new ContentDialog { XamlRoot = tabs.XamlRoot, Title = T("第三方许可", "Third-party licenses"), Content = new ScrollViewer { Content = text, MaxHeight = 450 }, CloseButtonText = Text("Close") }.ShowAsync();
+                await new ContentDialog { XamlRoot = tabs.XamlRoot, Style = App.DialogStyle, RequestedTheme = ((FrameworkElement)Content).ActualTheme, Title = T("第三方许可", "Third-party licenses"), Content = new ScrollViewer { Content = text, MaxHeight = 450 }, CloseButtonText = T("关闭", "Close") }.ShowAsync();
             }
             catch (Exception error) { status.Text = error.Message; }
         };

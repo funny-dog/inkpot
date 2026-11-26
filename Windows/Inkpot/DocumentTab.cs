@@ -4,11 +4,12 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Inkpot;
 
-internal sealed class DocumentTab(string? path, string text, bool hasBom, FileBaseline? baseline)
+internal sealed class DocumentTab(string? path, string text, bool hasBom, FileBaseline? baseline, string encoding = "utf-8")
 {
     internal string? Path { get; set; } = path;
     internal string InitialText { get; set; } = text;
     internal bool HasBom { get; set; } = hasBom;
+    internal string Encoding { get; set; } = string.IsNullOrEmpty(encoding) ? "utf-8" : encoding;
     internal FileBaseline? Baseline { get; set; } = baseline;
     internal int SavedRevision { get; set; }
     internal string RecoveryId { get; set; } = Guid.NewGuid().ToString("N");

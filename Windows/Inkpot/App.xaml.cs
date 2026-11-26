@@ -6,11 +6,14 @@ namespace Inkpot;
 public partial class App : Application
 {
     internal static readonly List<MainWindow> Windows = [];
-    internal static bool IsSmoke => Environment.GetCommandLineArgs().Contains("--smoke-report");
+    // 仅允许在显式开启测试环境变量时响应 --smoke-report，避免正式发布包被外部命令行劫持写文件。
+    internal static bool IsSmoke => Environment.GetEnvironmentVariable("INKPOT_ALLOW_SMOKE") == "1"
+        && Environment.GetCommandLineArgs().Contains("--smoke-report");
     internal static readonly AppState Data = new(Environment.GetEnvironmentVariable("INKPOT_DATA_DIRECTORY")
         ?? (IsSmoke ? Path.Combine(Path.GetTempPath(), "InkpotSmoke", Guid.NewGuid().ToString("N"))
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Inkpot")));
     internal static readonly Preferences Preferences = Data.LoadPreferences();
+    internal static Style DialogStyle => (Style)Application.Current.Resources["DefaultContentDialogStyle"];
     internal static string Version => typeof(App).Assembly.GetName().Version is { } version ? $"{version.Major}.{version.Minor}.{version.Build}" : "0.1.0";
     private static SettingsWindow? settings;
     public static readonly System.Diagnostics.Stopwatch StartupClock = System.Diagnostics.Stopwatch.StartNew();

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Sockets;
 
 namespace Inkpot.Storage;
 
@@ -10,18 +11,51 @@ public static class ImageStorage
     private static readonly HttpClient Client = new(new HttpClientHandler { UseCookies = false, UseDefaultCredentials = false, AllowAutoRedirect = false })
         { Timeout = TimeSpan.FromSeconds(15) };
 
+    private static bool IsUncOrDevicePath(string path)
+        => path.StartsWith(@"\\", StringComparison.Ordinal) || path.StartsWith("//", StringComparison.Ordinal);
+
+    private static bool IsPrivateOrLoopbackHost(string host)
+    {
+        string normalized = host.Trim().TrimEnd('.').ToLowerInvariant();
+        if (normalized.Length == 0 || normalized == "localhost" || normalized.EndsWith(".local", StringComparison.Ordinal) || normalized.EndsWith(".localhost", StringComparison.Ordinal))
+            return true;
+        if (!IPAddress.TryParse(normalized.Trim('[', ']'), out var address)) return false;
+        if (address.IsIPv4MappedToIPv6) address = address.MapToIPv4();
+        if (IPAddress.IsLoopback(address) || address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any)) return true;
+        byte[] bytes = address.GetAddressBytes();
+        if (address.AddressFamily == AddressFamily.InterNetwork)
+        {
+            return bytes[0] is 0 or 10 or 127
+                || (bytes[0] == 169 && bytes[1] == 254)
+                || (bytes[0] == 172 && bytes[1] is >= 16 and <= 31)
+                || (bytes[0] == 192 && bytes[1] == 168)
+                || (bytes[0] == 100 && bytes[1] is >= 64 and <= 127);
+        }
+        return address.IsIPv6LinkLocal || address.IsIPv6SiteLocal || address.IsIPv6Multicast || (bytes[0] & 0xFE) == 0xFC;
+    }
+
     public static string ResolveLocal(string destination, string? document)
     {
-        if (destination.StartsWith("//", StringComparison.Ordinal)) throw new IOException("Unsupported image path.");
+        if (IsUncOrDevicePath(destination)) throw new IOException("Unsupported image path.");
         if (Uri.TryCreate(destination, UriKind.Absolute, out var uri) && !Path.IsPathFullyQualified(destination))
         {
-            if (!uri.IsFile) throw new IOException("Unsupported image scheme.");
-            return uri.LocalPath;
+            if (!uri.IsFile || uri.IsUnc || (!string.IsNullOrEmpty(uri.Host) && !uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)))
+                throw new IOException("Unsupported image scheme.");
+            string localPath = uri.LocalPath;
+            if (IsUncOrDevicePath(localPath)) throw new IOException("Unsupported image path.");
+            return Path.GetFullPath(localPath);
         }
         destination = Uri.UnescapeDataString(destination);
-        if (Path.IsPathFullyQualified(destination)) return Path.GetFullPath(destination);
-        if (document is null) throw new IOException("Save the document before using relative images.");
-        return Path.GetFullPath(destination, Path.GetDirectoryName(Path.GetFullPath(document))!);
+        if (IsUncOrDevicePath(destination)) throw new IOException("Unsupported image path.");
+        string resolved;
+        if (Path.IsPathFullyQualified(destination)) resolved = Path.GetFullPath(destination);
+        else
+        {
+            if (document is null) throw new IOException("Save the document before using relative images.");
+            resolved = Path.GetFullPath(destination, Path.GetDirectoryName(Path.GetFullPath(document))!);
+        }
+        if (IsUncOrDevicePath(resolved)) throw new IOException("Unsupported image path.");
+        return resolved;
     }
 
     public static async Task<ImageBytes> ReadAsync(string destination, string? document, bool remote, CancellationToken cancellation = default)
@@ -37,6 +71,7 @@ public static class ImageStorage
         else
         {
             string path = ResolveLocal(destination, document);
+            if (!FolderIndex.IsSafeEntry(path)) throw new IOException("Unsupported symbolic link image.");
             using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, true);
             if (input.Length > MaximumBytes) throw new IOException("Image exceeds 20 MB.");
             bytes = new byte[input.Length];
@@ -49,7 +84,8 @@ public static class ImageStorage
     {
         for (int redirect = 0; redirect <= 4; redirect++)
         {
-            if (uri.Scheme != "https" || uri.UserInfo != "") throw new IOException("Only credential-free HTTPS images are supported.");
+            if (uri.Scheme != "https" || uri.UserInfo != "" || IsPrivateOrLoopbackHost(uri.Host))
+                throw new IOException("Only public credential-free HTTPS images are supported.");
             using var response = await Client.GetAsync(uri, HttpCompletionOption.ResponseHeadersRead, cancellation);
             if ((int)response.StatusCode is >= 300 and < 400 && response.Headers.Location is { } location)
             { uri = new Uri(uri, location); continue; }

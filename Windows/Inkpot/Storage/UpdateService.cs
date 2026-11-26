@@ -10,7 +10,8 @@ public static class UpdateService
 {
     public const string DownloadPage = "https://github.com/funny-dog/inkpot/releases/latest";
     private const int MaxSize = 200 * 1024 * 1024;
-    private static readonly HttpClient Client = new(new HttpClientHandler { UseCookies = false }) { Timeout = TimeSpan.FromMinutes(5) };
+    private const int MaxChecksumSize = 4096;
+    private static readonly HttpClient Client = new(new HttpClientHandler { UseCookies = false, UseDefaultCredentials = false }) { Timeout = TimeSpan.FromMinutes(5) };
 
     public static async Task<AvailableUpdate?> CheckAsync(string current, string cache, bool download, CancellationToken cancellation = default)
     {
@@ -38,8 +39,10 @@ public static class UpdateService
             if (size < 1 || size > maximum || url != $"https://github.com/funny-dog/inkpot/releases/download/{tag}/{name}") throw new IOException("Invalid update asset.");
             return url;
         }
-        string archiveUrl = AssetUrl(archive, MaxSize), checksumUrl = AssetUrl(checksum, 4096);
-        string digest = (await Client.GetStringAsync(checksumUrl, cancellation)).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries)[0];
+        string archiveUrl = AssetUrl(archive, MaxSize), checksumUrl = AssetUrl(checksum, MaxChecksumSize);
+        string checksumText = await ReadLimitedStringAsync(checksumUrl, MaxChecksumSize, cancellation);
+        var tokens = checksumText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+        string digest = tokens.Length > 0 ? tokens[0] : "";
         if (digest.Length != 64 || !digest.All(Uri.IsHexDigit)) throw new IOException("Invalid SHA-256 checksum.");
         Directory.CreateDirectory(cache);
         string destination = Path.Combine(cache, "Inkpot-windows-x64.zip");
@@ -66,6 +69,23 @@ public static class UpdateService
             return new(tag, destination);
         }
         finally { if (File.Exists(temporary)) File.Delete(temporary); }
+    }
+
+    private static async Task<string> ReadLimitedStringAsync(string url, int maximumBytes, CancellationToken cancellation)
+    {
+        using var response = await Client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellation);
+        response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentLength > maximumBytes) throw new IOException("Invalid SHA-256 checksum.");
+        using var input = await response.Content.ReadAsStreamAsync(cancellation);
+        using var output = new MemoryStream();
+        byte[] buffer = new byte[1024];
+        int read;
+        while ((read = await input.ReadAsync(buffer, cancellation)) > 0)
+        {
+            if (output.Length + read > maximumBytes) throw new IOException("Invalid SHA-256 checksum.");
+            output.Write(buffer, 0, read);
+        }
+        return System.Text.Encoding.UTF8.GetString(output.ToArray());
     }
 
     public static bool IsNewer(string tag, string current)

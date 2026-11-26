@@ -80,7 +80,16 @@ public sealed partial class MainWindow
         if (document.Path is null && !await SaveAsync(document)) return;
         bytes = (await EditorSession.NormalizeBitmapAsync(bytes)).Bytes;
         string relative = await ImageStorage.ImportAsync(bytes, document.Path!, App.Preferences);
-        await editor.RequestAsync("insertImage", new JsonObject { ["path"] = relative });
+        try
+        {
+            await editor.RequestAsync("insertImage", new JsonObject { ["path"] = relative });
+        }
+        catch
+        {
+            // 插入失败时回滚清理刚写入的孤儿图片文件。
+            try { string written = ImageStorage.ResolveLocal(relative, document.Path); if (File.Exists(written)) File.Delete(written); } catch { }
+            throw;
+        }
     }
     private async Task OpenLinkAsync(string destination)
     {
@@ -122,7 +131,7 @@ public sealed partial class MainWindow
         var list = new ListView { MaxHeight = 400, SelectionMode = ListViewSelectionMode.Single };
         foreach (var item in Tabs.TabItems.OfType<TabViewItem>()) list.Items.Add(new TextBlock { Text = item.Header?.ToString(), Tag = item });
         list.SelectedIndex = Tabs.TabItems.IndexOf(Tabs.SelectedItem);
-        if (await new ContentDialog { XamlRoot = Root.XamlRoot, Title = T("所有标签页", "All tabs"), Content = list, PrimaryButtonText = T("切换", "Switch"), CloseButtonText = Text("Cancel") }.ShowAsync() == ContentDialogResult.Primary
+        if (await new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme, Title = T("所有标签页", "All tabs"), Content = list, PrimaryButtonText = T("切换", "Switch"), CloseButtonText = Text("Cancel") }.ShowAsync() == ContentDialogResult.Primary
             && list.SelectedItem is TextBlock { Tag: TabViewItem selected }) { Tabs.SelectedItem = selected; await ActivateCurrentAsync(); }
     }
     private Task ToggleTabBarAsync()
@@ -234,7 +243,7 @@ public sealed partial class MainWindow
     private async Task<string?> NameDialogAsync(string title, string initial)
     {
         var input = new TextBox { Text = initial, MinWidth = 300 }; input.SelectAll();
-        var answer = await new ContentDialog { XamlRoot = Root.XamlRoot, Title = title, Content = input, PrimaryButtonText = Text("OK"), CloseButtonText = Text("Cancel"), DefaultButton = ContentDialogButton.Primary }.ShowAsync();
+        var answer = await new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme, Title = title, Content = input, PrimaryButtonText = Text("OK"), CloseButtonText = Text("Cancel"), DefaultButton = ContentDialogButton.Primary }.ShowAsync();
         return answer == ContentDialogResult.Primary ? input.Text : null;
     }
     private async Task CreateEntryAsync(string? folder, bool directory)
@@ -249,6 +258,7 @@ public sealed partial class MainWindow
     }
     private async Task DuplicateAsync(string path)
     {
+        if (!FolderIndex.IsSafeEntry(path)) throw new IOException("Cannot duplicate a link.");
         string folder = Path.GetDirectoryName(path)!;
         for (int index = 1; ; index++)
         {
@@ -263,8 +273,19 @@ public sealed partial class MainWindow
         if (!FolderIndex.IsSafeEntry(path)) throw new IOException("Cannot rename a link.");
         if (await NameDialogAsync(T("重命名", "Rename"), Path.GetFileName(path)) is not { } name) return;
         string target = FolderIndex.ChildPath(Path.GetDirectoryName(path)!, name);
-        if (path == target) return;
-        if (Directory.Exists(path)) Directory.Move(path, target); else File.Move(path, target, false);
+        if (string.Equals(path, target, StringComparison.Ordinal)) return;
+        bool caseOnly = string.Equals(path, target, StringComparison.OrdinalIgnoreCase);
+        if (Directory.Exists(path))
+        {
+            if (caseOnly)
+            {
+                string staging = path + ".inkpot-rename-" + Guid.NewGuid().ToString("N");
+                Directory.Move(path, staging);
+                Directory.Move(staging, target);
+            }
+            else Directory.Move(path, target);
+        }
+        else File.Move(path, target, caseOnly);
         foreach (var window in App.Windows)
             foreach (var document in window.documents)
             {
@@ -278,8 +299,14 @@ public sealed partial class MainWindow
             }
         foreach (var paths in new[] { App.Preferences.RecentFiles, App.Preferences.RecentFolders })
             for (int index = 0; index < paths.Count; index++) if (InPath(paths[index], path)) paths[index] = Relocate(paths[index], path, target);
-        App.Preferences.DocumentFolders = App.Preferences.DocumentFolders.ToDictionary(pair => InPath(pair.Key, path) ? Relocate(pair.Key, path, target) : pair.Key,
-            pair => InPath(pair.Value, path) ? Relocate(pair.Value, path, target) : pair.Value, StringComparer.OrdinalIgnoreCase);
+        var updatedFolders = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var pair in App.Preferences.DocumentFolders)
+        {
+            string key = InPath(pair.Key, path) ? Relocate(pair.Key, path, target) : pair.Key;
+            string value = InPath(pair.Value, path) ? Relocate(pair.Value, path, target) : pair.Value;
+            updatedFolders[key] = value;
+        }
+        App.Preferences.DocumentFolders = updatedFolders;
         if (App.Preferences.ImageFolder is { } images && InPath(images, path)) App.Preferences.ImageFolder = Relocate(images, path, target);
         App.Data.SavePreferences(App.Preferences); RefreshFileTrees(); RefreshStatus();
     }
@@ -289,11 +316,17 @@ public sealed partial class MainWindow
     {
         if (!FolderIndex.IsSafeEntry(path)) throw new IOException("Cannot delete a link.");
         if (await DialogAsync(T("移到回收站？", "Move to Recycle Bin?"), path, T("移到回收站", "Move to Recycle Bin"), close: Text("Cancel")) != ContentDialogResult.Primary) return;
+        // 先逐一确认受影响标签，待磁盘移到回收站成功后再销毁标签与草稿，避免删除失败丢失未保存编辑历史。
+        var affected = new List<(MainWindow Window, DocumentTab Document)>();
         foreach (var window in App.Windows.ToArray())
             foreach (var document in window.documents.Where(document => document.Path is { } file && InPath(file, path)).ToArray())
-                if (!await window.CloseDocumentAsync(document)) return;
+            {
+                if (!await window.ConfirmCloseDocumentAsync(document)) return;
+                affected.Add((window, document));
+            }
         if (Directory.Exists(path)) Microsoft.VisualBasic.FileIO.FileSystem.DeleteDirectory(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
         else Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+        foreach (var (window, document) in affected) window.DisposeDocumentTab(document);
         foreach (var window in App.Windows) { if (window.documents.Count == 0) window.CreateDocument(); await window.ActivateCurrentAsync(); }
         RefreshFileTrees();
     }
@@ -307,7 +340,7 @@ public sealed partial class MainWindow
         bool source = editor.State?.SourceMode == true;
         await editor.OpenAsync(loaded.Text, Dark, Language); await editor.ApplyPreferencesAsync(App.Preferences);
         if (source) await editor.CommandAsync("toggleSourceMode");
-        document.Baseline = loaded.Baseline; document.HasBom = loaded.HasBom; document.SavedRevision = 0; document.Recovered = false; document.DraftRevision = -1;
+        document.Baseline = loaded.Baseline; document.HasBom = loaded.HasBom; document.Encoding = loaded.Encoding; document.SavedRevision = 0; document.Recovered = false; document.AutosaveBlocked = false; document.DraftRevision = -1;
         App.Data.RemoveDraft(document.RecoveryId); document.RefreshHeader(); RefreshStatus();
     }
     private async Task DetachTabAsync()
@@ -375,7 +408,7 @@ public sealed partial class MainWindow
         { if (update is not null) SaveLabel.Text = T("新版本可用：", "Update available: ") + update.Tag + (update.DownloadedPath is null ? "" : T("（已下载）", " (downloaded)")); return; }
         var answer = await DialogAsync(update is null ? T("已是最新版本", "You're up to date") : T("发现新版本 ", "New version ") + update.Tag,
             update?.DownloadedPath ?? T("如有新版本，可前往发布页下载安装。", "Visit the releases page to download a new version."),
-            update?.DownloadedPath is null ? T("前往下载页", "Open downloads") : T("显示下载包", "Show download"), close: Text("Close"));
+            update?.DownloadedPath is null ? T("前往下载页", "Open downloads") : T("显示下载包", "Show download"), close: T("关闭", "Close"));
         if (answer == ContentDialogResult.Primary)
         { if (update?.DownloadedPath is { } path) await Launcher.LaunchFolderPathAsync(Path.GetDirectoryName(path)!); else await Launcher.LaunchUriAsync(new Uri(UpdateService.DownloadPage)); }
     }
@@ -399,7 +432,9 @@ public sealed partial class MainWindow
                 return item;
             }
             CoreWebView2ContextMenuItem Command(string label, string command) => Action(label, () => editor.CommandAsync(command),
-                command.StartsWith("table", StringComparison.Ordinal) ? state?.TableActions.Contains(command) == true : state?.EditorFocused == true);
+                command == "insertTable" || command.StartsWith("table", StringComparison.Ordinal) ? state?.TableActions.Contains(command) == true
+                : BlockCommands.Contains(command) ? state?.EditorFocused == true && state.TableCellFocused == false
+                : state?.EditorFocused == true);
             CoreWebView2ContextMenuItem Submenu(string title, IEnumerable<(string Label, string Command)> commands)
             {
                 var item = environment.CreateContextMenuItem(title, null, CoreWebView2ContextMenuItemKind.Submenu);
@@ -419,7 +454,7 @@ public sealed partial class MainWindow
             paragraph.AddRange([(Text("OrderedList"), "orderedList"), (Text("BulletList"), "bulletList"), (Text("TaskList"), "taskList"),
                 (Text("Quote"), "blockquote"), (Text("CodeBlock"), "codeBlock"), (T("公式块", "Math block"), "insertMathBlock")]);
             args.MenuItems.Add(Submenu(T("段落", "Paragraph"), paragraph));
-            args.MenuItems.Add(Submenu(Text("Format"), [(Text("Bold"), "bold"), (Text("Italic"), "italic"), (Text("Strike"), "strikethrough"), (Text("InlineCode"), "inlineCode"), (Text("Link"), "link")]));
+            args.MenuItems.Add(Submenu(Text("Format"), [(Text("Bold"), "bold"), (Text("Italic"), "italic"), (Text("Strike"), "strikethrough"), (T("高亮", "Highlight"), "highlight"), (Text("InlineCode"), "inlineCode"), (Text("Link"), "link")]));
             var insert = Submenu(T("插入", "Insert"), [(T("表格", "Table"), "insertTable"), (Text("Rule"), "horizontalRule")]);
             insert.Children.Insert(0, Action(T("本地图片…", "Local image…"), owner.InsertImagePickerAsync, state?.EditorFocused == true)); args.MenuItems.Add(insert);
             if (state?.TableActions.Length > 0) args.MenuItems.Add(Submenu(T("表格", "Table"), TableActions.Where(action => state.TableActions.Contains(action.Command))));

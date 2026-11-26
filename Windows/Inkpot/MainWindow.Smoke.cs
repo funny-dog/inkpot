@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json.Nodes;
 using Inkpot.Bridge;
 using Inkpot.Storage;
-using Inkpot.Workspace;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -66,6 +65,7 @@ public sealed partial class MainWindow
             report["appWorkingSetBytes"] = Process.GetCurrentProcess().WorkingSet64;
             report["webView2ProcessIds"] = new JsonArray((await environment).GetProcessInfos()
                 .Select(info => JsonValue.Create(info.ProcessId)).Cast<JsonNode?>().ToArray());
+            report["sidebarFilesOutlineSettingsAndStatus"] = report["alignedSidebarToolbarAndStatus"]?.GetValue<bool>() == true;
             report["success"] = true;
             foreach (var document in documents) document.SavedRevision = document.Editor?.State?.Revision ?? 0;
         }
@@ -76,8 +76,11 @@ public sealed partial class MainWindow
         }
         finally
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(reportPath))!);
-            await File.WriteAllTextAsync(reportPath, report.ToJsonString(new() { WriteIndented = true }));
+            string fullPath = Path.GetFullPath(reportPath);
+            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+            string temporary = fullPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            await File.WriteAllTextAsync(temporary, report.ToJsonString(new() { WriteIndented = true }));
+            File.Move(temporary, fullPath, true);
             // 失败时保留窗口数秒：measure.ps1 读到报告会先截图留现场再关闭应用。
             if (report["success"]?.GetValue<bool>() != true)
             {

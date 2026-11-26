@@ -91,7 +91,6 @@ internal sealed record PasteImageMessage(int Generation) : HostMessage;
 internal sealed record ShortcutMessage(int Generation, string Shortcut) : HostMessage;
 internal sealed record LinkMessage(int Generation, string OpenLink) : HostMessage;
 internal sealed record Heading(int Id, int Level, string Title);
-internal sealed record OutlineHeading(int Id, int From, int To, int Level, string Title);
 internal sealed record OutlineMessage(int Generation, int Revision, Heading[]? Headings, int? Active) : HostMessage;
 internal sealed record EditorSnapshot(string Text, int Revision);
 internal sealed record DocumentStats(int Words, int Characters, int Lines);

@@ -1,4 +1,4 @@
-param(
+﻿param(
     [Parameter(Mandatory=$true)][string]$AppDirectory,
     [Parameter(Mandatory=$true)][string]$ResultsDirectory
 )
@@ -7,6 +7,9 @@ New-Item -ItemType Directory -Force $ResultsDirectory | Out-Null
 $report = Join-Path (Resolve-Path $ResultsDirectory) 'smoke-raw.json'
 $executable = Join-Path (Resolve-Path $AppDirectory) 'Inkpot.exe'
 $started = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
+$previousSmoke = $env:INKPOT_ALLOW_SMOKE
+$env:INKPOT_ALLOW_SMOKE = '1'
+$failed = $false
 $process = Start-Process $executable -ArgumentList "--smoke-report `"$report`"" -PassThru
 try {
     $deadline = [DateTime]::UtcNow.AddSeconds(120)
@@ -26,7 +29,7 @@ try {
         $graphics.CopyFromScreen($screen.Location, [System.Drawing.Point]::Empty, $screen.Size)
         $bitmap.Save((Join-Path (Resolve-Path $ResultsDirectory) 'window-screenshot.png'), [System.Drawing.Imaging.ImageFormat]::Png)
     } finally { $graphics.Dispose(); $bitmap.Dispose() }
-    if (!$raw.success) { throw $raw.error }
+    if (!$raw.success) { $failed = $true; throw $raw.error }
     $ids = @($process.Id) + @($raw.webView2ProcessIds) | Sort-Object -Unique
     $samples = @()
     foreach ($iteration in 1..3) {
@@ -70,8 +73,15 @@ try {
     }
 }
 finally {
+    if ($null -eq $previousSmoke) { Remove-Item Env:INKPOT_ALLOW_SMOKE -ErrorAction SilentlyContinue } else { $env:INKPOT_ALLOW_SMOKE = $previousSmoke }
     if (!$process.HasExited) {
         [void]$process.CloseMainWindow()
-        if (!$process.WaitForExit(10000)) { throw '测试应用未能正常退出，保留现场。' }
+        if (!$process.WaitForExit(10000)) {
+            if ($failed) {
+                $process.Kill()
+            } else {
+                throw '测试应用未能正常退出，保留现场。'
+            }
+        }
     }
 }

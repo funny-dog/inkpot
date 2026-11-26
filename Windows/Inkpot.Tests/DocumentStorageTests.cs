@@ -342,6 +342,50 @@ public class DocumentStorageTests : IDisposable
         var loaded = await DocumentStorage.ReadAsync(filePath);
         Assert.Equal(string.Empty, loaded.Text);
         Assert.False(loaded.HasBom);
+        Assert.Equal("utf-8", loaded.Encoding);
         Assert.Equal(0, loaded.Baseline.Length);
+    }
+
+    [Fact]
+    public async Task ReadAndSave_Utf16WithBom_RoundTripsLosslessly()
+    {
+        string text = "# 标题\r\nHello UTF-16";
+
+        string lePath = Path.Combine(_testDirectory, "utf16le.md");
+        byte[] leBytes = [0xFF, 0xFE, .. new UnicodeEncoding(bigEndian: false, byteOrderMark: false).GetBytes(text)];
+        await File.WriteAllBytesAsync(lePath, leBytes);
+        var loadedLe = await DocumentStorage.ReadAsync(lePath);
+        Assert.Equal("utf-16le", loadedLe.Encoding);
+        Assert.True(loadedLe.HasBom);
+        Assert.Equal(text, loadedLe.Text);
+        await DocumentStorage.SaveAsync(lePath, loadedLe.Text, loadedLe.HasBom, loadedLe.Baseline, encoding: loadedLe.Encoding);
+        Assert.Equal(leBytes, await File.ReadAllBytesAsync(lePath));
+
+        string bePath = Path.Combine(_testDirectory, "utf16be.md");
+        byte[] beBytes = [0xFE, 0xFF, .. new UnicodeEncoding(bigEndian: true, byteOrderMark: false).GetBytes(text)];
+        await File.WriteAllBytesAsync(bePath, beBytes);
+        var loadedBe = await DocumentStorage.ReadAsync(bePath);
+        Assert.Equal("utf-16be", loadedBe.Encoding);
+        Assert.True(loadedBe.HasBom);
+        Assert.Equal(text, loadedBe.Text);
+        await DocumentStorage.SaveAsync(bePath, loadedBe.Text, loadedBe.HasBom, loadedBe.Baseline, encoding: loadedBe.Encoding);
+        Assert.Equal(beBytes, await File.ReadAllBytesAsync(bePath));
+    }
+
+    [Fact]
+    public async Task ReadAndSave_Gb18030_RoundTripsLosslessly()
+    {
+        string filePath = Path.Combine(_testDirectory, "gb18030.md");
+        byte[] original = [0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0x0D, 0x0A]; // "# 中文\r\n"
+        await File.WriteAllBytesAsync(filePath, original);
+
+        var loaded = await DocumentStorage.ReadAsync(filePath);
+        Assert.Equal("gb18030", loaded.Encoding);
+        Assert.False(loaded.HasBom);
+        Assert.Equal("# 中文\r\n", loaded.Text);
+
+        byte[] updatedExpected = [0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0xA3, 0xAC, 0xC4, 0xAB, 0xB3, 0xD8, 0x0D, 0x0A]; // "# 中文，墨池\r\n"
+        await DocumentStorage.SaveAsync(filePath, "# 中文，墨池\r\n", loaded.HasBom, loaded.Baseline, encoding: loaded.Encoding);
+        Assert.Equal(updatedExpected, await File.ReadAllBytesAsync(filePath));
     }
 }

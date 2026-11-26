@@ -21,12 +21,20 @@ public sealed partial class MainWindow : Window
     private readonly Task<CoreWebView2Environment> environment;
     private readonly List<DocumentTab> documents = [];
     private readonly Dictionary<string, MenuFlyoutItem> commandMenus = [];
+    private static readonly HashSet<string> BlockCommands = new(StringComparer.Ordinal)
+    {
+        "heading1", "heading2", "heading3", "heading4", "heading5", "heading6",
+        "orderedList", "bulletList", "taskList", "blockquote", "codeBlock", "horizontalRule",
+    };
     private bool busy;
     private bool allowClose;
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly SavedWindow? restoredWindow;
     private new DocumentTab? Current => documents.FirstOrDefault(document => ReferenceEquals(document.Item, Tabs.SelectedItem));
     private bool Dark => Root.ActualTheme == ElementTheme.Dark;
+    private static ElementTheme EffectiveTheme => App.Preferences.Theme == "dracula"
+        ? ElementTheme.Dark
+        : App.Preferences.Appearance switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
 
     internal MainWindow(string[] arguments, SavedWindow? saved = null)
     {
@@ -39,7 +47,7 @@ public sealed partial class MainWindow : Window
         catch (Exception error) { environment = Task.FromException<CoreWebView2Environment>(error); }
         BuildMenus();
         InitializeWorkspace();
-        Root.RequestedTheme = App.Preferences.Appearance switch { "light" => ElementTheme.Light, "dark" => ElementTheme.Dark, _ => ElementTheme.Default };
+        Root.RequestedTheme = EffectiveTheme;
         recoveryTimer.Tick += async (_, _) => await PersistEditsAsync();
         Closed += (_, _) => { recoveryTimer.Stop(); searchCancellation?.Cancel(); printView?.Close(); };
         AppWindow.Closing += WindowClosing;
@@ -51,7 +59,7 @@ public sealed partial class MainWindow : Window
         Root.Loaded += async (_, _) => await RunAsync(async () =>
         {
             int reportIndex = Array.IndexOf(arguments, "--smoke-report");
-            if (reportIndex >= 0 && reportIndex + 1 < arguments.Length)
+            if (App.IsSmoke && reportIndex >= 0 && reportIndex + 1 < arguments.Length)
             {
                 await RunSmokeAsync(arguments[reportIndex + 1]);
                 return;
@@ -163,11 +171,12 @@ public sealed partial class MainWindow : Window
         Command(format, "Bold", "bold", VirtualKey.B);
         Command(format, "Italic", "italic", VirtualKey.I);
         Command(format, "Strike", "strikethrough", VirtualKey.X, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        Command(format, T("高亮", "Highlight"), "highlight");
         Command(format, "InlineCode", "inlineCode", VirtualKey.E);
         Command(format, "Link", "link", VirtualKey.K);
         for (int level = 1; level <= 6; level++) Command(format, $"Heading{level}", $"heading{level}", (VirtualKey)((int)VirtualKey.Number0 + level));
-        Command(format, "OrderedList", "orderedList", VirtualKey.Number7);
-        Command(format, "BulletList", "bulletList", VirtualKey.Number8);
+        Command(format, "OrderedList", "orderedList", VirtualKey.Number7, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
+        Command(format, "BulletList", "bulletList", VirtualKey.Number8, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         Command(format, "TaskList", "taskList", VirtualKey.Number9, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
         // WinRT 的 VirtualKey 枚举没有句点成员，190 是主键盘句点键的虚拟键值。
         Command(format, "Quote", "blockquote", (VirtualKey)190, VirtualKeyModifiers.Control | VirtualKeyModifiers.Shift);
@@ -205,7 +214,7 @@ public sealed partial class MainWindow : Window
 
     private DocumentTab CreateDocument(string? path = null, LoadedDocument? loaded = null)
     {
-        var document = new DocumentTab(path, loaded?.Text ?? "", loaded?.HasBom ?? false, loaded?.Baseline);
+        var document = new DocumentTab(path, loaded?.Text ?? "", loaded?.HasBom ?? false, loaded?.Baseline, loaded?.Encoding ?? "utf-8");
         document.Folder = path is not null && App.Preferences.DocumentFolders.TryGetValue(path, out var folder) && Directory.Exists(folder) ? folder : Current?.Folder;
         document.Sidebar = Current?.Sidebar ?? true;
         document.SidebarPage = Current?.SidebarPage ?? "files";
@@ -222,9 +231,18 @@ public sealed partial class MainWindow : Window
         path = Path.GetFullPath(path);
         if (!FolderIndex.IsText(path) && !App.Preferences.AllFiles)
             throw new IOException(L10n.Text("UnsupportedFile"));
-        var existing = documents.FirstOrDefault(document => string.Equals(document.Path, path, StringComparison.OrdinalIgnoreCase));
-        if (existing is not null) Tabs.SelectedItem = existing.Item;
-        else CreateDocument(path, await DocumentStorage.ReadAsync(path));
+        // 跨全部窗口查重：若已在其他窗口打开则激活该窗口并切到对应标签，避免打开后保存必报错。
+        foreach (var window in App.Windows)
+        {
+            var existing = window.documents.FirstOrDefault(document => string.Equals(document.Path, path, StringComparison.OrdinalIgnoreCase));
+            if (existing is null) continue;
+            window.Tabs.SelectedItem = existing.Item;
+            RememberFile(path);
+            if (window == this) { if (activate) await ActivateCurrentAsync(); }
+            else { window.Activate(); if (activate) await window.ActivateCurrentAsync(); }
+            return;
+        }
+        CreateDocument(path, await DocumentStorage.ReadAsync(path));
         RememberFile(path);
         if (activate) await ActivateCurrentAsync();
     }
@@ -312,7 +330,9 @@ public sealed partial class MainWindow : Window
                 "undo" => state.CanUndo || state.SearchInputFocused,
                 "redo" => state.CanRedo || state.SearchInputFocused,
                 "find" or "findNext" or "findPrevious" or "toggleSourceMode" => true,
+                "insertTable" => state.TableActions.Contains(name),
                 _ when name.StartsWith("table", StringComparison.Ordinal) => state.TableActions.Contains(name),
+                _ when BlockCommands.Contains(name) => state.EditorFocused && !state.TableCellFocused,
                 _ => state.EditorFocused,
             });
     }
@@ -335,13 +355,13 @@ public sealed partial class MainWindow : Window
             throw new IOException(T("该文件已在另一个标签页中打开，请先关闭对应标签页。", "This file is already open in another tab. Close that tab first."));
         var expected = string.Equals(path, document.Path, StringComparison.OrdinalIgnoreCase) ? document.Baseline : null;
         FileBaseline baseline;
-        try { baseline = await DocumentStorage.SaveAsync(path, snapshot.Text, document.HasBom, expected); }
+        try { baseline = await DocumentStorage.SaveAsync(path, snapshot.Text, document.HasBom, expected, encoding: document.Encoding); }
         catch (ExternalChangeException)
         {
             if (automatic) { document.AutosaveBlocked = true; RefreshStatus(); return false; }
             var answer = await DialogAsync(L10n.Text("ExternalChange"), path, L10n.Text("Overwrite"), null, L10n.Text("Cancel"));
             if (answer != ContentDialogResult.Primary) return false;
-            baseline = await DocumentStorage.SaveAsync(path, snapshot.Text, document.HasBom, expected, overwriteExternal: true);
+            baseline = await DocumentStorage.SaveAsync(path, snapshot.Text, document.HasBom, expected, overwriteExternal: true, encoding: document.Encoding);
         }
         document.Path = path;
         document.Baseline = baseline;
@@ -360,7 +380,7 @@ public sealed partial class MainWindow : Window
         return true;
     }
 
-    private async Task<bool> CloseDocumentAsync(DocumentTab document)
+    private async Task<bool> ConfirmCloseDocumentAsync(DocumentTab document)
     {
         // 即使状态通知尚未送达，也先取快照；输入法候选或编辑器故障时阻止关闭。
         if (document.Editor is { } editor)
@@ -377,15 +397,26 @@ public sealed partial class MainWindow : Window
             var answer = await DialogAsync(L10n.Text("Unsaved"), document.Name, L10n.Text("Save"), L10n.Text("Discard"), L10n.Text("Cancel"));
             if (answer == ContentDialogResult.None || (answer == ContentDialogResult.Primary && !await SaveAsync(document))) return false;
         }
+        return true;
+    }
+
+    private void DisposeDocumentTab(DocumentTab document)
+    {
         App.Data.RemoveDraft(document.RecoveryId);
         document.Editor?.Dispose();
         documents.Remove(document);
         Tabs.TabItems.Remove(document.Item);
+    }
+
+    private async Task<bool> CloseDocumentAsync(DocumentTab document)
+    {
+        if (!await ConfirmCloseDocumentAsync(document)) return false;
+        DisposeDocumentTab(document);
         return true;
     }
 
     private Task<ContentDialogResult> DialogAsync(string title, string content, string? primary = null, string? secondary = null, string? close = null)
-        => new ContentDialog { XamlRoot = Root.XamlRoot, Style = PreferencesDialog.DialogStyle, RequestedTheme = Root.ActualTheme,
+        => new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme,
             Title = title, Content = content, PrimaryButtonText = primary ?? "",
             SecondaryButtonText = secondary ?? "", CloseButtonText = close ?? L10n.Text("OK"), DefaultButton = ContentDialogButton.Close }.ShowAsync().AsTask();
 
@@ -399,12 +430,22 @@ public sealed partial class MainWindow : Window
         try { await action(); }
         catch (Exception error)
         {
-            if (error is WebView2RuntimeMissingException)
+            try
             {
-                var answer = await DialogAsync(L10n.Text("RuntimeMissing"), L10n.Text("RuntimeHelp"), L10n.Text("Download"));
-                if (answer == ContentDialogResult.Primary) await Launcher.LaunchUriAsync(new Uri("https://developer.microsoft.com/microsoft-edge/webview2/"));
+                if (Root.XamlRoot is null) { App.RecordFailure(error, "RunAsync(NoXamlRoot)"); }
+                else if (error is WebView2RuntimeMissingException)
+                {
+                    var answer = await DialogAsync(L10n.Text("RuntimeMissing"), L10n.Text("RuntimeHelp"), L10n.Text("Download"));
+                    if (answer == ContentDialogResult.Primary) await Launcher.LaunchUriAsync(new Uri("https://developer.microsoft.com/microsoft-edge/webview2/"));
+                }
+                else await DialogAsync(L10n.Text("Error"), error.Message);
             }
-            else await DialogAsync(L10n.Text("Error"), error.Message);
+            catch (Exception dialogError)
+            {
+                // 已有模态框打开或窗口关闭期间无法再弹 ContentDialog，记录原始错误避免 async void 进程崩溃。
+                App.RecordFailure(error, "RunAsync");
+                App.RecordFailure(dialogError, "RunAsync.Dialog");
+            }
         }
         finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; RefreshMenus(); commandGate.Release(); }
     }
