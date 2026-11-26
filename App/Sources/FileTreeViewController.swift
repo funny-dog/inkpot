@@ -91,7 +91,6 @@ final class FileTreeViewController: NSViewController, NSOutlineViewDataSource, N
     outlineView.delegate = self
     outlineView.target = self
     outlineView.action = #selector(activate(_:))
-    outlineView.doubleAction = #selector(activate(_:))
     let menu = NSMenu()
     menu.delegate = self
     outlineView.menu = menu

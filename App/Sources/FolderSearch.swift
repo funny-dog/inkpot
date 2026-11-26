@@ -36,6 +36,7 @@ enum FolderSearch {
   static let fileSizeLimit = 5 * 1024 * 1024
   static let snippetLimit = 300
   private static let fileExtensions: Set<String> = ["md", "markdown", "txt"]
+  private static let ignoredDirectories: Set<String> = ["node_modules", "build", "DerivedData", "Pods", "target", "dist", "bin", "obj"]
   private static let snippetLeadingContext = 60
 
   /// 同步遍历并搜索；界面层负责放到后台执行，并可通过 `isCancelled` 中止。
@@ -99,9 +100,10 @@ enum FolderSearch {
       if isCancelled() { return nil }
       guard let values = try? url.resourceValues(forKeys: keys) else { continue }
       if values.isDirectory == true {
-        // 目录本身不出现；隐藏目录、包与符号链接目录不再向下遍历。
+        // 目录本身不出现；隐藏目录、包、符号链接与常见依赖/构建目录不再向下遍历。
+        let name = url.lastPathComponent
         if values.isHidden == true || values.isPackage == true || values.isSymbolicLink == true
-          || url.lastPathComponent.hasPrefix(".") {
+          || name.hasPrefix(".") || ignoredDirectories.contains(name) {
           enumerator.skipDescendants()
         }
         continue
@@ -131,6 +133,8 @@ enum FolderSearch {
     isCancelled: () -> Bool
   ) -> [FolderSearchMatch]? {
     let text = content as NSString
+    // 全文快速预检：未命中关键词时直接跳过逐行拆分。
+    guard text.range(of: query, options: [.caseInsensitive, .literal]).location != NSNotFound else { return [] }
     var result: [FolderSearchMatch] = []
     var line = 1
     var location = 0
@@ -178,7 +182,7 @@ enum FolderSearch {
   private static func snippet(in text: NSString, lineRange: NSRange, match: NSRange) -> (text: String, highlight: NSRange) {
     let line = text.substring(with: lineRange) as NSString
     var length = line.length
-    while length > 0, CharacterSet.whitespaces.contains(Unicode.Scalar(line.character(at: length - 1)) ?? " ") {
+    while length > 0, let scalar = Unicode.Scalar(line.character(at: length - 1)), CharacterSet.whitespaces.contains(scalar) {
       length -= 1
     }
     let offset = match.location - lineRange.location
@@ -196,7 +200,7 @@ enum FolderSearch {
     let body = line.substring(with: NSRange(location: start, length: end - start))
     let highlight = NSRange(
       location: prefix.utf16.count + offset - start,
-      length: min(match.length, max(0, end - match.location))
+      length: min(match.length, max(0, end - offset))
     )
     return (prefix + body + suffix, highlight)
   }

@@ -25,7 +25,8 @@ final class FileTreeActions {
   static func relocated(_ url: URL, from source: URL, to destination: URL) -> URL? {
     let path = url.standardizedFileURL.path
     let sourcePath = source.standardizedFileURL.path
-    guard path == sourcePath || path.hasPrefix(sourcePath + "/") else { return nil }
+    let prefix = sourcePath == "/" ? "/" : sourcePath + "/"
+    guard path == sourcePath || path.hasPrefix(prefix) else { return nil }
     return URL(fileURLWithPath: destination.standardizedFileURL.path + path.dropFirst(sourcePath.count))
   }
 
@@ -79,7 +80,9 @@ final class FileTreeActions {
     let requireText = FileTree.textExtensions.contains(source.pathExtension.lowercased())
     let target = try Self.named(name, in: source.deletingLastPathComponent(), directory: directory, requireText: requireText)
     guard target != source.standardizedFileURL else { return target }
-    guard !FileManager.default.fileExists(atPath: target.path) else { throw CocoaError(.fileWriteFileExists) }
+    // 大小写不敏感文件系统下仅修改大小写时，target 与 source 指向同一文件，不应误报重名。
+    let caseOnlyRename = target.path.lowercased() == source.standardizedFileURL.path.lowercased()
+    guard caseOnlyRename || !FileManager.default.fileExists(atPath: target.path) else { throw CocoaError(.fileWriteFileExists) }
     let affected = matching(source)
     for document in affected { try await document.synchronize() }
     var coordinationError: NSError?

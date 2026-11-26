@@ -79,16 +79,30 @@ enum DocumentExport {
     let configuration = WKWebViewConfiguration()
     configuration.setURLSchemeHandler(MathAssetHandler(), forURLScheme: "inkpot-asset")
     let webView = WKWebView(frame: NSRect(x: 0, y: 0, width: width, height: 800), configuration: configuration)
-    // 相对路径的本地图片按文档所在目录解析。
-    try await webView.loadHTMLString(html, baseURL: document.fileURL?.deletingLastPathComponent())
-    let loaded = { try await webView.evaluateJavaScript("document.readyState === 'complete'") as? Bool == true }
+    let loader = ExportNavigationLoader()
+    webView.navigationDelegate = loader
+    defer { webView.navigationDelegate = nil }
+    // 相对路径的本地图片按文档所在目录解析，通过导航代理精确等待主文档加载完成。
+    try await loader.load(html: html, baseURL: document.fileURL?.deletingLastPathComponent(), in: webView)
+    _ = try? await webView.callAsyncJavaScript(
+      "if (document.fonts && document.fonts.ready) { await document.fonts.ready; } return true;",
+      arguments: [:],
+      in: nil,
+      contentWorld: .page
+    )
     let deadline = Date.now.addingTimeInterval(10)
-    while !(try await loaded()) && Date.now < deadline {
-      try await Task.sleep(for: .milliseconds(50))
+    while Date.now < deadline {
+      let ready = try await webView.evaluateJavaScript(
+        "document.readyState === 'complete' && Array.from(document.images).every(img => img.complete)"
+      ) as? Bool == true
+      if ready { break }
+      try await Task.sleep(for: .milliseconds(30))
     }
-    try await Task.sleep(for: .milliseconds(300))
     let height = (try await webView.evaluateJavaScript("Math.ceil(Math.max(document.documentElement.scrollHeight, document.body.scrollHeight))") as? Double) ?? 800
     webView.frame = NSRect(x: 0, y: 0, width: width, height: max(height, 100))
+    // 离屏 WebView 没有显示刷新驱动，不可使用 requestAnimationFrame；通过读取布局高度强制完成同步重排。
+    _ = try? await webView.evaluateJavaScript("document.body.offsetHeight")
+    try await Task.sleep(for: .milliseconds(30))
     return webView
   }
 
@@ -173,5 +187,42 @@ enum DocumentExport {
     } catch {
       document.presentError(error)
     }
+  }
+}
+
+/// 离屏导出 WebView 导航代理：准确等待 HTML 导航完成，并拒绝意外的外部跳转。
+@MainActor
+private final class ExportNavigationLoader: NSObject, WKNavigationDelegate {
+  private var continuation: CheckedContinuation<Void, Error>?
+  private var allowInitialNavigation = false
+
+  func load(html: String, baseURL: URL?, in webView: WKWebView) async throws {
+    try await withCheckedThrowingContinuation { continuation in
+      self.continuation = continuation
+      self.allowInitialNavigation = true
+      _ = webView.loadHTMLString(html, baseURL: baseURL)
+    }
+  }
+
+  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
+    navigationAction.navigationType == .other && allowInitialNavigation ? .allow : .cancel
+  }
+
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+    allowInitialNavigation = false
+    continuation?.resume()
+    continuation = nil
+  }
+
+  func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+    allowInitialNavigation = false
+    continuation?.resume(throwing: error)
+    continuation = nil
+  }
+
+  func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+    allowInitialNavigation = false
+    continuation?.resume(throwing: error)
+    continuation = nil
   }
 }

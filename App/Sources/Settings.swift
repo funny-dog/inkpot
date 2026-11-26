@@ -38,6 +38,10 @@ final class AppSettings: ObservableObject {
     }
   }
 
+  deinit {
+    for observer in observers { NotificationCenter.default.removeObserver(observer) }
+  }
+
   /// 保持原有启动行为；从访达打开指定文件时始终优先打开该文件。
   var restorePreviousSession: Bool {
     get { defaults.object(forKey: "startup.restorePreviousSession") as? Bool ?? true }
@@ -178,8 +182,10 @@ final class AppSettings: ObservableObject {
     set {
       guard newValue != spellChecking else { return }
       objectWillChange.send()
-      let webView = NSDocumentController.shared.documents.lazy.compactMap { ($0 as? InkpotDocument)?.editor?.view as? WKWebView }.first
-      if let webView { NSApp.sendAction(#selector(NSTextView.toggleContinuousSpellChecking(_:)), to: webView, from: nil) }
+      if defaults === UserDefaults.standard,
+         let webView = NSDocumentController.shared.documents.lazy.compactMap({ ($0 as? InkpotDocument)?.editor?.view as? WKWebView }).first {
+        NSApp.sendAction(#selector(NSTextView.toggleContinuousSpellChecking(_:)), to: webView, from: nil)
+      }
       defaults.set(newValue, forKey: "WebContinuousSpellCheckingEnabled")
     }
   }
@@ -571,7 +577,10 @@ final class SettingsWindowController: NSWindowController {
   func show(_ pane: SettingsPane) { tabs.selectedTabViewItemIndex = SettingsPane.allCases.firstIndex(of: pane) ?? 0 }
 
   @objc func showSettings(_ sender: Any?) {
-    if window?.isVisible != true { window?.center() }
+    // 仅在尚未保存过窗口位置时居中，避免覆盖 setFrameAutosaveName 记住的位置。
+    if window?.isVisible != true && UserDefaults.standard.string(forKey: "NSWindow Frame InkpotSettings") == nil {
+      window?.center()
+    }
     showWindow(sender)
     window?.makeKeyAndOrderFront(sender)
   }

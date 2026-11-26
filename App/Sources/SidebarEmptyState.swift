@@ -50,7 +50,7 @@ final class SidebarEmptyState: NSStackView {
 
   /// 把标题与说明合成一句，VoiceOver 读到空状态时一次读完。
   private func updateAccessibility() {
-    titleField.setAccessibilityLabel(message.isEmpty ? title : "\(title)。\(message)")
+    titleField.setAccessibilityLabel(message.isEmpty ? title : L10n.text("%@。%@", title, message))
     messageField.setAccessibilityElement(false)
   }
 

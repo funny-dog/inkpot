@@ -9,7 +9,48 @@ final class InkpotDocumentController: NSDocumentController {
     withAlertTitle title: String?, cancellable: Bool, delegate: Any?, didReviewAllSelector: Selector?, contextInfo: UnsafeMutableRawPointer?
   ) {
     MainActor.assumeIsolated { Self.quitSnapshot = DocumentSession.capture() }
-    super.reviewUnsavedDocuments(withAlertTitle: title, cancellable: cancellable, delegate: delegate, didReviewAllSelector: didReviewAllSelector, contextInfo: contextInfo)
+    guard let target = delegate as AnyObject?, let selector = didReviewAllSelector else {
+      super.reviewUnsavedDocuments(withAlertTitle: title, cancellable: cancellable, delegate: delegate, didReviewAllSelector: didReviewAllSelector, contextInfo: contextInfo)
+      return
+    }
+    // 拦截退出前未保存检查的结果：用户取消退出时立即清空 quitSnapshot，避免污染下次正常退出的会话记录。
+    let proxy = UnsavedReviewProxy(target: target, selector: selector) { didReviewAll in
+      if !didReviewAll {
+        MainActor.assumeIsolated { Self.quitSnapshot = nil }
+      }
+    }
+    super.reviewUnsavedDocuments(
+      withAlertTitle: title,
+      cancellable: cancellable,
+      delegate: proxy,
+      didReviewAllSelector: #selector(UnsavedReviewProxy.documentController(_:didReviewAll:contextInfo:)),
+      contextInfo: contextInfo
+    )
+  }
+}
+
+private final class UnsavedReviewProxy: NSObject {
+  private let target: AnyObject
+  private let selector: Selector
+  private let onFinish: (Bool) -> Void
+  private var retainSelf: UnsavedReviewProxy?
+
+  init(target: AnyObject, selector: Selector, onFinish: @escaping (Bool) -> Void) {
+    self.target = target
+    self.selector = selector
+    self.onFinish = onFinish
+    super.init()
+    retainSelf = self
+  }
+
+  @objc func documentController(_ controller: NSDocumentController, didReviewAll: Bool, contextInfo: UnsafeMutableRawPointer?) {
+    defer { retainSelf = nil }
+    onFinish(didReviewAll)
+    typealias ReviewCallback = @convention(c) (AnyObject, Selector, NSDocumentController, ObjCBool, UnsafeMutableRawPointer?) -> Void
+    if let implementation = target.method(for: selector) {
+      let callback = unsafeBitCast(implementation, to: ReviewCallback.self)
+      callback(target, selector, controller, ObjCBool(didReviewAll), contextInfo)
+    }
   }
 }
 

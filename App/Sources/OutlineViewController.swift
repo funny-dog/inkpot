@@ -41,7 +41,6 @@ final class OutlineViewController: NSViewController, NSOutlineViewDataSource, NS
     outlineView.delegate = self
     outlineView.target = self
     outlineView.action = #selector(navigate(_:))
-    outlineView.doubleAction = #selector(navigate(_:))
     scrollView.documentView = outlineView
     scrollView.hasVerticalScroller = true
     scrollView.drawsBackground = false

@@ -229,7 +229,7 @@
 "浅色" = "Light";
 "深色" = "Dark";
 "第三方依赖及许可原文" = "Third-Party Dependencies and License Notices";
-"当前仅支持 UTF-8 文本。文件未被修改，请使用原编码的编辑器打开。" = "Only UTF-8 text is currently supported. The file has not been modified; please open it with an editor that supports its original encoding.";
+"无法识别的文本编码（支持 UTF-8、UTF-16 与 GB18030）。文件未被修改，请使用原编码的编辑器打开。" = "Unsupported text encoding (UTF-8, UTF-16, and GB18030 are supported). The file has not been modified; please open it with an editor that supports its original encoding.";
 "本地恢复草稿写入失败。请手动保存文档。\n%@" = "Failed to write local recovery draft. Please save the document manually.\n%@";
 "磁盘文件已被其他程序修改，已阻止覆盖。当前编辑仍保留；请另存为，或通过“文件 → 重新载入磁盘版本”放弃当前修改后载入。" = "The file has been modified on disk by another program. Overwriting was prevented. Your current edits are preserved; please Save As, or use \"File → Revert to Saved…\" to discard changes and reload.";
 "请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 %@ 文件夹。" = "Please save the Markdown document before dropping images. Images will be saved in the \"%@\" folder next to the document.";

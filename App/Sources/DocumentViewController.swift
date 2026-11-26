@@ -260,11 +260,12 @@ final class DocumentViewController: NSSplitViewController, NSToolbarDelegate {
     Task { @MainActor in
       do {
         let document = try await fileSwitch.open(url, in: controller)
-        files.selectCurrentFile(document?.fileURL)
-        if document?.editor === editor {
-          editor.focusEditor()
-          if let fragment { editor.navigateFragment(fragment) }
-          if let match { editor.selectMatch(line: match.line, column: match.column, length: match.length) }
+        files.selectCurrentFile((controller.document as? InkpotDocument)?.fileURL)
+        updateSaveState()
+        if let targetEditor = document?.editor {
+          targetEditor.focusEditor()
+          if let fragment { targetEditor.navigateFragment(fragment) }
+          if let match { targetEditor.selectMatch(line: match.line, column: match.column, length: match.length) }
         }
       } catch {
         files.selectCurrentFile((controller.document as? InkpotDocument)?.fileURL)

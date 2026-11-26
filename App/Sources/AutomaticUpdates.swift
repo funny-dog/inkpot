@@ -163,7 +163,6 @@ final class AutomaticUpdates: ObservableObject {
   private func run(force: Bool = false) {
     guard enabled, task == nil,
           force || Self.isDue(lastCheck: defaults.object(forKey: "updates.lastCheck") as? Date, now: .now) else { return }
-    defaults.set(Date.now, forKey: "updates.lastCheck")
     status = L10n.text("正在检查更新…")
     task = Task { @MainActor in
       defer {
@@ -174,7 +173,10 @@ final class AutomaticUpdates: ObservableObject {
       defer { session.finishTasksAndInvalidate() }
       do {
         guard let current = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else { throw UpdateError.invalidRelease }
-        guard let release = try await UpdateRelease.fetch(current: current, session: session) else {
+        let release = try await UpdateRelease.fetch(current: current, session: session)
+        // 检查成功后才记录上次检查时间，避免启动时短暂断网导致 24 小时内不再重试。
+        defaults.set(Date.now, forKey: "updates.lastCheck")
+        guard let release else {
           if !Task.isCancelled && enabled {
             downloadedURL = nil
             defaults.removeObject(forKey: "updates.downloadedVersion")

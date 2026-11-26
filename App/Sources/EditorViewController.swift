@@ -55,6 +55,10 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     fatalError("使用 init(text:) 初始化编辑器")
   }
 
+  deinit {
+    NotificationCenter.default.removeObserver(self)
+  }
+
   override func loadView() {
     view = webView
     webView.pageZoom = EditorZoom.shared.level
@@ -96,7 +100,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     return (text, revision)
   }
 
-  func replaceText(_ text: String) {
+  func replaceText(_ text: String, preservePending: Bool = false) {
     initialText = text
     guard isViewLoaded && pageReady else { return }
     isReady = false
@@ -112,8 +116,10 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     sourceMode = false
     tableActions = []
     tableCellFocused = false
-    pendingFragment = nil
-    pendingMatch = nil
+    if !preservePending {
+      pendingFragment = nil
+      pendingMatch = nil
+    }
     let documentGeneration = generation
     Task { @MainActor in
       do {
@@ -139,7 +145,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
   }
 
   func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-    navigationAction.request.url == resourceURL && !isReady ? .allow : .cancel
+    navigationAction.request.url == resourceURL && !pageReady ? .allow : .cancel
   }
 
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
@@ -198,7 +204,7 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
           let body = message.body as? [String: Any] else { return }
     if body["ready"] as? Bool == true {
       pageReady = true
-      replaceText(initialText)
+      replaceText(initialText, preservePending: true)
       return
     }
     if body["pasteImage"] as? Bool == true, body["generation"] as? Int == generation {
@@ -292,7 +298,8 @@ extension EditorViewController {
         let argument = try encodedArgument(name)
         _ = try await evaluateScript("window.inkpot.command(\(argument)); null")
       } catch {
-        fail(error)
+        // 单次编辑命令失败不置死整个编辑器，避免阻止后续保存与关闭。
+        presentError(error)
       }
     }
   }
@@ -323,7 +330,7 @@ extension EditorViewController {
     Task { @MainActor in
       do {
         _ = try await evaluateScript("window.inkpot.navigateHeading(\(id)); null")
-      } catch { fail(error) }
+      } catch { presentError(error) }
     }
   }
 

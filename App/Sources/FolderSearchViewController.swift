@@ -42,9 +42,11 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
 
   final class Group: NSObject {
     let file: FolderSearchFile
+    let items: [MatchItem]
 
     init(_ file: FolderSearchFile) {
       self.file = file
+      self.items = file.matches.map(MatchItem.init)
     }
   }
 
@@ -54,6 +56,11 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     init(_ match: FolderSearchMatch) {
       self.match = match
     }
+  }
+
+  deinit {
+    searchTask?.cancel()
+    activeToken?.cancel()
   }
 
   override func loadView() {
@@ -70,15 +77,15 @@ final class FolderSearchViewController: NSViewController, NSOutlineViewDataSourc
     outlineView.addTableColumn(column)
     outlineView.outlineTableColumn = column
     outlineView.headerView = nil
-    outlineView.rowHeight = 24
     outlineView.indentationPerLevel = 10
     outlineView.style = .sourceList
+    outlineView.rowSizeStyle = .custom
+    outlineView.rowHeight = 24
     outlineView.setAccessibilityLabel(L10n.text("搜索结果"))
     outlineView.dataSource = self
     outlineView.delegate = self
     outlineView.target = self
     outlineView.action = #selector(activate(_:))
-    outlineView.doubleAction = #selector(activate(_:))
     scrollView.documentView = outlineView
     scrollView.hasVerticalScroller = true
     scrollView.drawsBackground = false
@@ -207,7 +214,7 @@ extension FolderSearchViewController {
 
   func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
     guard let group = item as? Group else { return groups[index] }
-    return MatchItem(group.file.matches[index])
+    return group.items[index]
   }
 
   func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {

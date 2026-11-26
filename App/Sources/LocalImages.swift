@@ -1,4 +1,5 @@
 import AppKit
+import Darwin
 import ImageIO
 import UniformTypeIdentifiers
 import WebKit
@@ -32,19 +33,36 @@ enum LocalImages {
     let name = "image-" + UUID().uuidString.lowercased() + "." + (type.preferredFilenameExtension ?? "png")
     let url = folder.appendingPathComponent(name)
     try bytes.write(to: url, options: .withoutOverwriting)
-    // Markdown 链接目标中的空格与括号需要转义，其他字符（含中文）保持原样，读取时会还原。
-    let reference = folderName.replacingOccurrences(of: " ", with: "%20").replacingOccurrences(of: "(", with: "%28").replacingOccurrences(of: ")", with: "%29")
+    // Markdown 链接目标中的百分号、空格、括号与查询/锚点字符需要转义，其他字符（含中文）保持原样，读取时会还原。
+    let reference = folderName
+      .replacingOccurrences(of: "%", with: "%25")
+      .replacingOccurrences(of: " ", with: "%20")
+      .replacingOccurrences(of: "(", with: "%28")
+      .replacingOccurrences(of: ")", with: "%29")
+      .replacingOccurrences(of: "#", with: "%23")
+      .replacingOccurrences(of: "?", with: "%3F")
     return (reference + "/" + name, url)
   }
 
   static func read(_ reference: String, relativeTo documentURL: URL?) throws -> (Data, String) {
-    // 先编码中文等字符，同时保留 Markdown URL 中已有的百分号转义。
-    let encoded = reference.addingPercentEncoding(withAllowedCharacters: .urlFragmentAllowed.union(CharacterSet(charactersIn: "%#")))
+    // 先编码中文及 #/? 等路径字符，同时保留 Markdown URL 中已有的百分号转义，避免文件名含 # 被裁成 URL fragment。
+    let encoded = reference.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed.union(CharacterSet(charactersIn: "%:")))
     guard let documentURL, let encoded, let url = URL(string: encoded, relativeTo: documentURL)?.absoluteURL, url.isFileURL, (url.host?.isEmpty ?? true) || url.host == "localhost" else {
       throw CocoaError(.fileReadUnsupportedScheme)
     }
+    // 仅允许读取常规文件并限制体积，避免读取设备文件或巨型位图导致内存溢出。
+    let values = try url.resourceValues(forKeys: [.isRegularFileKey, .fileSizeKey])
+    guard values.isRegularFile == true else {
+      throw CocoaError(.fileReadNoPermission)
+    }
+    if let fileSize = values.fileSize, fileSize > RemoteImages.maxBytes {
+      throw NSError(domain: "Inkpot", code: 36, userInfo: [NSLocalizedDescriptionKey: L10n.text("图片体积超出限制（最大支持 20MB）。")])
+    }
     let data = try Data(contentsOf: url, options: .mappedIfSafe)
-    let image = try validated(data)
+    if data.count > RemoteImages.maxBytes {
+      throw NSError(domain: "Inkpot", code: 36, userInfo: [NSLocalizedDescriptionKey: L10n.text("图片体积超出限制（最大支持 20MB）。")])
+    }
+    let image = try RemoteImages.validate(data: data)
     return (image.data, image.type.preferredMIMEType ?? "application/octet-stream")
   }
 }
@@ -73,7 +91,7 @@ enum RemoteImages {
     return scheme != "file"
   }
 
-  /// 校验 URL 是否为合法安全的 HTTPS 请求，拒绝非 HTTPS、URL 用户名/密码及空 host。
+  /// 校验 URL 是否为合法安全的 HTTPS 请求，拒绝非 HTTPS、URL 用户名/密码、空 host 及回环/内网地址。
   static func validate(url: URL) throws {
     guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false) else {
       throw CocoaError(.fileReadUnsupportedScheme)
@@ -87,6 +105,48 @@ enum RemoteImages {
     guard let host = components.host, !host.isEmpty else {
       throw CocoaError(.fileReadUnsupportedScheme)
     }
+    if isPrivateOrLoopbackHost(host) {
+      throw CocoaError(.fileReadNoPermission)
+    }
+  }
+
+  /// 拦截本机回环、链路本地及私有内网主机名与 IP，避免远程图片功能被用于内网探测。
+  static func isPrivateOrLoopbackHost(_ host: String) -> Bool {
+    let normalized = host.trimmingCharacters(in: .whitespacesAndNewlines)
+      .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+      .lowercased()
+    if normalized.isEmpty || normalized == "localhost" || normalized.hasSuffix(".local") || normalized.hasSuffix(".localhost") {
+      return true
+    }
+    let bare = normalized.hasPrefix("[") && normalized.hasSuffix("]") ? String(normalized.dropFirst().dropLast()) : normalized
+    var v4 = in_addr()
+    if inet_pton(AF_INET, bare, &v4) == 1 {
+      return isPrivateIPv4(UInt32(bigEndian: v4.s_addr))
+    }
+    var v6 = in6_addr()
+    if inet_pton(AF_INET6, bare, &v6) == 1 {
+      let bytes = withUnsafeBytes(of: &v6) { Array($0) }
+      // :: 或 ::1
+      if bytes.prefix(15).allSatisfy({ $0 == 0 }) && (bytes[15] == 0 || bytes[15] == 1) { return true }
+      // IPv4 映射地址 ::ffff:a.b.c.d
+      if bytes.prefix(10).allSatisfy({ $0 == 0 }) && bytes[10] == 0xFF && bytes[11] == 0xFF {
+        let mapped = (UInt32(bytes[12]) << 24) | (UInt32(bytes[13]) << 16) | (UInt32(bytes[14]) << 8) | UInt32(bytes[15])
+        return isPrivateIPv4(mapped)
+      }
+      // 唯一本地地址 fc00::/7、链路本地 fe80::/10、多播 ff00::/8
+      if (bytes[0] & 0xFE) == 0xFC || (bytes[0] == 0xFE && (bytes[1] & 0xC0) == 0x80) || bytes[0] == 0xFF { return true }
+    }
+    return false
+  }
+
+  private static func isPrivateIPv4(_ address: UInt32) -> Bool {
+    let first = (address >> 24) & 0xFF
+    let second = (address >> 16) & 0xFF
+    return first == 0 || first == 10 || first == 127
+      || (first == 169 && second == 254)
+      || (first == 172 && (16...31).contains(second))
+      || (first == 192 && second == 168)
+      || (first == 100 && (64...127).contains(second))
   }
 
   /// 提取图片元数据并验证像素数量，避免大图内存爆炸。
@@ -262,13 +322,22 @@ final class RemoteImageDelegate: NSObject, URLSessionDataDelegate {
 final class LocalImageHandler: NSObject, WKURLSchemeHandler {
   var documentURL: URL?
   var generation = 0 {
-    didSet { if generation != oldValue { for task in tasks.values { task.cancel() } } }
+    didSet { if generation != oldValue { for entry in tasks.values { entry.task.cancel() } } }
   }
   /// 是否允许加载远程 HTTPS 图片，默认关闭。
   var allowRemoteImages = false {
-    didSet { if !allowRemoteImages { for task in tasks.values { task.cancel() } } }
+    didSet {
+      // 关闭远程图片时仅取消远程下载任务，避免误杀正在读取的本地图片。
+      if !allowRemoteImages {
+        for entry in tasks.values where entry.isRemote { entry.task.cancel() }
+      }
+    }
   }
-  private var tasks: [ObjectIdentifier: Task<Void, Never>] = [:]
+  private var tasks: [ObjectIdentifier: (task: Task<Void, Never>, isRemote: Bool)] = [:]
+
+  deinit {
+    for entry in tasks.values { entry.task.cancel() }
+  }
 
   func webView(_ webView: WKWebView, start urlSchemeTask: WKURLSchemeTask) {
     guard let url = urlSchemeTask.request.url, let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
@@ -282,10 +351,11 @@ final class LocalImageHandler: NSObject, WKURLSchemeHandler {
     let documentURL = documentURL
     let generation = generation
     let allowRemote = allowRemoteImages
+    let isRemote = RemoteImages.isHTTPSReference(reference)
 
     let task = Task { @MainActor [weak self] in
       let result: Result<(Data, String), Error>
-      if RemoteImages.isHTTPSReference(reference) {
+      if isRemote {
         if !allowRemote {
           result = .failure(NSError(domain: "Inkpot", code: 35, userInfo: [NSLocalizedDescriptionKey: L10n.text("已禁用远程图片加载。可在设置中开启。")]))
         } else {
@@ -306,7 +376,7 @@ final class LocalImageHandler: NSObject, WKURLSchemeHandler {
       }
 
       guard let self, self.tasks.removeValue(forKey: id) != nil else { return }
-      guard self.generation == generation, !Task.isCancelled, !RemoteImages.isHTTPSReference(reference) || self.allowRemoteImages else {
+      guard self.generation == generation, !Task.isCancelled, !isRemote || self.allowRemoteImages else {
         urlSchemeTask.didFailWithError(CocoaError(.userCancelled))
         return
       }
@@ -323,12 +393,12 @@ final class LocalImageHandler: NSObject, WKURLSchemeHandler {
         urlSchemeTask.didFailWithError(error)
       }
     }
-    tasks[id] = task
+    tasks[id] = (task, isRemote)
   }
 
   func webView(_ webView: WKWebView, stop urlSchemeTask: WKURLSchemeTask) {
     let id = ObjectIdentifier(urlSchemeTask)
-    tasks.removeValue(forKey: id)?.cancel()
+    tasks.removeValue(forKey: id)?.task.cancel()
   }
 }
 

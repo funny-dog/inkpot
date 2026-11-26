@@ -23,7 +23,7 @@ final class DocumentFileSwitch {
     let (next, alreadyOpen) = try await openDocument(url)
     if alreadyOpen || !next.windowControllers.isEmpty {
       next.showWindows()
-      return current
+      return next
     }
     var adopted = false
     defer { if !adopted { next.close() } }
@@ -32,6 +32,8 @@ final class DocumentFileSwitch {
     try await current.synchronize()
     guard await confirmClose(current) else { return current }
     guard windowController.document === current, current.editor?.isReady == true else { return current }
+    // 在移除 windowController 前记住旧文件所在文件夹，否则 close() 时 windowControllers 已为空。
+    DocumentFolders.remember(current)
     current.removeWindowController(windowController)
     current.transferEditor(to: next)
     next.addWindowController(windowController)

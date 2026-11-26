@@ -155,6 +155,7 @@ final class InkpotDocument: NSDocument {
   override func revert(toContentsOf url: URL, ofType typeName: String) throws {
     try super.revert(toContentsOf: url, ofType: typeName)
     safety.saved(content.data)
+    autosave.saved()
   }
 
   override func showWindows() {

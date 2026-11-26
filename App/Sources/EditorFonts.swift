@@ -76,9 +76,14 @@ final class EditorFonts: NSObject {
 
   /// 设置窗口的候选家族：正文列出全部已安装字体，代码只列等宽字体；首次使用时计算一次。
   static let bodyFamilies = NSFontManager.shared.availableFontFamilies.filter { !$0.hasPrefix(".") }
-  static let codeFamilies = bodyFamilies.filter { family in
-    NSFontManager.shared.font(withFamily: family, traits: [], weight: 5, size: 13)?.isFixedPitch == true
-  }
+  static let codeFamilies: [String] = {
+    // 直接向系统查询带等宽特征的字体名称，避免逐个实例化全量系统字体阻塞主线程。
+    let fixedPitch = Set(
+      (NSFontManager.shared.availableFontNames(with: .fixedPitchFontMask) ?? [])
+        .compactMap { NSFont(name: $0, size: 13)?.familyName }
+    )
+    return bodyFamilies.filter { fixedPitch.contains($0) }
+  }()
 
   /// 显示 → 字体与字号…：打开设置窗口的外观分类，在页内直接选择。
   @objc func showFontSettings(_ sender: Any?) {

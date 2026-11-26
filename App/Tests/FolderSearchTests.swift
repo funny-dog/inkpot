@@ -87,6 +87,17 @@ final class FolderSearchTests: XCTestCase {
     let range = NSRange(location: 0, length: (match.snippet as NSString).length)
     XCTAssertTrue(NSLocationInRange(match.highlight.location, range))
     XCTAssertEqual((match.snippet as NSString).substring(with: match.highlight), "关键词")
+
+    // 第 2 行及以后超长行的高亮长度不得受全文偏移影响；行尾 Emoji 代理对不得被误作空白裁删。
+    let secondLine = "第一行占位内容\n" + String(repeating: "甲", count: 400) + "目标词" + String(repeating: "乙", count: 400)
+    try write(secondLine, "long-line2.md", in: root)
+    let secondMatch = try XCTUnwrap(FolderSearch.search(in: root, query: "目标词").files.first?.matches.first)
+    XCTAssertEqual(secondMatch.line, 2)
+    XCTAssertEqual((secondMatch.snippet as NSString).substring(with: secondMatch.highlight), "目标词")
+
+    try write("测试摘要保留表情 😀🎉  ", "emoji.md", in: root)
+    let emojiMatch = try XCTUnwrap(FolderSearch.search(in: root, query: "测试").files.first?.matches.first)
+    XCTAssertEqual(emojiMatch.snippet, "测试摘要保留表情 😀🎉")
   }
 
   func testResultLimitTruncatesAndMarksTheResult() throws {

@@ -52,6 +52,12 @@ final class ImageTests: XCTestCase {
     }
     XCTAssertThrowsError(try LocalImages.read("https://example.com/a.png", relativeTo: url))
     XCTAssertThrowsError(try LocalImages.read("file://remotehost/a.png", relativeTo: url))
+    let svgFile = root.appendingPathComponent("evil.svg")
+    try Data("<svg xmlns='http://www.w3.org/2000/svg'></svg>".utf8).write(to: svgFile)
+    XCTAssertThrowsError(try LocalImages.read("evil.svg", relativeTo: url))
+    let subdir = root.appendingPathComponent("dir", isDirectory: true)
+    try FileManager.default.createDirectory(at: subdir, withIntermediateDirectories: true)
+    XCTAssertThrowsError(try LocalImages.read("dir", relativeTo: url))
     let linkedDocument = outside.appendingPathComponent("b.md")
     try FileManager.default.createSymbolicLink(at: outside.appendingPathComponent("assets"), withDestinationURL: root)
     XCTAssertThrowsError(try LocalImages.store(data, beside: linkedDocument))
@@ -145,6 +151,11 @@ final class ImageTests: XCTestCase {
     }
     XCTAssertThrowsError(try RemoteImages.validate(url: try XCTUnwrap(URL(string: "https:///image.png")))) { error in
       XCTAssertEqual((error as? CocoaError)?.code, .fileReadUnsupportedScheme)
+    }
+    for blocked in ["https://localhost/a.png", "https://127.0.0.1/a.png", "https://169.254.169.254/a.png", "https://10.0.0.1/a.png", "https://192.168.1.1/a.png", "https://[::1]/a.png", "https://printer.local/a.png"] {
+      XCTAssertThrowsError(try RemoteImages.validate(url: try XCTUnwrap(URL(string: blocked)))) { error in
+        XCTAssertEqual((error as? CocoaError)?.code, .fileReadNoPermission)
+      }
     }
 
     // 通过本地 URLProtocol stub 验证重定向策略

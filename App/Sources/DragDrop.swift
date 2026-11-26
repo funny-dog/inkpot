@@ -25,14 +25,24 @@ enum DragDrop {
         controller.files.openFolder(folder)
         if !controller.filesVisible { controller.toggleContent(files: true) }
       }
-      for url in documents { controller.openFile(url) }
+      if let first = documents.first {
+        controller.openFile(first)
+        if documents.count > 1, let window = webView.window {
+          let rest = Array(documents.dropFirst())
+          Task { @MainActor in
+            for url in rest {
+              do { try await DocumentTabs.open(url, in: window).showWindows() } catch { controller.presentError(error) }
+            }
+          }
+        }
+      }
     }
     guard !images.isEmpty else { return }
     insertImages(images, into: document)
   }
 
   private static func insertImages(_ urls: [URL], into document: InkpotDocument) {
-    guard let base = document.fileURL else {
+    guard let base = document.fileURL, let editor = document.editor else {
       Task { @MainActor in
         document.presentError(NSError(domain: "Inkpot", code: 41, userInfo: [NSLocalizedDescriptionKey: L10n.text("请先保存 Markdown 文档，再拖入图片。图片将保存在文档同级的 %@ 文件夹。", AppSettings.shared.imageFolder)]))
       }
@@ -40,17 +50,24 @@ enum DragDrop {
     }
     Task { @MainActor in
       for url in urls {
+        var asset: URL?
         let scoped = url.startAccessingSecurityScopedResource()
         defer { if scoped { url.stopAccessingSecurityScopedResource() } }
         do {
-          let data = try Data(contentsOf: url)
-          let image = try await Task.detached { [folder = AppSettings.shared.imageFolder(beside: base)] in try LocalImages.store(data, beside: base, folderName: folder) }.value
-          try await document.editor?.insertImage(image.path)
+          let image = try await Task.detached { [folder = AppSettings.shared.imageFolder(beside: base)] in
+            let data = try Data(contentsOf: url)
+            return try LocalImages.store(data, beside: base, folderName: folder)
+          }.value
+          asset = image.url
+          guard document.fileURL == base, document.editor === editor, !document.windowControllers.isEmpty else { throw CocoaError(.userCancelled) }
+          try await editor.insertImage(image.path)
+          asset = nil
         } catch {
+          if let asset { try? FileManager.default.removeItem(at: asset) }
           if (error as NSError).code != NSUserCancelledError { document.presentError(error) }
         }
       }
-      document.editor?.focusEditor()
+      editor.focusEditor()
     }
   }
 }

@@ -79,10 +79,10 @@ final class FileTreeActionsTests: XCTestCase {
     XCTAssertIdentical(reopened.0, document)
     XCTAssertTrue(reopened.1)
     let binary = root.appendingPathComponent("图.png")
-    try Data([0xFF, 0xFE, 0x00, 0xC3]).write(to: binary)
+    try Data([0x80, 0xFF, 0x00, 0xC3]).write(to: binary)
     do {
       _ = try await DocumentFileSwitch.load(binary)
-      XCTFail("非 UTF-8 文件应提示无法打开")
+      XCTFail("二进制文件应提示无法打开")
     } catch {}
 
     let defaults = try XCTUnwrap(UserDefaults(suiteName: "DocumentFoldersTests"))
