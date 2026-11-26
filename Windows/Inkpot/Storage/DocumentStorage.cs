@@ -20,11 +20,11 @@ public static class DocumentStorage
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool MoveFileEx(string source, string destination, uint flags);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern int MultiByteToWideChar(uint codePage, uint flags, byte[] bytes, int byteCount, char[]? chars, int charCount);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern int MultiByteToWideChar(uint codePage, uint flags, [In] byte[] bytes, int byteCount, [Out] char[]? chars, int charCount);
 
-    [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern int WideCharToMultiByte(uint codePage, uint flags, string chars, int charCount, byte[]? bytes, int byteCount, IntPtr defaultChar, IntPtr usedDefaultChar);
+    [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern int WideCharToMultiByte(uint codePage, uint flags, string chars, int charCount, [Out] byte[]? bytes, int byteCount, IntPtr defaultChar, IntPtr usedDefaultChar);
 
     public static async Task<LoadedDocument> ReadAsync(string path)
     {
