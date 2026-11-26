@@ -226,42 +226,6 @@ final class DocumentTests: XCTestCase {
     XCTAssertEqual(content.data, Data("\u{FEFF}e\u{301}\r\n中文".utf8))
   }
 
-  func testInvalidEncodingDoesNotReplaceLoadedDocument() throws {
-    let document = InkpotDocument()
-    let original = Data("原文件\r\n".utf8)
-    try document.read(from: original, ofType: "net.daringfireball.markdown")
-    for invalid in [Data([0xFF, 0xFE, 0x00, 0x00]), Data([0xC3, 0x28]), Data([0xEF, 0xBB, 0xBF, 0xFF]), Data([0x80, 0xFF, 0x00, 0xC3])] {
-      XCTAssertThrowsError(try document.read(from: invalid, ofType: "net.daringfireball.markdown"))
-      XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), original)
-    }
-  }
-
-  func testUTF16AndGB18030RoundTripExactBytes() throws {
-    let sample = "# 标题\r\nHello 中文\n"
-    let leBody = try XCTUnwrap(sample.data(using: .utf16LittleEndian))
-    let utf16LE = Data([0xFF, 0xFE]) + leBody
-    let leDoc = InkpotDocument()
-    try leDoc.read(from: utf16LE, ofType: "net.daringfireball.markdown")
-    XCTAssertEqual(try leDoc.data(ofType: "net.daringfireball.markdown"), utf16LE)
-
-    let beBody = try XCTUnwrap(sample.data(using: .utf16BigEndian))
-    let utf16BE = Data([0xFE, 0xFF]) + beBody
-    let beDoc = InkpotDocument()
-    try beDoc.read(from: utf16BE, ofType: "net.daringfireball.markdown")
-    XCTAssertEqual(try beDoc.data(ofType: "net.daringfireball.markdown"), utf16BE)
-
-    let gbBytes = Data([0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0x0D, 0x0A]) // "# 中文\r\n"
-    var gbContent = try DocumentContent(data: gbBytes)
-    XCTAssertEqual(gbContent.encoding, .gb18030)
-    XCTAssertEqual(gbContent.text, "# 中文\r\n")
-    XCTAssertEqual(gbContent.data, gbBytes)
-    gbContent.text = "# 中文，墨池\r\n"
-    XCTAssertEqual(
-      gbContent.data,
-      Data([0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0xA3, 0xAC, 0xC4, 0xAB, 0xB3, 0xD8, 0x0D, 0x0A])
-    )
-  }
-
   func testSafeWriteAndFailedWriteKeepDocumentContent() throws {
     let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
@@ -550,5 +514,41 @@ extension DocumentTests {
     try await document.synchronize()
     XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), Data(original.utf8))
     XCTAssertFalse(document.isDocumentEdited)
+  }
+
+  func testInvalidEncodingDoesNotReplaceLoadedDocument() throws {
+    let document = InkpotDocument()
+    let original = Data("原文件\r\n".utf8)
+    try document.read(from: original, ofType: "net.daringfireball.markdown")
+    for invalid in [Data([0xFF, 0xFE, 0x00, 0x00]), Data([0xC3, 0x28]), Data([0xEF, 0xBB, 0xBF, 0xFF]), Data([0x80, 0xFF, 0x00, 0xC3])] {
+      XCTAssertThrowsError(try document.read(from: invalid, ofType: "net.daringfireball.markdown"))
+      XCTAssertEqual(try document.data(ofType: "net.daringfireball.markdown"), original)
+    }
+  }
+
+  func testUTF16AndGB18030RoundTripExactBytes() throws {
+    let sample = "# 标题\r\nHello 中文\n"
+    let leBody = try XCTUnwrap(sample.data(using: .utf16LittleEndian))
+    let utf16LE = Data([0xFF, 0xFE]) + leBody
+    let leDoc = InkpotDocument()
+    try leDoc.read(from: utf16LE, ofType: "net.daringfireball.markdown")
+    XCTAssertEqual(try leDoc.data(ofType: "net.daringfireball.markdown"), utf16LE)
+
+    let beBody = try XCTUnwrap(sample.data(using: .utf16BigEndian))
+    let utf16BE = Data([0xFE, 0xFF]) + beBody
+    let beDoc = InkpotDocument()
+    try beDoc.read(from: utf16BE, ofType: "net.daringfireball.markdown")
+    XCTAssertEqual(try beDoc.data(ofType: "net.daringfireball.markdown"), utf16BE)
+
+    let gbBytes = Data([0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0x0D, 0x0A]) // "# 中文\r\n"
+    var gbContent = try DocumentContent(data: gbBytes)
+    XCTAssertEqual(gbContent.encoding, .gb18030)
+    XCTAssertEqual(gbContent.text, "# 中文\r\n")
+    XCTAssertEqual(gbContent.data, gbBytes)
+    gbContent.text = "# 中文，墨池\r\n"
+    XCTAssertEqual(
+      gbContent.data,
+      Data([0x23, 0x20, 0xD6, 0xD0, 0xCE, 0xC4, 0xA3, 0xAC, 0xC4, 0xAB, 0xB3, 0xD8, 0x0D, 0x0A])
+    )
   }
 }

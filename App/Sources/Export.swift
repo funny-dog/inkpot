@@ -208,19 +208,19 @@ private final class ExportNavigationLoader: NSObject, WKNavigationDelegate {
     navigationAction.navigationType == .other && allowInitialNavigation ? .allow : .cancel
   }
 
-  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+  func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {
     allowInitialNavigation = false
     continuation?.resume()
     continuation = nil
   }
 
-  func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+  func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
     allowInitialNavigation = false
     continuation?.resume(throwing: error)
     continuation = nil
   }
 
-  func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+  func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation?, withError error: Error) {
     allowInitialNavigation = false
     continuation?.resume(throwing: error)
     continuation = nil

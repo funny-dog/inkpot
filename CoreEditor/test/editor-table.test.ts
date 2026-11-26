@@ -187,7 +187,8 @@ describe('Inkpot 表格', () => {
     expect(input(view, 0, 3).value).toBe('c');
     undo(view); expect(read()).toBe(text);
     const target = input(view, 1, 0); target.focus();
-    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: true, bubbles: true, cancelable: true }));
+    const isWindows = /(?:^|\W)(?:Win32|Win64|Windows)(?:\W|$)/i.test(navigator.userAgent);
+    target.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', metaKey: !isWindows, ctrlKey: isWindows, bubbles: true, cancelable: true }));
     expect(read()).toBe(text + '\n\n');
     expect(document.activeElement).toBe(view.contentDOM);
     undo(view); expect(read()).toBe(text);
