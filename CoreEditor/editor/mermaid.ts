@@ -12,33 +12,63 @@ let load = async (): Promise<Mermaid> => (await import(/* @vite-ignore */ `${ass
 let library: Promise<Mermaid> | undefined;
 let renderTail: Promise<void> = Promise.resolve();
 let diagramID = 0;
+const svgCaches = new WeakMap<EditorView, Map<string, string>>();
+const svgCacheLimit = 64;
+
+function viewCache(view: EditorView) {
+  let cache = svgCaches.get(view);
+  if (cache === undefined) {
+    cache = new Map<string, string>();
+    svgCaches.set(view, cache);
+  }
+  return cache;
+}
 
 export function useMermaidForTests(module: Mermaid) {
   library = undefined;
   load = () => Promise.resolve(module);
 }
 
-async function render(source: string, dark: boolean, element: HTMLElement) {
+async function render(view: EditorView, source: string, dark: boolean, element: HTMLElement) {
+  const cache = viewCache(view);
+  const cacheKey = `${dark ? '1' : '0'}:${source}`;
+  const cached = cache.get(cacheKey);
+  if (cached !== undefined) {
+    cache.delete(cacheKey);
+    cache.set(cacheKey, cached);
+    return cached;
+  }
   const previous = renderTail;
   const job = (async () => {
     await previous;
     if (!element.isConnected) return '';
+    const hit = cache.get(cacheKey);
+    if (hit !== undefined) return hit;
+    let mermaid: Mermaid;
     try {
-      const mermaid = await (library ??= load());
-      // 文档配置不能放宽执行边界或覆盖资源限制；SVG 文本也便于独立导出。
-      mermaid.initialize({
-        startOnLoad: false, securityLevel: 'strict', htmlLabels: false, suppressErrorRendering: true,
-        maxTextSize: 50000, maxEdges: 500, theme: dark ? 'dark' : 'default', layout: 'dagre',
-        fontFamily: 'system-ui, sans-serif',
-        secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'htmlLabels', 'theme', 'themeCSS', 'fontFamily', 'layout', 'dompurifyConfig'],
-      });
-      const staging = document.body.appendChild(document.createElement('div'));
-      staging.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
-      try { return (await mermaid.render(`inkpot-diagram-${++diagramID}`, source, staging)).svg; } finally { staging.remove(); }
+      mermaid = await (library ??= load());
     } catch (error) {
       library = undefined;
       throw error;
     }
+    // 文档配置不能放宽执行边界或覆盖资源限制；SVG 文本也便于独立导出。
+    mermaid.initialize({
+      startOnLoad: false, securityLevel: 'strict', htmlLabels: false, suppressErrorRendering: true,
+      maxTextSize: 50000, maxEdges: 500, theme: dark ? 'dark' : 'default', layout: 'dagre',
+      fontFamily: 'system-ui, sans-serif',
+      secure: ['secure', 'securityLevel', 'startOnLoad', 'maxTextSize', 'maxEdges', 'htmlLabels', 'theme', 'themeCSS', 'fontFamily', 'layout', 'dompurifyConfig'],
+    });
+    const staging = document.body.appendChild(document.createElement('div'));
+    staging.style.cssText = 'position:absolute;visibility:hidden;pointer-events:none';
+    try {
+      const svg = (await mermaid.render(`inkpot-diagram-${++diagramID}`, source, staging)).svg;
+      if (cache.size >= svgCacheLimit) {
+        const oldest = cache.keys().next().value;
+        if (oldest !== undefined) cache.delete(oldest);
+      }
+      cache.set(cacheKey, svg);
+      return svg;
+    } finally { staging.remove(); }
   })();
   // Mermaid 的配置和布局共享状态，串行渲染避免多个图表或主题切换相互覆盖。
   renderTail = (async () => { try { await job; } catch { /* 失败不阻塞后续图表。 */ } })();
@@ -46,8 +76,9 @@ async function render(source: string, dark: boolean, element: HTMLElement) {
 }
 
 class MermaidPreview extends WidgetType {
-  constructor(readonly source: string, readonly anchor: number, readonly dark: boolean) { super(); }
-  eq(other: MermaidPreview) { return this.source === other.source && this.anchor === other.anchor && this.dark === other.dark; }
+  constructor(readonly source: string, readonly dark: boolean) { super(); }
+  // 比较不含绝对文档偏移，前文编辑时不触发后方全部 Mermaid 图表重绘。
+  eq(other: MermaidPreview) { return this.source === other.source && this.dark === other.dark; }
 
   toDOM(view: EditorView) {
     const element = document.createElement('div');
@@ -61,8 +92,11 @@ class MermaidPreview extends WidgetType {
       element.title = t('点击或按 Enter 编辑图表源码');
     }
     const reveal = () => {
-      if (!editable || isComposing(view)) return;
-      view.dispatch({ selection: { anchor: this.anchor }, scrollIntoView: true });
+      if (!editable || isComposing(view) || !element.isConnected) return;
+      const from = view.posAtDOM(element);
+      const firstLine = view.state.doc.lineAt(from);
+      const anchor = Math.min(view.state.doc.length, firstLine.to + 1);
+      view.dispatch({ selection: { anchor }, scrollIntoView: true });
       view.focus();
     };
     element.addEventListener('mousedown', event => { if (event.button === 0) { event.preventDefault(); reveal(); } });
@@ -71,7 +105,7 @@ class MermaidPreview extends WidgetType {
     void (async () => {
       try {
         if (this.source.length > 50000) throw new Error(t('图表文本超过 50,000 字符限制'));
-        const svg = await render(this.source, this.dark, element);
+        const svg = await render(view, this.source, this.dark, element);
         if (element.isConnected) {
           element.innerHTML = svg;
         }
@@ -128,7 +162,7 @@ function decorations(state: EditorState) {
     }
     const from = state.doc.lineAt(node.from).from;
     const to = state.doc.lineAt(node.to).to;
-    ranges.push(Decoration.replace({ block: true, widget: new MermaidPreview(source, start, !exporting && state.facet(EditorView.darkTheme)) }).range(from, to));
+    ranges.push(Decoration.replace({ block: true, widget: new MermaidPreview(source, !exporting && state.facet(EditorView.darkTheme)) }).range(from, to));
   }
   return Decoration.set(ranges, true);
 }
@@ -136,7 +170,10 @@ function decorations(state: EditorState) {
 const mermaidBlocks = StateField.define<DecorationSet>({
   create: decorations,
   update: (value, transaction) => transaction.docChanged || transaction.reconfigured
-    || transaction.effects.length > 0 || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
+    || transaction.startState.field(previewExport, false) !== transaction.state.field(previewExport, false)
+    || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
+    || transaction.startState.facet(EditorView.darkTheme) !== transaction.state.facet(EditorView.darkTheme)
+    || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
     || (transaction.selection !== undefined && !selectionMissesBlocks(transaction, blocks => blocks.mermaid))
     ? decorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),

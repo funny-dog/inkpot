@@ -89,7 +89,8 @@ export type HostRequest = { requestId: number } & (
   | { method: 'command'; name: string }
   | { method: 'pastePlainText'; text: string }
   | { method: 'setAppearance'; dark: boolean }
-  | { method: 'preferences'; fonts: EditorFonts; editing: PairingPreferences & { remoteImages: boolean; indent: number }; modes: { focus: boolean; typewriter: boolean }; spellcheck: boolean; zoom: number; zoomWithControlScroll: boolean }
+  | { method: 'setTheme'; theme: string }
+  | { method: 'preferences'; fonts: EditorFonts; editing: PairingPreferences & { remoteImages: boolean; indent: number }; modes: { focus: boolean; typewriter: boolean }; spellcheck: boolean; zoom: number; zoomWithControlScroll: boolean; theme?: string }
   | { method: 'setFonts'; fonts: EditorFonts }
   | { method: 'setDisplayModes'; modes: { focus: boolean; typewriter: boolean } }
   | { method: 'setEditingPreferences'; preferences: PairingPreferences & { remoteImages: boolean; indent: number } }
@@ -130,15 +131,29 @@ export function listenToHost(api: InkpotAPI) {
     if (zoomWithControlScroll && event.deltaY !== 0) postToHost({ shortcut: event.deltaY < 0 ? 'zoomIn' : 'zoomOut', generation });
   }, { passive: false });
   document.addEventListener('keydown', event => {
-    if (event.isComposing) return;
+    if (event.isComposing || event.defaultPrevented || event.metaKey) return;
     const key = event.key.toLowerCase();
-    const plain: Record<string, string> = { F8: 'focus', F9: 'typewriter', F11: 'fullscreen', F3: event.shiftKey ? 'findPrevious' : 'findNext' };
-    const control: Record<string, string> = { n: event.altKey ? 'newTab' : 'new', o: event.altKey ? 'openFolder' : event.shiftKey ? 'outline' : 'open',
-      s: event.shiftKey ? 'saveAs' : 'save', w: 'close', ',': 'settings', f: 'folderSearch', e: 'files', m: 'source',
-      tab: event.shiftKey ? 'previousTab' : 'nextTab', p: event.shiftKey ? 'pageSetup' : 'print', v: 'pastePlain',
-      '0': 'resetZoom', '=': 'zoomIn', '+': 'zoomIn', '-': 'zoomOut' };
-    const shiftOnly = ['f', 'e', 'm', 'v'];
-    const shortcut = event.ctrlKey ? (shiftOnly.includes(key) && !event.shiftKey ? undefined : control[key]) : plain[event.key];
+    let shortcut: string | undefined;
+    if (event.ctrlKey) {
+      if (event.altKey) {
+        if (!event.shiftKey) shortcut = key === 'n' ? 'newTab' : key === 'o' ? 'openFolder' : undefined;
+      } else {
+        const control: Record<string, string> = {
+          n: 'new', o: event.shiftKey ? 'outline' : 'open',
+          s: event.shiftKey ? 'saveAs' : 'save', w: 'close', ',': 'settings', f: 'folderSearch', e: 'files', m: 'source',
+          tab: event.shiftKey ? 'previousTab' : 'nextTab', p: event.shiftKey ? 'pageSetup' : 'print', v: 'pastePlain',
+          '0': 'resetZoom', '=': 'zoomIn', '+': 'zoomIn', '-': 'zoomOut',
+        };
+        const shiftOnly = ['f', 'e', 'm', 'v'];
+        const allowShift = ['o', 's', 'tab', 'p', '+', ...shiftOnly];
+        if (!event.shiftKey || allowShift.includes(key)) {
+          shortcut = shiftOnly.includes(key) && !event.shiftKey ? undefined : control[key];
+        }
+      }
+    } else if (!event.altKey) {
+      if (event.key === 'F3') shortcut = event.shiftKey ? 'findPrevious' : 'findNext';
+      else if (!event.shiftKey) shortcut = ({ F8: 'focus', F9: 'typewriter', F11: 'fullscreen' } as Record<string, string>)[event.key];
+    }
     if (shortcut === undefined) return;
     event.preventDefault();
     postToHost({ shortcut, generation });
@@ -172,16 +187,22 @@ export function listenToHost(api: InkpotAPI) {
           if (typeof request.dark !== 'boolean') throw new Error('无效的外观消息。');
           api.setAppearance(request.dark);
           break;
+        case 'setTheme':
+          if (typeof request.theme !== 'string') throw new Error('无效的主题消息。');
+          api.setTheme(request.theme);
+          break;
         case 'preferences': {
           const { fonts, editing, modes } = request;
-          if (fonts === undefined || typeof fonts.bodyFamily !== 'string' || typeof fonts.codeFamily !== 'string'
-            || !Number.isFinite(fonts.bodySize) || !Number.isFinite(fonts.codeSize)
-            || editing === undefined || typeof editing.brackets !== 'boolean' || typeof editing.markdown !== 'boolean'
+          if (fonts == null || typeof fonts.bodyFamily !== 'string' || typeof fonts.codeFamily !== 'string'
+            || ![fonts.bodySize, fonts.codeSize].every(size => typeof size === 'number' && Number.isFinite(size) && size >= 8 && size <= 72)
+            || editing == null || typeof editing.brackets !== 'boolean' || typeof editing.markdown !== 'boolean'
             || typeof editing.remoteImages !== 'boolean' || ![2, 4].includes(editing.indent)
-            || modes === undefined || typeof modes.focus !== 'boolean' || typeof modes.typewriter !== 'boolean'
+            || modes == null || typeof modes.focus !== 'boolean' || typeof modes.typewriter !== 'boolean'
             || typeof request.spellcheck !== 'boolean' || typeof request.zoom !== 'number' || !Number.isFinite(request.zoom) || request.zoom < .5 || request.zoom > 2
-            || typeof request.zoomWithControlScroll !== 'boolean') throw new Error('无效的偏好设置。');
+            || typeof request.zoomWithControlScroll !== 'boolean'
+            || (request.theme !== undefined && typeof request.theme !== 'string')) throw new Error('无效的偏好设置。');
           api.setFonts(fonts); api.setEditingPreferences(editing); api.setDisplayModes(modes); api.setSpellcheck(request.spellcheck);
+          if (typeof request.theme === 'string') api.setTheme(request.theme);
           document.body.style.zoom = String(request.zoom);
           zoomWithControlScroll = request.zoomWithControlScroll;
           break;

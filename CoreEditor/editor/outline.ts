@@ -24,7 +24,7 @@ export function headings(state: EditorState, tree: Tree): Omit<Heading, 'id'>[] 
       node.node.toTree().iterate({
         enter(child) {
           const parent = child.node.parent?.name;
-          if (['HeaderMark', 'EmphasisMark', 'CodeMark', 'LinkMark'].includes(child.name)
+          if (['HeaderMark', 'EmphasisMark', 'CodeMark', 'LinkMark', 'StrikethroughMark', 'InlineHighlightMark', 'InlineMathMark'].includes(child.name)
             || (['URL', 'LinkTitle', 'LinkLabel'].includes(child.name) && ['Link', 'Image'].includes(parent ?? ''))) {
             removed.push({ from: node.from + child.from, to: node.from + child.to });
             return false;

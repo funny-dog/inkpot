@@ -9,7 +9,7 @@ import { SyntaxNode, Tree } from '@lezer/common';
 import { headings } from './outline';
 import { selectionMissesBlocks, topBlocks } from './blocks';
 import { selectionTouches } from './basic';
-import { isComposing, sourceMode } from './mode';
+import { isComposing, previewExport, searchSelection, sourceMode } from './mode';
 
 export const highlightTag = Tag.define();
 export const inlineHighlightTagName = 'InlineHighlight';
@@ -30,9 +30,10 @@ export const highlightExtension: MarkdownConfig = {
   parseInline: [{
     name: inlineHighlightTagName,
     parse(cx, next, pos) {
-      if (next !== 61 || cx.char(pos + 1) !== 61) return -1;
+      if (next !== 61 || cx.char(pos + 1) !== 61 || cx.char(pos + 2) === 61) return -1;
       for (let index = pos + 2; index < cx.end; index++) {
         const char = cx.char(index);
+        if (char === 92) { index++; continue; }
         if (char === 10) return -1;
         if (char === 61 && cx.char(index + 1) === 61 && index > pos + 2) {
           return cx.addElement(cx.elt(inlineHighlightTagName, pos, index + 2, [
@@ -61,8 +62,9 @@ export const footnoteExtension: MarkdownConfig = {
       for (let index = pos + 2; index < cx.end; index++) {
         const char = cx.char(index);
         if (char === 93) {
-          // 空标签或紧跟冒号（定义行标记）的不是引用。
-          if (index === pos + 2 || cx.char(index + 1) === 58) return -1;
+          // 空标签、紧跟冒号（定义行标记）或紧跟左括号（普通链接 [^text](url)）的不是脚注引用。
+          const after = cx.char(index + 1);
+          if (index === pos + 2 || after === 58 || after === 40) return -1;
           return cx.addElement(cx.elt(footnoteRefTagName, pos, index + 1));
         }
         if (char === 10 || char === 91 || char === 32 || char === 9) return -1;
@@ -85,8 +87,8 @@ export const footnoteExtension: MarkdownConfig = {
 };
 
 class TaskCheckbox extends WidgetType {
-  constructor(readonly checked: boolean, private readonly from: number, private readonly to: number) { super(); }
-  eq(other: TaskCheckbox) { return this.checked === other.checked && this.from === other.from; }
+  constructor(readonly checked: boolean) { super(); }
+  eq(other: TaskCheckbox) { return this.checked === other.checked; }
   toDOM(view: EditorView) {
     const input = document.createElement('input');
     input.type = 'checkbox';
@@ -96,9 +98,13 @@ class TaskCheckbox extends WidgetType {
     input.disabled = !editable;
     input.addEventListener('mousedown', event => event.preventDefault());
     input.addEventListener('click', () => {
-      if (!editable || isComposing(view)) { input.checked = this.checked; return; }
+      if (!editable || isComposing(view) || !input.isConnected) { input.checked = this.checked; return; }
+      const pos = view.posAtDOM(input);
+      let node: SyntaxNode | null = syntaxTree(view.state).resolveInner(pos, 1);
+      while (node !== null && node.name !== 'TaskMarker') node = node.parent;
+      if (node === null) { input.checked = this.checked; return; }
       view.dispatch({
-        changes: { from: this.from, to: this.to, insert: this.checked ? '[ ]' : '[x]' },
+        changes: { from: node.from, to: node.to, insert: this.checked ? '[ ]' : '[x]' },
         annotations: isolateHistory.of('full'),
         userEvent: 'input.task',
       });
@@ -109,8 +115,8 @@ class TaskCheckbox extends WidgetType {
 }
 
 class FootnoteRef extends WidgetType {
-  constructor(readonly label: string, readonly definition: string, private readonly anchor: number) { super(); }
-  eq(other: FootnoteRef) { return this.label === other.label && this.definition === other.definition && this.anchor === other.anchor; }
+  constructor(readonly label: string, readonly definition: string) { super(); }
+  eq(other: FootnoteRef) { return this.label === other.label && this.definition === other.definition; }
   toDOM(view: EditorView) {
     const element = document.createElement('sup');
     element.className = 'cm-inkpot-footnote-ref';
@@ -120,8 +126,9 @@ class FootnoteRef extends WidgetType {
       element.addEventListener('mousedown', event => {
         if (event.button !== 0) return;
         event.preventDefault();
-        if (isComposing(view)) return;
-        view.dispatch({ selection: { anchor: this.anchor }, scrollIntoView: true });
+        if (isComposing(view) || !element.isConnected) return;
+        const pos = view.posAtDOM(element);
+        view.dispatch({ selection: { anchor: Math.min(view.state.doc.length, pos + 1) }, scrollIntoView: true });
         view.focus();
       });
     }
@@ -138,8 +145,19 @@ function footnoteDefinitions(state: EditorState) {
   if (definitions === undefined) {
     definitions = new Map<string, string>();
     const pattern = /^ {0,3}\[\^([^\s[\]]+)\]:[ \t]*(.*)$/;
+    let fenceChar = '';
+    let fenceLength = 0;
     for (let number = 1; number <= state.doc.lines; number++) {
-      const match = pattern.exec(state.doc.line(number).text);
+      const text = state.doc.line(number).text;
+      const fence = /^ {0,3}(`{3,}|~{3,})/.exec(text);
+      if (fence !== null) {
+        if (fenceChar === '') { fenceChar = fence[1][0]; fenceLength = fence[1].length; continue; }
+        if (fence[1][0] === fenceChar && fence[1].length >= fenceLength && text.slice(fence[0].length).trim() === '') {
+          fenceChar = ''; fenceLength = 0; continue;
+        }
+      }
+      if (fenceChar !== '') continue;
+      const match = pattern.exec(text);
       if (match !== null) definitions.set(match[1], match[2]);
     }
     definitionCache.set(state.doc, definitions);
@@ -151,16 +169,17 @@ export function gfmDecorations(node: SyntaxNode, view: EditorView, searchSelecti
   const { state } = view;
   const decorations: Range<Decoration>[] = [];
   const atoms: Range<Decoration>[] = [];
-  const editing = selectionTouches(state, node.from, node.to, true);
-  const searching = searchSelection && selectionTouches(state, node.from, node.to, false);
+  const exporting = state.field(previewExport, false) === true;
+  const editing = !exporting && selectionTouches(state, node.from, node.to, true);
+  const searching = !exporting && searchSelection && selectionTouches(state, node.from, node.to, false);
   if (!editing && !searching) {
     if (node.name === 'TaskMarker') {
-      const replacement = Decoration.replace({ widget: new TaskCheckbox(/x/i.test(state.sliceDoc(node.from, node.to)), node.from, node.to) }).range(node.from, node.to);
+      const replacement = Decoration.replace({ widget: new TaskCheckbox(/x/i.test(state.sliceDoc(node.from, node.to))) }).range(node.from, node.to);
       decorations.push(replacement);
       atoms.push(replacement);
     } else if (node.name === footnoteRefTagName) {
       const label = state.sliceDoc(node.from + 2, node.to - 1);
-      const replacement = Decoration.replace({ widget: new FootnoteRef(label, footnoteDefinitions(state).get(label) ?? '', node.from + 1) }).range(node.from, node.to);
+      const replacement = Decoration.replace({ widget: new FootnoteRef(label, footnoteDefinitions(state).get(label) ?? '') }).range(node.from, node.to);
       decorations.push(replacement);
       atoms.push(replacement);
     }
@@ -170,7 +189,12 @@ export function gfmDecorations(node: SyntaxNode, view: EditorView, searchSelecti
 
 class TableOfContents extends WidgetType {
   constructor(readonly entries: { level: number; title: string; from: number }[]) { super(); }
-  eq(other: TableOfContents) { return this.entries.length === other.entries.length && this.entries.every((entry, index) => entry.level === other.entries[index].level && entry.title === other.entries[index].title); }
+  eq(other: TableOfContents) {
+    return this.entries.length === other.entries.length
+      && this.entries.every((entry, index) => entry.level === other.entries[index].level
+        && entry.title === other.entries[index].title
+        && entry.from === other.entries[index].from);
+  }
   toDOM(view: EditorView) {
     const wrapper = document.createElement('div');
     wrapper.className = 'cm-inkpot-toc';
@@ -180,7 +204,6 @@ class TableOfContents extends WidgetType {
       empty.className = 'cm-inkpot-toc-empty';
       empty.textContent = t('暂无标题');
     } else {
-      const editable = !view.state.readOnly && view.state.facet(EditorView.editable);
       for (const entry of this.entries) {
         const item = wrapper.appendChild(document.createElement('div'));
         item.className = 'cm-inkpot-toc-item';
@@ -190,8 +213,9 @@ class TableOfContents extends WidgetType {
         item.addEventListener('mousedown', (event: MouseEvent) => {
           if (event.button !== 0) return;
           event.preventDefault();
-          if (!editable || isComposing(view)) return;
-          view.dispatch({ selection: { anchor: entry.from }, scrollIntoView: true });
+          if (isComposing(view)) return;
+          const anchor = Math.min(entry.from, view.state.doc.length);
+          view.dispatch({ selection: { anchor }, scrollIntoView: true });
           view.focus();
         });
       }
@@ -200,12 +224,6 @@ class TableOfContents extends WidgetType {
   }
   ignoreEvent() { return false; }
 }
-
-// 目录块 [toc]：块级装饰必须由 StateField 提供；搜索命中标记时临时展开源码。
-const tocSearch = StateField.define({
-  create: () => false,
-  update: (value, transaction) => transaction.isUserEvent('select.search') ? true : transaction.selection !== undefined || transaction.docChanged ? false : value,
-});
 
 // 目录条目按语法树缓存：同一棵树只提取一次标题，多个 [toc] 与选区引起的重建共用。
 const tocEntryCache = new WeakMap<Tree, { level: number; title: string; from: number }[]>();
@@ -221,12 +239,13 @@ function tocEntries(state: EditorState) {
 }
 
 function tocDecorations(state: EditorState) {
-  if (state.field(sourceMode)) return Decoration.none;
+  const exporting = state.field(previewExport, false) === true;
+  if (state.field(sourceMode) && !exporting) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
   const selection = state.selection.main;
   for (const node of topBlocks(state).toc) {
-    if (selectionTouches(state, node.from, node.to, true)
-      || (state.field(tocSearch) && selection.from < node.to && selection.to > node.from)) continue;
+    if (!exporting && (selectionTouches(state, node.from, node.to, true)
+      || (state.field(searchSelection, false) === true && selection.from < node.to && selection.to > node.from))) continue;
     ranges.push(Decoration.replace({ block: true, widget: new TableOfContents(tocEntries(state)) }).range(state.doc.lineAt(node.from).from, state.doc.lineAt(node.to).to));
   }
   return Decoration.set(ranges, true);
@@ -235,6 +254,7 @@ function tocDecorations(state: EditorState) {
 const tocBlocks = StateField.define<DecorationSet>({
   create: tocDecorations,
   update: (value, transaction) => transaction.docChanged || transaction.reconfigured
+    || transaction.startState.field(previewExport, false) !== transaction.state.field(previewExport, false)
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
     || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
     || (transaction.selection !== undefined && !selectionMissesBlocks(transaction, blocks => blocks.toc)) ? tocDecorations(transaction.state) : value,
@@ -242,7 +262,7 @@ const tocBlocks = StateField.define<DecorationSet>({
 });
 
 export const gfmEditing = [
-  tocSearch, tocBlocks,
+  tocBlocks,
   EditorView.atomicRanges.of(view => view.state.field(tocBlocks)),
   EditorView.theme({
     '.cm-inkpot-footnote-ref': { fontSize: '0.75em', verticalAlign: 'super', cursor: 'help' },

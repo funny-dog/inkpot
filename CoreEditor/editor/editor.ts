@@ -9,12 +9,12 @@ import { searchCommands } from './search';
 import { liveEditing, sourceMode, toggleSourceMode } from './live';
 import { documentOutline } from './outline';
 import { refreshImages, setImageDocument, setRemoteImages } from './image';
-import { tableCommands, canTableCommand, syncTableSelection } from './table';
+import { availableTableActions, tableCommands, syncTableSelection } from './table';
 import { mathCommands } from './math';
 import { documentStats, statsExtension } from './stats';
 import { spellingExclusions } from './spelling';
 import { documentHTML } from './export';
-import { applyAppearance, appearanceExtensionsFor } from './theme';
+import { applyAppearance, appearanceExtensionsFor, preferredDarkFor } from './theme';
 import { applyDisplayModes, displayExtensions } from './focus';
 import { isComposing } from './mode';
 import { linkAt, linkNavigation } from './basic';
@@ -36,19 +36,26 @@ const outline = documentOutline((headings, active) => {
 });
 const commands: Readonly<Partial<Record<string, Command>>> = { focus: view => { view.focus(); return true; }, undo, redo, selectAll, toggleSourceMode, ...formatCommands, ...searchCommands, ...tableCommands, ...mathCommands };
 
+function isTextInput(element: Element | null): element is HTMLInputElement | HTMLTextAreaElement {
+  if (element instanceof HTMLTextAreaElement) return true;
+  if (!(element instanceof HTMLInputElement)) return false;
+  return !['checkbox', 'radio', 'button', 'submit', 'reset'].includes(element.type);
+}
+
 function publish(changed: boolean) {
   if (view === undefined) return;
+  const active = document.activeElement;
   postToHost({
     changed,
     revision,
     generation,
     canUndo: undoDepth(view.state) > 0,
     canRedo: redoDepth(view.state) > 0,
-    searchInputFocused: document.activeElement instanceof HTMLInputElement && !document.activeElement.matches('.cm-inkpot-table-input'),
-    tableCellFocused: document.activeElement?.matches('.cm-inkpot-table-input') === true,
-    tableActions: Object.keys(tableCommands).filter(name => view !== undefined && canTableCommand(name, view)),
+    searchInputFocused: isTextInput(active) && !active.matches('.cm-inkpot-table-input'),
+    tableCellFocused: active?.matches('.cm-inkpot-table-input') === true,
+    tableActions: availableTableActions(view),
     stats: documentStats(view.state),
-    editorFocused: view.contentDOM.contains(document.activeElement),
+    editorFocused: view.contentDOM.contains(active),
     sourceMode: view.state.field(sourceMode),
     composing: isComposing(view),
   });
@@ -136,6 +143,10 @@ window.inkpot = {
   },
   navigateFragment(fragment) {
     if (view === undefined) return;
+    const raw = fragment.startsWith('#') ? fragment.slice(1) : fragment;
+    let normalized = raw;
+    try { normalized = decodeURIComponent(raw); } catch { /* 保留原始锚点文本。 */ }
+    normalized = normalized.toLowerCase();
     const plugin = view.plugin(outline.extension);
     plugin?.refresh();
     const counts = new Map<string, number>();
@@ -143,7 +154,7 @@ window.inkpot = {
       const slug = item.title.toLowerCase().replace(/[^\p{L}\p{N}_\-\s]/gu, '').replace(/\s/g, '-');
       const count = counts.get(slug) ?? 0;
       counts.set(slug, count + 1);
-      return (count === 0 ? slug : `${slug}-${count}`) === fragment;
+      return (count === 0 ? slug : `${slug}-${count}`) === normalized;
     });
     if (target !== undefined) outline.navigate(view, target.id);
   },
@@ -151,8 +162,8 @@ window.inkpot = {
   selectMatch(line, column, length) {
     if (view === undefined || line < 1 || line > view.state.doc.lines) return;
     const target = view.state.doc.line(line);
-    const from = Math.min(target.to, target.from + column);
-    const head = Math.min(target.to, from + length);
+    const from = Math.min(target.to, target.from + Math.max(0, column));
+    const head = Math.min(target.to, from + Math.max(0, length));
     view.dispatch({
       selection: { anchor: from, head },
       effects: EditorView.scrollIntoView(from, { y: 'center' }),
@@ -161,7 +172,8 @@ window.inkpot = {
   },
   insertImage(path) {
     if (view === undefined || isComposing(view) || view.state.readOnly) throw new Error(t('请先结束输入或等待编辑器就绪，再插入图片。'));
-    view.dispatch(view.state.update({ ...view.state.replaceSelection(`![${t('图片')}](${path})`), annotations: isolateHistory.of('full'), userEvent: 'input.image', scrollIntoView: true }));
+    const destination = /[\s()]/.test(path) && !(path.startsWith('<') && path.endsWith('>')) ? `<${path}>` : path;
+    view.dispatch(view.state.update({ ...view.state.replaceSelection(`![${t('图片')}](${destination})`), annotations: isolateHistory.of('full'), userEvent: 'input.image', scrollIntoView: true }));
     view.focus();
   },
   refreshImages() { view?.dispatch({ effects: refreshImages.of(null) }); },
@@ -176,7 +188,7 @@ window.inkpot = {
   selectedMarkdown() {
     if (view === undefined || isComposing(view)) return '';
     const input = document.activeElement;
-    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+    if (isTextInput(input)) {
       return input.value.slice(input.selectionStart ?? 0, input.selectionEnd ?? 0);
     }
     return view.state.selection.ranges.map(range => view?.state.sliceDoc(range.from, range.to) ?? '').join('\n');
@@ -184,7 +196,7 @@ window.inkpot = {
   pastePlainText(text) {
     if (view === undefined || isComposing(view) || view.state.readOnly) return;
     const input = document.activeElement;
-    if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+    if (isTextInput(input)) {
       document.execCommand('insertText', false, text);
       return;
     }
@@ -196,7 +208,7 @@ window.inkpot = {
     let node = syntaxTree(view.state).resolveInner(view.state.selection.main.from, 1);
     let code = false;
     while (node.parent !== null) { code ||= ['InlineCode', 'FencedCode', 'CodeBlock', 'HTMLBlock'].includes(node.name); node = node.parent; }
-    const isInput = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
+    const isInput = isTextInput(document.activeElement);
     let text = plain;
     if (!code && !isInput && !view.state.field(sourceMode) && html !== '') {
       try { text = htmlToMarkdown(html) || plain; } catch { /* Fall back to clipboard text. */ }
@@ -205,7 +217,7 @@ window.inkpot = {
   },
   setSpellcheck(enabled) { view?.dispatch({ effects: spellcheck.reconfigure(EditorView.contentAttributes.of({ spellcheck: String(enabled) })) }); },
   setAppearance(dark) { if (view !== undefined) applyAppearance(view, dark); },
-  setTheme(name) { if (view !== undefined) applyAppearance(view, view.state.facet(EditorView.darkTheme), name); },
+  setTheme(name) { if (view !== undefined) applyAppearance(view, preferredDarkFor(view), name); },
   setDisplayModes(modes) { if (view !== undefined) applyDisplayModes(view, modes); },
   exportHTML(mode?: string) {
     if (view === undefined) throw new Error(t('编辑器尚未就绪。'));
@@ -220,7 +232,7 @@ window.inkpot = {
     if (view === undefined || isComposing(view)) return;
     const input = document.activeElement;
     syncTableSelection(view);
-    if (input instanceof HTMLInputElement && ['undo', 'redo', 'selectAll'].includes(name)
+    if (isTextInput(input) && ['undo', 'redo', 'selectAll'].includes(name)
       && (name === 'selectAll' || !input.matches('.cm-inkpot-table-input'))) {
       if (name === 'selectAll') input.select(); else document.execCommand(name);
       return;

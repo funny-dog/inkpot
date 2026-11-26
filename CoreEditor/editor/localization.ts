@@ -57,6 +57,7 @@ const english = {
   '语言文件 {0} 缺少 {1}': 'Language file {0} is missing {1}',
   '图片来源不受支持，已取消导出。': 'Unsupported image source. Export was cancelled.',
   '图片无法读取': 'Unable to read image',
+  '图片格式不受支持': 'Unsupported image format',
   '图片体积超过导出限制（单张 20 MB，总计 50 MB）': 'Images exceed the export limit (20 MB per image, 50 MB total)',
   '图片编码失败': 'Unable to encode image',
   '读取失败': 'Unable to read',

@@ -6,7 +6,7 @@ import { Command, Decoration, DecorationSet, EditorView, keymap, WidgetType } fr
 import { SyntaxNode } from '@lezer/common';
 import { linkDestination } from './basic';
 import { selectionMissesBlocks, topBlocks } from './blocks';
-import { isComposing, sourceMode } from './mode';
+import { isComposing, isPrimaryModifier, searchSelection, sourceMode } from './mode';
 import { Cell, readTable, serializeTable, Table } from './table-model';
 
 function tableAt(state: EditorState, position = state.selection.main.head): Table | undefined {
@@ -56,7 +56,7 @@ function cellPreview(state: EditorState, cell: Cell | undefined): DocumentFragme
       const element = document.createElement(code ? 'code' : 'span');
       if (code) element.className = 'cm-inkpot-inline-code';
       const marks = node.getChildren('CodeMark');
-      element.textContent = code ? state.sliceDoc(marks[0].to, marks[1].from) : state.sliceDoc(node.from, node.to);
+      element.textContent = code && marks.length >= 2 ? state.sliceDoc(marks[0].to, marks[1].from) : state.sliceDoc(node.from, node.to);
       parent.appendChild(element);
       return;
     }
@@ -108,7 +108,7 @@ class TableWidget extends WidgetType {
         input.spellcheck = false;
         preview.addEventListener('mousedown', event => {
           const link = (event.target as HTMLElement).closest<HTMLElement>('[data-destination]');
-          if (event.metaKey && link?.dataset.destination !== undefined) {
+          if (isPrimaryModifier(event) && link?.dataset.destination !== undefined) {
             event.preventDefault();
             view.dom.dispatchEvent(new CustomEvent('inkpot-open-link', { bubbles: true, detail: link.dataset.destination }));
           } else if (event.button === 0 && !view.state.readOnly && view.state.facet(EditorView.editable)) {
@@ -120,18 +120,34 @@ class TableWidget extends WidgetType {
         input.addEventListener('input', event => { if (!(event as InputEvent).isComposing && !input.hasAttribute('data-table-composing')) this.edit(view, input); });
         input.addEventListener('compositionstart', () => { input.setAttribute('data-table-composing', ''); });
         input.addEventListener('compositionend', () => { input.removeAttribute('data-table-composing'); this.edit(view, input); });
+        // 失焦兜底清理组合态标记，避免输入法切窗未派发 compositionend 时永久锁死保存与命令。
+        input.addEventListener('blur', () => {
+          if (input.hasAttribute('data-table-composing')) {
+            input.removeAttribute('data-table-composing');
+            this.edit(view, input);
+          }
+        });
         input.addEventListener('keydown', event => {
           if (event.isComposing || isComposing(view)) return;
-          if (event.metaKey && event.key.toLowerCase() === 'z') {
+          if (isPrimaryModifier(event) && event.key.toLowerCase() === 'z') {
             event.preventDefault(); (event.shiftKey ? redo : undo)(view);
-          } else if (event.metaKey && event.key === 'Enter') {
+          } else if (isPrimaryModifier(event) && event.key.toLowerCase() === 'y' && !event.shiftKey) {
+            event.preventDefault(); redo(view);
+          } else if (isPrimaryModifier(event) && event.key === 'Enter') {
             event.preventDefault(); leaveTable(view, true);
           } else if (['Tab', 'Enter', 'Escape'].includes(event.key)) {
             event.preventDefault();
             const inputs = [...wrapper.querySelectorAll<HTMLInputElement>('input')];
             const step = event.key === 'Enter' ? this.table.alignments.length : 1;
             const index = inputs.indexOf(input) + (event.shiftKey ? -step : step);
-            if (event.key !== 'Escape' && index >= 0 && index < inputs.length) { inputs[index].focus(); inputs[index].select(); } else this.exit(view, event.shiftKey);
+            if (event.key !== 'Escape' && index >= 0 && index < inputs.length) {
+              inputs[index].focus(); inputs[index].select();
+            } else if (event.key === 'Tab' && !event.shiftKey && index >= inputs.length && !view.state.readOnly && view.state.facet(EditorView.editable)) {
+              // 在表格末格按 Tab 自动新增一行并聚焦新行首格。
+              tableCommands.tableRowBelow(view);
+            } else {
+              this.exit(view, event.shiftKey);
+            }
           }
         });
       }
@@ -172,6 +188,7 @@ class TableWidget extends WidgetType {
     if (wrapper === null) return;
     const table = readTable(view.state, Number(wrapper.dataset.from), Number(wrapper.dataset.to));
     const row = Number(input.dataset.row), column = Number(input.dataset.column);
+    if (row < 0 || row >= table.rows.length) return;
     const value = normalizeCell(input.value);
     const cell = table.rows[row].at(column);
     if (view.state.sliceDoc(Number(input.dataset.from), Number(input.dataset.to)) === value) return;
@@ -180,7 +197,7 @@ class TableWidget extends WidgetType {
     let valueOffset = 0;
     if (cell === undefined) {
       const line = view.state.doc.lineAt(from);
-      const trailing = /(?<!\\)\|\s*$/.test(line.text);
+      const trailing = /(?:^|[^\\])(?:\\\\)*\|\s*$/.test(line.text);
       const prefix = (trailing ? ' ' : ' | ') + Array.from({ length: column - table.rows[row].length }, () => ' | ').join('');
       valueOffset = prefix.length;
       insert = prefix + value + (trailing ? ' |' : '');
@@ -210,16 +227,12 @@ class TableWidget extends WidgetType {
   ignoreEvent() { return true; }
 }
 
-const searchSelection = StateField.define({
-  create: () => false,
-  update: (value, transaction) => transaction.isUserEvent('select.search') ? true : transaction.selection !== undefined || transaction.docChanged ? false : value,
-});
 function decorations(state: EditorState) {
   if (state.field(sourceMode)) return Decoration.none;
   const ranges: Range<Decoration>[] = [];
   const selection = state.selection.main;
   for (const node of topBlocks(state).table) {
-    if (!(state.field(searchSelection) && selection.from < node.to && selection.to > node.from)) {
+    if (!(state.field(searchSelection, false) === true && selection.from < node.to && selection.to > node.from)) {
       const table = readTable(state, node.from, node.to);
       ranges.push(Decoration.replace({ block: true, widget: new TableWidget(table, state.readOnly || !state.facet(EditorView.editable)) }).range(table.from, table.to));
     }
@@ -232,23 +245,40 @@ const tables = StateField.define<DecorationSet>({
   update: (value, transaction) => transaction.docChanged || transaction.reconfigured
     || transaction.startState.field(sourceMode) !== transaction.state.field(sourceMode)
     || syntaxTree(transaction.startState) !== syntaxTree(transaction.state)
-    || (transaction.selection !== undefined && (transaction.startState.field(searchSelection) || transaction.state.field(searchSelection))
+    || (transaction.selection !== undefined && (transaction.startState.field(searchSelection, false) === true || transaction.state.field(searchSelection, false) === true)
       && !selectionMissesBlocks(transaction, blocks => blocks.table)) ? decorations(transaction.state) : value,
   provide: field => EditorView.decorations.from(field),
 });
 
+function canInsertTable(state: EditorState) {
+  let node: SyntaxNode | null = syntaxTree(state).resolveInner(state.selection.main.head, 1);
+  while (node !== null) {
+    if (['Table', 'FencedCode', 'CodeBlock', 'HTMLBlock', 'ListItem', 'Blockquote'].includes(node.name)) return false;
+    node = node.parent;
+  }
+  return true;
+}
+
 export function canTableCommand(name: string, view: EditorView) {
   if (isComposing(view) || view.state.readOnly || !view.state.facet(EditorView.editable)) return false;
+  if (name === 'insertTable') return canInsertTable(view.state);
   const context = tableContext(view);
-  if (name === 'insertTable') {
-    let node: SyntaxNode | null = syntaxTree(view.state).resolveInner(view.state.selection.main.head, 1);
-    while (node !== null) {
-      if (['Table', 'FencedCode', 'CodeBlock', 'HTMLBlock', 'ListItem', 'Blockquote'].includes(node.name)) return false;
-      node = node.parent;
-    }
-    return true;
-  }
   return context !== undefined && (name !== 'tableDeleteRow' || context.row > 0) && (name !== 'tableDeleteColumn' || context.table.alignments.length > 1);
+}
+
+/** 单次求值当前可用的全部表格命令，避免 publish() 为每个命令重复解析整张表格。 */
+export function availableTableActions(view: EditorView): string[] {
+  if (isComposing(view) || view.state.readOnly || !view.state.facet(EditorView.editable)) return [];
+  const actions: string[] = [];
+  if (canInsertTable(view.state)) actions.push('insertTable');
+  const context = tableContext(view);
+  if (context !== undefined) {
+    actions.push('tableRowAbove', 'tableRowBelow', 'tableColumnBefore', 'tableColumnAfter');
+    if (context.row > 0) actions.push('tableDeleteRow');
+    if (context.table.alignments.length > 1) actions.push('tableDeleteColumn');
+    actions.push('tableAlignLeft', 'tableAlignCenter', 'tableAlignRight');
+  }
+  return actions;
 }
 
 export const tableCommands: Readonly<Record<string, Command>> = Object.fromEntries([
@@ -305,7 +335,7 @@ function leaveTable(view: EditorView, append: boolean) {
 }
 
 export const tableEditing = [
-  searchSelection, tables,
+  tables,
   EditorView.atomicRanges.of(view => view.state.field(tables)),
   keymap.of([{ key: 'Mod-Enter', run: view => leaveTable(view, true) }, { key: 'Enter', run: view => leaveTable(view, true) }]),
   EditorView.theme({

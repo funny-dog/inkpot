@@ -1,6 +1,7 @@
 import TurndownService from 'turndown';
 import { EditorView } from '@codemirror/view';
 import { syntaxTree } from '@codemirror/language';
+import { isolateHistory } from '@codemirror/commands';
 import { isComposing, sourceMode } from './mode';
 
 // 富文本粘贴：读取剪贴板的 HTML，用 Turndown 转成 Markdown 源码插入。
@@ -9,11 +10,16 @@ const turndown = new TurndownService({
   headingStyle: 'atx', bulletListMarker: '-', codeBlockStyle: 'fenced', emDelimiter: '*',
 });
 
-turndown.remove(['script', 'style', 'iframe', 'object']);
-// 核心包不带删除线规则（在 gfm 插件里），编辑器支持 ~~语法~~，自己补上。
+turndown.remove(['script', 'style', 'iframe', 'object', 'embed', 'noscript', 'template']);
+turndown.remove(node => node.nodeName.toLowerCase() === 'svg');
+// 核心包不带删除线与高亮规则，编辑器支持 ~~删除线~~ 与 ==高亮==，自己补上。
 turndown.addRule('strikethrough', {
   filter: ['del', 's'],
   replacement: content => `~~${content}~~`,
+});
+turndown.addRule('highlight', {
+  filter: 'mark',
+  replacement: content => content === '' ? '' : `==${content}==`,
 });
 // Turndown 7 默认输出 "-   "（三空格），与编辑器续写的 "- " 不一致，覆盖为单空格。
 turndown.addRule('listItem', {
@@ -72,7 +78,7 @@ export const richPaste = EditorView.domEventHandlers({
     try {
       const text = htmlToMarkdown(html);
       if (text === '') return false;
-      view.dispatch({ ...view.state.replaceSelection(text), scrollIntoView: true, userEvent: 'input.paste' });
+      view.dispatch({ ...view.state.replaceSelection(text), annotations: isolateHistory.of('full'), scrollIntoView: true, userEvent: 'input.paste' });
       event.preventDefault();
       return true;
     } catch (error) {

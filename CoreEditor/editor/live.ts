@@ -1,7 +1,7 @@
 import { Range, StateEffect } from '@codemirror/state';
 import { syntaxTree } from '@codemirror/language';
 import { Decoration, DecorationSet, EditorView, keymap, ViewPlugin, ViewUpdate, WidgetType } from '@codemirror/view';
-import { sourceMode, toggleSourceMode, isComposing, previewExport } from './mode';
+import { sourceMode, toggleSourceMode, isComposing, previewExport, searchSelection } from './mode';
 import { hasMermaidPreview, mermaidEditing } from './mermaid';
 import { tableEditing } from './table';
 export { sourceMode, toggleSourceMode } from './mode';
@@ -152,7 +152,7 @@ const preview = ViewPlugin.fromClass(class {
 });
 
 export const liveEditing = [
-  sourceMode, previewExport, remoteImages,
+  sourceMode, previewExport, searchSelection, remoteImages,
   ...mermaidEditing,
   ...tableEditing,
   ...mathEditing,
@@ -163,7 +163,7 @@ export const liveEditing = [
   mathTheme,
   preview,
   keymap.of([
-    { key: 'Mod-Shift-m', run: toggleSourceMode },
+    { key: 'Mod-Shift-m', run: toggleSourceMode, stopPropagation: true },
     ...codeBindings.map(binding => ({ ...binding,
       run: (view: EditorView) => isComposing(view) ? true
         : view.state.field(sourceMode) || (view.state.readOnly && ['Enter', 'Backspace', 'Delete', 'Tab'].includes(binding.key ?? ''))

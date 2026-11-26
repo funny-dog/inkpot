@@ -155,6 +155,12 @@ describe('Inkpot 富文本粘贴', () => {
     expect(read()).toBe('原文中文');
   });
 
+  test('高亮标记转换为 ==...== 并移除 svg 与 template 危险节点', () => {
+    const { view, read } = editor('');
+    view.contentDOM.dispatchEvent(pasteEvent('<p>重要 <mark>高亮</mark><svg><script>alert(1)</script></svg><template>hidden</template></p>'));
+    expect(read()).toBe('重要 ==高亮==');
+  });
+
   test('单元格输入框内的粘贴不改写文档', () => {
     const { view, read } = editor('原文');
     const input = document.createElement('input');

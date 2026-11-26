@@ -28,4 +28,20 @@ describe('查找栏结构', () => {
     expect(second.querySelector('.cm-inkpot-search-replace-field input[name=replace]')).not.toBeNull();
     expect([...second.querySelectorAll('.cm-inkpot-search-action')].map(node => node.textContent)).toEqual(['替换', '全部替换']);
   });
+
+  test('输入关键词并切换匹配项时实时更新匹配计数', () => {
+    const view = editor('苹果 香蕉 苹果 橘子 苹果');
+    openSearchPanel(view);
+    const input = view.dom.querySelector<HTMLInputElement>('.cm-inkpot-search input[name=search]');
+    const status = view.dom.querySelector<HTMLElement>('.cm-inkpot-search [role=status]');
+    const nextButton = view.dom.querySelector<HTMLButtonElement>('.cm-inkpot-search button[name=next]');
+    if (input === null || status === null || nextButton === null) throw new Error('查找面板控件缺失');
+    input.value = '苹果';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(status.textContent).toBe('3');
+    nextButton.click();
+    expect(status.textContent).toBe('1 / 3');
+    nextButton.click();
+    expect(status.textContent).toBe('2 / 3');
+  });
 });

@@ -13,7 +13,7 @@ interface BlockRange {
   to: number;
 }
 
-const blockNodeNames = new RegExp(`^(FencedCode|CodeBlock|HTMLBlock|Table|ListItem|HorizontalRule|${blockMathTagName}|ATXHeading[1-6]|SetextHeading[12])$`);
+const blockNodeNames = new RegExp(`^(Paragraph|Blockquote|FencedCode|CodeBlock|HTMLBlock|Table|ListItem|HorizontalRule|${blockMathTagName}|ATXHeading[1-6]|SetextHeading[12])$`);
 
 /**
  * 光标所在块的原文范围：段落、列表项、代码块、表格、公式块保持正常；
@@ -60,8 +60,13 @@ function focusDecorations(view: EditorView): DecorationSet {
   const { state } = view;
   const blocks: BlockRange[] = [];
   for (const range of state.selection.ranges) {
-    blocks.push(activeBlockRange(state, range.head));
-    if (!range.empty) blocks.push(activeBlockRange(state, range.to));
+    if (range.empty) {
+      blocks.push(activeBlockRange(state, range.head));
+    } else {
+      const start = activeBlockRange(state, range.from);
+      const end = activeBlockRange(state, Math.max(range.from, range.to - 1));
+      blocks.push({ from: Math.min(start.from, end.from), to: Math.max(start.to, end.to) });
+    }
   }
   const decorations: Range<Decoration>[] = [];
   for (const { from, to } of view.visibleRanges) {
@@ -114,12 +119,17 @@ function centerCaret(view: EditorView) {
   view.dispatch({ effects: EditorView.scrollIntoView(view.state.selection.main.head, { y: 'center', yMargin: 0 }) });
 }
 
-const typewriterExtension = EditorView.updateListener.of(update => {
+const typewriterTheme = EditorView.theme({
+  // 打字机模式底部追加约半屏留白，写到文档末尾时仍可将光标行保持在视口中部。
+  '.cm-content': { paddingBottom: '50vh' },
+});
+
+const typewriterExtension: Extension[] = [typewriterTheme, EditorView.updateListener.of(update => {
   if (!update.docChanged && !update.selectionSet) return;
   // 导出期间原生会临时移动选区，此时不滚动。
   if (update.state.field(previewExport) || update.startState.field(previewExport)) return;
   centerCaret(update.view);
-});
+})];
 
 const focusTheme = EditorView.theme({
   '.cm-focus-dim': { opacity: '0.2' },

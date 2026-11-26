@@ -145,6 +145,7 @@ export const formatCommands: Readonly<Partial<Record<string, StateCommand>>> = {
   bold: inline('**', 'StrongEmphasis'),
   italic: inline('*', 'Emphasis'),
   strikethrough: inline('~~', 'Strikethrough', 'StrikethroughMark'),
+  highlight: inline('==', 'InlineHighlight', 'InlineHighlightMark'),
   inlineCode: inline('`', 'InlineCode', 'CodeMark'),
   link, codeBlock, horizontalRule,
   blockquote: block('blockquote'),

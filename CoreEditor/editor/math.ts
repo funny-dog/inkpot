@@ -8,7 +8,7 @@ import { SyntaxNode } from '@lezer/common';
 import { mathTag } from './math-parser';
 import { selectionMissesBlocks, topBlocks } from './blocks';
 import { selectionTouches } from './basic';
-import { isComposing, previewExport, sourceMode } from './mode';
+import { isComposing, previewExport, searchSelection, sourceMode } from './mode';
 import { assetBase } from './bridge';
 
 export { blockMathTagName, blockMathContentTagName, markdownMathExtension, mathTag } from './math-parser';
@@ -31,11 +31,14 @@ export const inlineMathExtension: MarkdownConfig = {
       if (backslashes % 2 === 1) return -1;
       for (let index = pos + 1; index < cx.end; index++) {
         const char = cx.char(index);
-        if (char === 92) { index++; continue; }
+        if (char === 92) {
+          if (cx.char(index + 1) === 10) return -1;
+          index++; continue;
+        }
         if (char === 36) {
           if (cx.char(index - 1) <= 32) return -1;
           const after = cx.char(index + 1);
-          if (after >= 48 && after <= 57) return -1;
+          if (after === 36 || (after >= 48 && after <= 57)) return -1;
           return cx.addElement(cx.elt(inlineMathTagName, pos, index + 1, [
             cx.elt(inlineMathMarkTagName, pos, pos + 1),
             cx.elt(inlineMathMarkTagName, index, index + 1),
@@ -81,8 +84,9 @@ async function loadKatex(): Promise<Katex> {
 }
 
 class MathPreview extends WidgetType {
-  constructor(readonly source: string, readonly display: boolean, private readonly anchor: number) { super(); }
-  eq(other: MathPreview) { return this.source === other.source && this.display === other.display && this.anchor === other.anchor; }
+  constructor(readonly source: string, readonly display: boolean) { super(); }
+  // 比较不含绝对文档偏移，前文编辑时不触发后方全部公式重新渲染。
+  eq(other: MathPreview) { return this.source === other.source && this.display === other.display; }
   toDOM(view: EditorView) {
     const element: HTMLElement = document.createElement(this.display ? 'div' : 'span');
     element.className = this.display ? 'cm-inkpot-math cm-inkpot-math-block' : 'cm-inkpot-math';
@@ -107,8 +111,10 @@ class MathPreview extends WidgetType {
       if (event.button !== 0) return;
       // 始终拦截对公式的默认点击定位，只读和组合输入期间保持渲染不进入编辑。
       event.preventDefault();
-      if (!editable || view.compositionStarted) return;
-      view.dispatch({ selection: { anchor: this.anchor }, scrollIntoView: true });
+      if (!editable || view.compositionStarted || !element.isConnected) return;
+      const from = view.posAtDOM(element);
+      const anchor = Math.min(view.state.doc.length, from + (this.display ? 2 : 1));
+      view.dispatch({ selection: { anchor }, scrollIntoView: true });
       view.focus();
     });
     return element;
@@ -125,18 +131,12 @@ export function mathDecorations(node: SyntaxNode, view: EditorView, searchSelect
   const editing = selectionTouches(state, node.from, node.to, true);
   const searching = searchSelection && selectionTouches(state, node.from, node.to, false);
   if (((!editing && !searching) || state.field(previewExport)) && source.length > 0) {
-    const replacement = Decoration.replace({ widget: new MathPreview(source, false, node.from + 1) }).range(node.from, node.to);
+    const replacement = Decoration.replace({ widget: new MathPreview(source, false) }).range(node.from, node.to);
     decorations.push(replacement);
     atoms.push(replacement);
   }
   return { decorations, atoms };
 }
-
-// 块级装饰必须由 StateField 提供；搜索命中标记时临时展开源码。
-const mathSearch = StateField.define({
-  create: () => false,
-  update: (value, transaction) => transaction.isUserEvent('select.search') ? true : transaction.selection !== undefined || transaction.docChanged ? false : value,
-});
 
 function blockDecorations(state: EditorState) {
   const exporting = state.field(previewExport);
@@ -145,13 +145,13 @@ function blockDecorations(state: EditorState) {
   const selection = state.selection.main;
   for (const node of topBlocks(state).math) {
     if (!exporting && (selectionTouches(state, node.from, node.to, true)
-      || (state.field(mathSearch) && selection.from < node.to && selection.to > node.from))) continue;
+      || (state.field(searchSelection, false) === true && selection.from < node.to && selection.to > node.from))) continue;
     const source = state.sliceDoc(node.from + 2, node.to - 2).trim();
     if (source.length === 0) continue;
     // 块级替换必须覆盖整行；闭标记总在行尾，开标记在行首。
     const from = state.doc.lineAt(node.from).from;
     const to = state.doc.lineAt(node.to).to;
-    ranges.push(Decoration.replace({ block: true, widget: new MathPreview(source, true, node.from + 2) }).range(from, to));
+    ranges.push(Decoration.replace({ block: true, widget: new MathPreview(source, true) }).range(from, to));
   }
   return Decoration.set(ranges, true);
 }
@@ -167,7 +167,7 @@ const mathBlocks = StateField.define<DecorationSet>({
 });
 
 export const mathEditing = [
-  mathSearch, mathBlocks,
+  mathBlocks,
   EditorView.atomicRanges.of(view => view.state.field(mathBlocks)),
 ];
 

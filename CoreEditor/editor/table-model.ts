@@ -27,7 +27,7 @@ export function readTable(state: EditorState, from: number, to: number): Table {
     const line = state.doc.line(first + index);
     return rowCells(line.text, line.from);
   });
-  const alignments = rows.splice(1, 1)[0].map(cell => cell.text);
+  const alignments = rows.length >= 2 ? rows.splice(1, 1)[0].map(cell => cell.text) : [];
   return { from: state.doc.line(first).from, to: state.doc.line(last).to, rows, alignments, prefix: /^[ \t]*/.exec(state.doc.line(first).text)?.[0] ?? '' };
 }
 

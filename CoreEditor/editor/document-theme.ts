@@ -13,9 +13,14 @@ export function validTheme(name: string): string {
   return Object.hasOwn(themePalettes, name) ? name : 'default';
 }
 
+const extensionCache = new Map<string, Extension[]>();
+
 export function documentThemeExtensions(name: string, dark: boolean): Extension[] {
   const palette = themePalettes[name]?.[dark ? 'dark' : 'light'];
   if (palette === undefined) return [];
+  const key = `${name}:${dark ? 'dark' : 'light'}`;
+  const cached = extensionCache.get(key);
+  if (cached !== undefined) return cached;
   // 额外的 cm-editor 类让配色优先于现有模块和默认深色规则，不改变它们的布局。
   const prefix = '&.cm-editor.cm-inkpot-themed';
   const styles = EditorView.theme({
@@ -59,5 +64,7 @@ export function documentThemeExtensions(name: string, dark: boolean): Extension[
     { tag: [tags.monospace, tags.processingInstruction], color: palette.codeText },
     { tag: [tags.list, tags.quote, tags.meta], color: palette.muted },
   ]);
-  return [Prec.highest(themeLayout(name, palette, dark)), Prec.highest(styles), Prec.highest(syntaxHighlighting(highlighting)), EditorView.editorAttributes.of({ class: 'cm-inkpot-themed', 'data-theme': name })];
+  const extensions: Extension[] = [Prec.highest(themeLayout(name, palette, dark)), Prec.highest(styles), Prec.highest(syntaxHighlighting(highlighting)), EditorView.editorAttributes.of({ class: 'cm-inkpot-themed', 'data-theme': name })];
+  extensionCache.set(key, extensions);
+  return extensions;
 }

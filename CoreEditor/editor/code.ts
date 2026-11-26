@@ -106,6 +106,7 @@ class LanguageLabel extends WidgetType {
     }
     const select = document.createElement('select');
     select.className = 'cm-inkpot-code-language cm-inkpot-code-language-select';
+    select.dataset.codeFrom = String(this.from);
     const current = codeLanguageFor(this.language)?.alias[0]
       ?? (/^(?:text|txt|plaintext)(?:\s|\{|$)/i.test(this.language) ? '' : this.language);
     select.add(new Option(t('纯文本'), ''));
@@ -244,7 +245,10 @@ function indentCode(view: EditorView, outdent: boolean) {
 }
 
 function beforeCode(view: EditorView, code: Code) {
-  if (code.first.number === 1) return move(view, code.first.to + 1 + bodyPrefix(code, view.state).length);
+  if (code.first.number === 1) {
+    const bodyLine = view.state.doc.line(Math.min(code.first.number + 1, view.state.doc.lines));
+    return move(view, Math.min(bodyLine.to, bodyLine.from + bodyPrefix(code, view.state).length));
+  }
   const previous = view.state.doc.line(code.first.number - 1);
   const previousCode = currentCode(view, previous.to);
   if (previousCode?.last?.number === previous.number && previous.number > previousCode.first.number + 1) {
@@ -262,7 +266,7 @@ export const codeBindings: KeyBinding[] = [
     if (view.state.field(editingCodeLanguage) === code.opening.from) {
       if (code.last?.number === code.first.number + 1) {
         view.dispatch({ effects: editLanguage.of(null) });
-        view.contentDOM.querySelector<HTMLSelectElement>('.cm-inkpot-code-language')?.focus();
+        view.contentDOM.querySelector<HTMLSelectElement>(`.cm-inkpot-code-language[data-code-from="${code.opening.from}"]`)?.focus();
         return true;
       }
       return enterBody(view, code);

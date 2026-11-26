@@ -3,10 +3,34 @@ import { EditorView, KeyBinding, runScopeHandlers, ViewUpdate } from '@codemirro
 import { closeSearchPanel, findNext, findPrevious, getSearchQuery, openSearchPanel, replaceAll, replaceNext, search, SearchQuery, setSearchQuery } from '@codemirror/search';
 import { isolateHistory } from '@codemirror/commands';
 
+const matchCountLimit = 1000;
+
+function matchSummary(view: EditorView, query: SearchQuery): string {
+  if (query.search === '') return '';
+  if (!query.valid) return query.regexp ? t('正则表达式无效') : '';
+  const cursor = query.getCursor(view.state.doc);
+  const { from, to } = view.state.selection.main;
+  let total = 0;
+  let active = 0;
+  let item = cursor.next();
+  while (item.done !== true) {
+    total++;
+    if (active === 0 && item.value.from === from && item.value.to === to) active = total;
+    if (total > matchCountLimit) break;
+    item = cursor.next();
+  }
+  if (total === 0) return t('未找到匹配项');
+  const countText = total > matchCountLimit ? `${matchCountLimit}+` : String(total);
+  return active > 0 ? `${active} / ${countText}` : countText;
+}
+
 function navigate(view: EditorView, forward: boolean) {
   const found = (forward ? findNext : findPrevious)(view);
   const status = view.dom.querySelector('.cm-inkpot-search [role=status]');
-  if (status !== null) status.textContent = !getSearchQuery(view.state).valid && getSearchQuery(view.state).regexp ? t('正则表达式无效') : found ? '' : t('未找到匹配项');
+  if (status !== null) {
+    const query = getSearchQuery(view.state);
+    status.textContent = !query.valid && query.regexp ? t('正则表达式无效') : found ? matchSummary(view, query) : t('未找到匹配项');
+  }
   return found;
 }
 
@@ -63,7 +87,7 @@ function createPanel(view: EditorView) {
       caseSensitive: caseSensitive.checked, wholeWord: wholeWord.checked, regexp: regexp.checked });
     view.dispatch({ effects: setSearchQuery.of(current) });
     find.setAttribute('aria-invalid', String(current.regexp && !current.valid && current.search !== ''));
-    status.textContent = current.regexp && !current.valid && current.search !== '' ? t('正则表达式无效') : '';
+    status.textContent = matchSummary(view, current);
   }
   function run(command: typeof findNext, field = find) {
     if (view.composing) return;
@@ -74,7 +98,8 @@ function createPanel(view: EditorView) {
     if (replacing) view.dispatch({ annotations: isolateHistory.of('full') });
     const found = command(view);
     if (replacing) view.dispatch({ annotations: isolateHistory.of('full') });
-    status.textContent = found ? '' : t('未找到匹配项');
+    const current = getSearchQuery(view.state);
+    status.textContent = found ? matchSummary(view, current) : t('未找到匹配项');
     field.focus();
   }
   function button(label: string, name: string, action: () => void) {
@@ -130,13 +155,21 @@ function createPanel(view: EditorView) {
   return {
     dom,
     top: true,
-    mount() { find.focus(); find.select(); },
+    mount() {
+      find.focus();
+      find.select();
+      status.textContent = matchSummary(view, getSearchQuery(view.state));
+    },
     update(update: ViewUpdate) {
-      if (!update.transactions.some(transaction => transaction.effects.some(effect => effect.is(setSearchQuery)))) return;
+      const queryChanged = update.transactions.some(transaction => transaction.effects.some(effect => effect.is(setSearchQuery)));
+      if (!queryChanged && !update.docChanged && !update.selectionSet) return;
       const current = getSearchQuery(view.state);
-      if (find.value !== current.search) find.value = current.search;
-      if (replace.value !== current.replace) replace.value = current.replace;
-      for (const toggle of toggles) toggle.checked = current[toggle.name as 'caseSensitive' | 'wholeWord' | 'regexp'];
+      if (queryChanged) {
+        if (find.value !== current.search) find.value = current.search;
+        if (replace.value !== current.replace) replace.value = current.replace;
+        for (const toggle of toggles) toggle.checked = current[toggle.name as 'caseSensitive' | 'wholeWord' | 'regexp'];
+      }
+      status.textContent = matchSummary(view, current);
     },
   };
 }

@@ -101,6 +101,14 @@ describe('Inkpot 专注与打字机模式', () => {
     const blankView = editor('甲\n\n乙', 2);
     applyDisplayModes(blankView.view, { focus: true });
     expect(dimmedLines(blankView.view)).toEqual([0, 2]);
+
+    // 多行软换行段落整体保持不淡化；跨多块选区不淡化起点和中间块。
+    const multiline = '第一行\n第二行\n\n第二段\n\n第三段';
+    const multiView = editor(multiline, 0);
+    applyDisplayModes(multiView.view, { focus: true });
+    expect(dimmedLines(multiView.view)).toEqual([2, 3, 4, 5]);
+    multiView.view.dispatch({ selection: { anchor: 0, head: multiline.length } });
+    expect(dimmedLines(multiView.view)).toEqual([]);
   });
 
   test('组合输入期间不重建装饰，结束后刷新一次', async () => {

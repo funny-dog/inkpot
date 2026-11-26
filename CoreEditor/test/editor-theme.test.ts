@@ -188,4 +188,30 @@ describe('Inkpot 外观', () => {
     expect(read().startsWith('新增# 标题')).toBe(true);
     expect(undoDepth(view.state)).toBe(1);
   });
+
+  test('浅色下切到 Dracula 再切回其他主题恢复浅色，深色 matchMedia 初始化不崩溃且销毁清空监听', async () => {
+    const { view } = editor(original);
+    applyAppearance(view, false, 'dracula');
+    expect(view.state.facet(EditorView.darkTheme)).toBe(true);
+    applyAppearance(view, false, 'notion');
+    expect(view.state.facet(EditorView.darkTheme)).toBe(false);
+    expect(view.dom.dataset.theme).toBe('notion');
+
+    const originalMatchMedia = window.matchMedia;
+    let listeners = 0;
+    window.matchMedia = (() => ({
+      matches: true,
+      addEventListener: () => { listeners++; },
+      removeEventListener: () => { listeners--; },
+    })) as unknown as typeof window.matchMedia;
+    try {
+      const darkSystem = editor(original);
+      await flushed();
+      expect(darkSystem.view.state.facet(EditorView.darkTheme)).toBe(true);
+      darkSystem.view.destroy();
+      expect(listeners).toBe(0);
+    } finally {
+      window.matchMedia = originalMatchMedia;
+    }
+  });
 });

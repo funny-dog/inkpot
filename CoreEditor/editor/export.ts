@@ -1,8 +1,8 @@
-import { t } from './localization';
+import { editorLanguage, t } from './localization';
 import { ensureSyntaxTree, syntaxParserRunning, syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { isComposing, previewExport, setPreviewExport, sourceMode, toggleSourceMode } from './mode';
-import { applyAppearance } from './theme';
+import { isComposing, previewExport, setPreviewExport, setSourceMode, sourceMode } from './mode';
+import { applyAppearance, preferredDarkFor } from './theme';
 import { documentTheme } from './document-theme';
 import { loadDocumentLanguages } from './code-languages';
 import { assetBase, imageBase } from './bridge';
@@ -92,6 +92,9 @@ async function embedImages(clone: HTMLElement) {
         const response = await fetch(source, { signal: controller.signal });
         if (!response.ok) throw new Error(t('图片无法读取'));
         const blob = await response.blob();
+        if (blob.type !== '' && !/^image\/(png|jpeg|gif|webp|bmp|tiff|avif|heic|heif)$/i.test(blob.type)) {
+          throw new Error(t('图片格式不受支持'));
+        }
         total += blob.size;
         if (blob.size > 20 * 1024 * 1024 || total > 50 * 1024 * 1024) throw new Error(t('图片体积超过导出限制（单张 20 MB，总计 50 MB）'));
         dataURL = await new Promise<string>((resolve, reject) => {
@@ -118,17 +121,22 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
   // 序列化以实时视图为准；记录并恢复调用前的源码模式、光标与外观（导出固定浅色）。
   const wasSource = view.state.field(sourceMode);
   const selection = view.state.selection;
-  const wasDark = view.dom.matches('.cm-inkpot-dark');
+  const wasDark = preferredDarkFor(view);
   const theme = view.state.facet(documentTheme);
   let clone: HTMLElement;
   // shortcut: CodeMirror 尚无公开的全篇 DOM 导出接口，升级编辑器依赖时需复验内部打印布局。
-  const printLayout = () => (view as unknown as { observer: { onPrint(event: Event): void } }).observer.onPrint(new Event('beforeprint'));
-  const timer = setInterval(printLayout, 250);
+  const internalView = view as unknown as {
+    observer: { onPrint(event: Event): void };
+    viewState?: { printing?: boolean };
+  };
+  const ensureFullViewport = () => {
+    if (internalView.viewState?.printing !== true) internalView.observer.onPrint(new Event('beforeprint'));
+  };
   try {
-    if (wasSource) toggleSourceMode(view);
-    if (wasDark || theme !== 'default') applyAppearance(view, false, 'default');
+    if (wasSource) view.dispatch({ effects: setSourceMode.of(false) });
+    if (view.dom.matches('.cm-inkpot-dark') || theme !== 'default') applyAppearance(view, false, 'default');
     view.dispatch({ selection: { anchor: 0 }, effects: setPreviewExport.of(true) });
-    printLayout();
+    ensureFullViewport();
     const deadline = Date.now() + 10000;
     // 代码语言文件按需加载，加载后等待重新解析，使导出与编辑器着色一致。
     const languagesLoaded = await loadDocumentLanguages();
@@ -137,9 +145,12 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
         !== view.dom.querySelectorAll('.cm-inkpot-math:not(.cm-inkpot-math-error)').length) {
       if (!view.dom.isConnected || view.state.doc !== original) throw new Error(t('文档已关闭或导出期间发生编辑，请重新导出。'));
       if (Date.now() > deadline) throw new Error(t('图表或公式渲染超时，请检查内容后重试。'));
+      ensureFullViewport();
       await new Promise(resolve => setTimeout(resolve, 20));
     }
     if (view.state.doc !== original) throw new Error(t('导出期间发生编辑，请重新导出。'));
+    // 克隆前同步确认全篇视口有效，避免前序 500ms 定时器恰好关闭 printing 导致裁剪。
+    ensureFullViewport();
     clone = view.contentDOM.cloneNode(true) as HTMLElement;
 
     clone.removeAttribute('contenteditable');
@@ -164,6 +175,16 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
       }
     });
 
+    // 先在节点下标与原 contentDOM 完全对齐时完成复选框状态回写与段落合并，再移除编辑器辅助节点。
+    const sourceBoxes = view.contentDOM.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    const boxes = clone.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
+    for (let index = 0; index < boxes.length && index < sourceBoxes.length; index++) {
+      if (sourceBoxes[index].checked) boxes[index].setAttribute('checked', '');
+      boxes[index].disabled = true;
+    }
+
+    exportParagraphs(view, clone);
+
     for (const diagram of clone.querySelectorAll('.cm-inkpot-mermaid')) {
       diagram.removeAttribute('tabindex'); diagram.removeAttribute('title');
       const svg = diagram.querySelector('svg');
@@ -178,15 +199,17 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     // 专注模式的淡化只在编辑器视口内生效，导出与打印不携带。
     for (const element of clone.querySelectorAll('.cm-focus-dim')) element.classList.remove('cm-focus-dim');
 
-    // 复选框的选中态是运行时属性，克隆与序列化都会丢失，按原件写回属性。
-    const sourceBoxes = view.contentDOM.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    const boxes = clone.querySelectorAll<HTMLInputElement>('input[type="checkbox"]');
-    for (let index = 0; index < boxes.length && index < sourceBoxes.length; index++) {
-      if (sourceBoxes[index].checked) boxes[index].setAttribute('checked', '');
-      boxes[index].disabled = true;
+    // 为导出的标题行补齐 GitHub 风格 id 锚点，确保文内 #锚点 链接在独立 HTML 中可跳转。
+    const headingCounts = new Map<string, number>();
+    for (const heading of clone.querySelectorAll<HTMLElement>('.cm-inkpot-heading1, .cm-inkpot-heading2, .cm-inkpot-heading3, .cm-inkpot-heading4, .cm-inkpot-heading5, .cm-inkpot-heading6')) {
+      const title = heading.textContent.trim().replace(/\s+/g, ' ');
+      const slug = title.toLowerCase().replace(/[^\p{L}\p{N}_\-\s]/gu, '').replace(/\s/g, '-');
+      if (slug === '') continue;
+      const count = headingCounts.get(slug) ?? 0;
+      headingCounts.set(slug, count + 1);
+      heading.id = count === 0 ? slug : `${slug}-${count}`;
     }
 
-    exportParagraphs(view, clone);
     await embedImages(clone);
     if (!view.dom.isConnected || view.state.doc !== original) throw new Error(t('导出期间发生编辑或文档已关闭，请重新导出。'));
 
@@ -205,8 +228,9 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
     const firstLine = view.state.doc.line(1).text.trim();
     const title = firstLine.length > 0 ? firstLine.replace(/^#+\s*/, '').slice(0, 60) : t('文档');
     const katex = mode === 'pdf' ? `<link rel="stylesheet" href="${escapeHTML(assetBase)}katex.min.css">\n` : '';
+    const lang = editorLanguage() === 'zh-Hans' ? 'zh-CN' : 'en';
     return `<!doctype html>
-  <html lang="zh-CN">
+  <html lang="${lang}">
   <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -214,15 +238,13 @@ export async function documentHTML(view: EditorView, mode: 'html' | 'pdf' = 'htm
   ${katex}<style>${exportCSS}</style>
   </head>
   <body>
-  ${clone.innerHTML}
+  <div class="inkpot-export">${clone.innerHTML}</div>
   </body>
   </html>`;
   } finally {
-    clearInterval(timer);
     if (view.dom.isConnected) {
-      view.dispatch({ effects: setPreviewExport.of(false), ...(view.state.doc === original ? { selection } : {}) });
+      view.dispatch({ effects: [setPreviewExport.of(false), ...(wasSource ? [setSourceMode.of(true)] : [])], ...(view.state.doc === original ? { selection } : {}) });
       if (wasDark || theme !== 'default') applyAppearance(view, wasDark, theme);
-      if (wasSource && !view.state.field(sourceMode)) toggleSourceMode(view);
     }
   }
 

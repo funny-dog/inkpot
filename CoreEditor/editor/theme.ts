@@ -80,24 +80,47 @@ const darkAppearance: Extension[] = [
 ];
 
 const appearanceCompartment = new Compartment();
+/** 记录每个编辑器视图期望的明暗外观，不受 Dracula 强制深色覆盖。 */
+const preferredDark = new WeakMap<EditorView, boolean>();
+
+export function preferredDarkFor(view: EditorView): boolean {
+  return preferredDark.get(view) ?? view.state.facet(EditorView.darkTheme);
+}
 
 /** 系统外观自检测：在页面内监听深浅色变化，无需原生脚本推送。 */
 const appearanceWatch = ViewPlugin.fromClass(class {
   private readonly media: MediaQueryList | null = null;
   private readonly listener: () => void;
+  private destroyed = false;
 
   constructor(view: EditorView) {
+    const initialDark = view.state.facet(EditorView.darkTheme);
+    preferredDark.set(view, initialDark);
     syncPageAppearance(view);
-    this.listener = () => { if (this.media !== null) applyAppearance(view, this.media.matches); };
+    this.listener = () => {
+      if (!this.destroyed && view.dom.isConnected && this.media !== null) {
+        applyAppearance(view, this.media.matches);
+      }
+    };
     if (typeof matchMedia === 'function') {
       this.media = matchMedia('(prefers-color-scheme: dark)');
       this.media.addEventListener('change', this.listener);
-      // 原生传入的初始值与页面感知不一致时以页面为准。
-      if (view.dom.matches('.cm-inkpot-dark') !== this.media.matches) applyAppearance(view, this.media.matches);
+      // 不可在 ViewPlugin 构造期间同步 dispatch；延迟到微任务校对页面感知与初始值。
+      const expected = this.media.matches;
+      if (initialDark !== expected) {
+        queueMicrotask(() => {
+          if (!this.destroyed && view.dom.isConnected && preferredDark.get(view) === initialDark) {
+            applyAppearance(view, expected);
+          }
+        });
+      }
     }
   }
 
-  destroy() { this.media?.removeEventListener('change', this.listener); }
+  destroy() {
+    this.destroyed = true;
+    this.media?.removeEventListener('change', this.listener);
+  }
 });
 
 /** 打开文档时的初始外观扩展：原生传入初始值，页面内自检测后续变化。 */
@@ -108,9 +131,10 @@ export function appearanceExtensionsFor(dark: boolean): Extension[] {
 /** 跟随系统的深浅色外观切换：重配置编辑器外观，并同步页面根类供 body 背景切换。 */
 export function applyAppearance(view: EditorView, dark: boolean, theme = view.state.facet(documentTheme)): void {
   theme = validTheme(theme);
-  dark ||= theme === 'dracula';
+  preferredDark.set(view, dark);
+  const effectiveDark = dark || theme === 'dracula';
   view.dispatch({ effects: appearanceCompartment.reconfigure([
-    ...(dark ? darkAppearance : []), documentTheme.of(theme), ...documentThemeExtensions(theme, dark),
+    ...(effectiveDark ? darkAppearance : []), documentTheme.of(theme), ...documentThemeExtensions(theme, effectiveDark),
   ]) });
   syncPageAppearance(view);
 }

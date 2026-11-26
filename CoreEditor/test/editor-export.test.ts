@@ -153,6 +153,7 @@ describe('Inkpot 导出', () => {
     await flushed();
     const html = await documentHTML(view, 'html');
     const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
+    expect(doc.querySelector('.inkpot-export')).not.toBeNull();
     expect(html).not.toContain('inkpot-asset://math/katex.min.css');
     expect(doc.querySelector('.cm-inkpot-table-input')).toBeNull();
     expect(doc.querySelector('.cm-inkpot-table-hint')).toBeNull();
@@ -199,5 +200,14 @@ describe('Inkpot 导出', () => {
     expect(keyword?.style.color).toBe('rgb(166, 38, 164)');
     expect(doc.querySelector<HTMLElement>('.cm-inkpot-token-string')?.style.color).toBe('rgb(80, 161, 79)');
     expect(doc.querySelector<HTMLElement>('.cm-inkpot-token-comment')?.style.fontStyle).toBe('italic');
+  });
+
+  test('导出包裹 .inkpot-export 并为标题生成去重 id 锚点', async () => {
+    const { view } = editor('# Hello World\n\n## 中文 小节\n\n## 中文 小节\n');
+    const html = await documentHTML(view, 'html');
+    const doc = parse(html.slice(html.indexOf('<body>') + 6, html.lastIndexOf('</body>')));
+    expect(doc.querySelector('.inkpot-export')).not.toBeNull();
+    const ids = [...doc.querySelectorAll('[id]')].map(node => node.id);
+    expect(ids).toEqual(['hello-world', '中文-小节', '中文-小节-1']);
   });
 });

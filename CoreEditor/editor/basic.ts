@@ -3,6 +3,7 @@ import { EditorState, Range } from '@codemirror/state';
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { Decoration, EditorView, ViewPlugin, WidgetType } from '@codemirror/view';
 import { SyntaxNode } from '@lezer/common';
+import { isPrimaryModifier } from './mode';
 
 export function selectionTouches(state: EditorState, from: number, to: number, includeCursor: boolean) {
   return state.selection.ranges.some(range => range.empty
@@ -58,8 +59,13 @@ export function basicDecorations(node: SyntaxNode, view: EditorView, searchSelec
 
 function unescape(text: string) {
   const decoder = document.createElement('textarea');
-  decoder.innerHTML = text.replace(/\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])/g, '$1');
-  return decoder.value;
+  // 单遍处理 CommonMark 反斜杠转义与 HTML 实体，避免把 \&amp; 误解码为 &。
+  return text.replace(/\\([!"#$%&'()*+,\-./:;<=>?@[\\\]^_`{|}~])|(&(?:#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z][a-zA-Z0-9]*);)/g,
+    (_match, escaped?: string, entity?: string) => {
+      if (escaped !== undefined) return escaped;
+      decoder.innerHTML = entity ?? '';
+      return decoder.value;
+    });
 }
 
 export function linkDestination(node: SyntaxNode, state: EditorState): string | undefined {
@@ -97,7 +103,7 @@ export function linkAt(view: EditorView, position: number) {
 export function linkNavigation(open: (destination: string) => void) {
   return ViewPlugin.define(() => ({}), { eventHandlers: {
     mousedown(event, view) {
-      if (!event.metaKey || event.button !== 0 || view.compositionStarted) return false;
+      if (!isPrimaryModifier(event) || event.button !== 0 || view.compositionStarted) return false;
       const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
       const destination = position === null ? undefined : linkAt(view, position);
       if (destination === undefined) return false;

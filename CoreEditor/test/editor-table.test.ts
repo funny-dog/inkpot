@@ -95,6 +95,18 @@ describe('Inkpot 表格', () => {
     undo(view); expect(read()).toBe(original);
   });
 
+  test('表格单元格组合输入期间失焦时兜底清理组合态标记，不永久锁死命令与保存', () => {
+    const { view, read } = editor(original);
+    const target = input(view, 1, 0); target.focus();
+    target.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+    type(target, '切窗候选', true);
+    expect(isComposing(view)).toBe(true);
+    target.dispatchEvent(new FocusEvent('blur', { bubbles: false }));
+    expect(isComposing(view)).toBe(false);
+    expect(read()).toBe(original.replace('| x |', '| 切窗候选 |'));
+    expect(toggleSourceMode(view)).toBe(true);
+  });
+
   test.each(['tableRowAbove', 'tableRowBelow', 'tableColumnBefore', 'tableColumnAfter', 'tableDeleteRow', 'tableDeleteColumn', 'tableAlignCenter'])('%s 只改变目标表格，独立撤销保留混合行尾', command => {
     const text = original.replace('| x | y |', '| x | y | 隐藏内容 |');
     const { view, read } = editor(text);
@@ -199,6 +211,17 @@ describe('Inkpot 表格', () => {
     expect(document.activeElement).toBe(target);
     expect(read()).toBe(original.replace('| x |', '| x hello |'));
     undo(view); expect(read()).toBe(original);
+  });
+
+  test('末行末列按 Tab 自动新增一行并保持可撤销', () => {
+    const text = '| a | b |\n| --- | --- |\n| 1 | 2 |';
+    const { view, read } = editor(text);
+    const lastCell = input(view, 1, 1);
+    lastCell.focus();
+    lastCell.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true }));
+    expect(read()).toBe('| a | b |\n| --- | --- |\n| 1 | 2 |\n|  |  |');
+    undo(view);
+    expect(read()).toBe(text);
   });
 
 });
