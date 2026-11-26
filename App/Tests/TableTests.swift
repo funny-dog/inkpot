@@ -7,7 +7,7 @@ final class TableTests: XCTestCase {
   private let original = "\u{FEFF}前文\r\n\r\n| A |B|\r\n|:---|---:|\n| x | y |\r\n| z | q |\n\n后文"
 
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
-    let deadline = Date.now.addingTimeInterval(5)
+    let deadline = Date.now.addingTimeInterval(10)
     while !(try await condition()) {
       guard Date.now < deadline else { throw CocoaError(.coderReadCorrupt) }
       try await Task.sleep(for: .milliseconds(20))

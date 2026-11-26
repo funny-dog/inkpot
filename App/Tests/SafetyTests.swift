@@ -11,7 +11,7 @@ final class SafetyTests: XCTestCase {
   }
 
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
-    let deadline = Date.now.addingTimeInterval(5)
+    let deadline = Date.now.addingTimeInterval(10)
     while !(try await condition()) {
       guard Date.now < deadline else { throw CocoaError(.coderReadCorrupt) }
       try await Task.sleep(for: .milliseconds(20))

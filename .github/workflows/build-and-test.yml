@@ -184,7 +184,7 @@ jobs:
         run: ./Windows/scripts/measure.ps1 -AppDirectory build/Windows -ResultsDirectory build/WindowsResults
 
       - name: Upload Windows application
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: inkpot-windows-x64
           path: build/Windows/
@@ -192,7 +192,7 @@ jobs:
 
       - name: Upload Windows validation results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: inkpot-windows-validation
           path: |

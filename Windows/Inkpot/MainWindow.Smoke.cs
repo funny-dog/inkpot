@@ -15,15 +15,20 @@ public sealed partial class MainWindow
     // 仅由 CI 显式参数触发；使用临时文档，不读取或覆盖用户文件。
     private async Task RunSmokeAsync(string reportPath)
     {
+        string fullReportPath = Path.GetFullPath(reportPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullReportPath)!);
+        string tracePath = Path.Combine(Path.GetDirectoryName(fullReportPath)!, "smoke-trace.log");
         var report = new JsonObject { ["success"] = false, ["os"] = Environment.OSVersion.ToString(),
             ["cpuCount"] = Environment.ProcessorCount, ["runtime"] = Environment.Version.ToString() };
         try
         {
+            TraceSmoke(tracePath, "start");
             var initial = CreateDocument();
             await ActivateCurrentAsync();
             await AssertEditorVisibleAsync(initial, "首个文档");
             if (SidebarToggle.IsChecked != true || EmptyFiles.Visibility != Visibility.Visible || FilesTree.Visibility != Visibility.Collapsed)
                 throw new IOException("初始文件侧栏或空状态未显示。");
+            TraceSmoke(tracePath, "initial-ready");
             report["readyMilliseconds"] = initial.Editor!.ReadyMilliseconds;
             report["readyUnixMilliseconds"] = initial.Editor.ReadyUnixMilliseconds;
             report["editorVisualSize"] = $"{initial.Editor.Control.ActualWidth:0}x{initial.Editor.Control.ActualHeight:0}";
@@ -36,7 +41,9 @@ public sealed partial class MainWindow
             await initial.Editor.CommandAsync("undo");
             if ((await initial.Editor.SnapshotAsync()).Text != original) throw new IOException("撤销未恢复原文。");
             report["editUndoAndLineEndings"] = true;
-            await RunParitySmokeAsync(initial, report);
+            TraceSmoke(tracePath, "edit-undo-ok");
+            await RunParitySmokeAsync(initial, report, tracePath);
+            TraceSmoke(tracePath, "large-1mib-start");
             var text = new StringBuilder();
             const string paragraph = "Markdown paragraph 中文测试 with **bold** and a link.\n\n";
             int paragraphBytes = Encoding.UTF8.GetByteCount(paragraph);
@@ -51,6 +58,7 @@ public sealed partial class MainWindow
             report["open1MiBMilliseconds"] = timer.Elapsed.TotalMilliseconds;
             report["documentCharacters"] = large.Length;
             report["documentUtf8Bytes"] = Encoding.UTF8.GetByteCount(large);
+            TraceSmoke(tracePath, "ten-tabs-start");
             for (int index = 1; index < 10; index++) CreateDocument();
             report["webViewsBeforeActivation"] = documents.Count(document => document.Editor is not null);
             if (documents.Count(document => document.Editor is not null) != 1) throw new IOException("后台标签提前创建了 WebView2。");
@@ -63,24 +71,29 @@ public sealed partial class MainWindow
             }
             report["activatedTabs"] = documents.Count(document => document.Editor is not null);
             report["appWorkingSetBytes"] = Process.GetCurrentProcess().WorkingSet64;
-            report["webView2ProcessIds"] = new JsonArray((await environment).GetProcessInfos()
+            report["webView2ProcessIds"] = new JsonArray((await environment.WaitAsync(TimeSpan.FromSeconds(10))).GetProcessInfos()
                 .Select(info => JsonValue.Create(info.ProcessId)).Cast<JsonNode?>().ToArray());
             report["sidebarFilesOutlineSettingsAndStatus"] = report["alignedSidebarToolbarAndStatus"]?.GetValue<bool>() == true;
+            foreach (var document in documents)
+            {
+                document.Recovered = false;
+                document.SavedRevision = document.Editor is { } active ? (await active.SnapshotAsync()).Revision : 0;
+            }
             report["success"] = true;
-            foreach (var document in documents) document.SavedRevision = document.Editor?.State?.Revision ?? 0;
+            TraceSmoke(tracePath, "smoke-success");
         }
         catch (Exception error)
         {
+            TraceSmoke(tracePath, "smoke-error: " + error.Message);
             report["error"] = error.ToString();
             Environment.ExitCode = 1;
         }
         finally
         {
-            string fullPath = Path.GetFullPath(reportPath);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            string temporary = fullPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            string temporary = fullReportPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
             await File.WriteAllTextAsync(temporary, report.ToJsonString(new() { WriteIndented = true }));
-            File.Move(temporary, fullPath, true);
+            File.Move(temporary, fullReportPath, true);
+            TraceSmoke(tracePath, "report-written");
             // 失败时保留窗口数秒：measure.ps1 读到报告会先截图留现场再关闭应用。
             if (report["success"]?.GetValue<bool>() != true)
             {
@@ -91,8 +104,15 @@ public sealed partial class MainWindow
         }
     }
 
-    private async Task RunParitySmokeAsync(DocumentTab document, JsonObject report)
+    private static void TraceSmoke(string tracePath, string step)
     {
+        try { File.AppendAllText(tracePath, $"{DateTimeOffset.UtcNow:O} {step}\n"); }
+        catch { /* 诊断日志写入失败不应掩盖冒烟主流程。 */ }
+    }
+
+    private async Task RunParitySmokeAsync(DocumentTab document, JsonObject report, string tracePath)
+    {
+        TraceSmoke(tracePath, "parity:open");
         var editor = document.Editor!;
         string folder = Path.Combine(App.Data.DirectoryPath, "parity"); Directory.CreateDirectory(folder);
         document.Path = Path.Combine(folder, "中文 文档.md"); editor.DocumentPath = document.Path;
@@ -100,11 +120,12 @@ public sealed partial class MainWindow
         await editor.OpenAsync(markdown, Dark, L10n.Language);
         App.Preferences.Focus = App.Preferences.Typewriter = true; App.Preferences.Zoom = 1.2; App.Preferences.Indent = 4;
         await editor.ApplyPreferencesAsync(App.Preferences);
-        if (await editor.Control.CoreWebView2.ExecuteScriptAsync("document.body.style.zoom==='1.2'") != "true") throw new IOException("缩放偏好未应用。");
+        if (await editor.Control.CoreWebView2.ExecuteScriptAsync("document.body.style.zoom==='1.2'").AsTask().WaitAsync(TimeSpan.FromSeconds(15)) != "true") throw new IOException("缩放偏好未应用。");
         App.Preferences.Focus = App.Preferences.Typewriter = false; App.Preferences.Zoom = 1; App.Preferences.Indent = 2;
         await editor.ApplyPreferencesAsync(App.Preferences);
         await WaitSmokeAsync(() => editor.Headings.Length == 2, "标题大纲未传回宿主。");
         await editor.RequestAsync("navigateHeading", new JsonObject { ["id"] = editor.Headings[1].Id });
+        TraceSmoke(tracePath, "parity:filetree");
         await OpenFolderAsync(folder);
         await File.WriteAllTextAsync(document.Path, markdown);
         document.Baseline = (await DocumentStorage.ReadAsync(document.Path)).Baseline;
@@ -126,6 +147,7 @@ public sealed partial class MainWindow
         await CloseDocumentAsync(sibling);
         Tabs.SelectedItem = document.Item; await ActivateCurrentAsync();
         report["fileTreePreservesOpenTabs"] = true;
+        TraceSmoke(tracePath, "parity:draft-autosave");
         await editor.PasteAsync("待恢复正文");
         await PersistDocumentAsync(document);
         if (App.Data.LoadDrafts().Single().Text != (await editor.SnapshotAsync()).Text) throw new IOException("恢复草稿未保存最新编辑器内容。");
@@ -135,6 +157,7 @@ public sealed partial class MainWindow
         if (!document.AutosaveBlocked || !(await File.ReadAllTextAsync(document.Path)).EndsWith("external")) throw new IOException("自动保存覆盖了外部修改。");
         App.Preferences.Autosave = false; document.AutosaveBlocked = false; App.Data.RemoveDraft(document.RecoveryId);
         report["recoveryDraftAndAutosaveConflict"] = true;
+        TraceSmoke(tracePath, "parity:sidebar-toolbar");
         displayedFolder = null; RefreshSidebar();
         await WaitSmokeAsync(() => FilesTree.RootNodes.Count > 0, "文件树未显示文档。");
         await ShowSidebarAsync("outline");
@@ -155,22 +178,37 @@ public sealed partial class MainWindow
         await ShowSidebarAsync("outline");
         report["alignedSidebarToolbarAndStatus"] = true;
         report["preferencesOutlineAndStatus"] = true;
+        TraceSmoke(tracePath, "parity:session-restore-open");
         App.Data.SaveSession([CaptureSession()]);
         var restored = App.OpenWindow([], App.Data.LoadSession().Single());
-        await WaitSmokeAsync(() => restored.Current?.Editor?.State is not null && !restored.busy, "会话恢复窗口未就绪。");
-        await restored.AssertSidebarInteractionAsync();
-        report["sidebarFocusAndBackgroundSave"] = true;
-        await restored.AssertFileTreeRecyclingAsync();
-        report["fileTreeContainerRecycling"] = true;
-        await restored.commandGate.WaitAsync();
         try
         {
-            if (restored.Current?.Path != document.Path || restored.Current.SidebarPage != "outline") throw new IOException("会话恢复未还原文件或侧栏。");
-            await restored.CloseDocumentAsync(restored.Current); restored.allowClose = true; restored.Close();
+            await WaitSmokeAsync(() => restored.Current?.Editor?.State is not null && !restored.busy,
+                "会话恢复窗口未就绪。", TimeSpan.FromSeconds(25), () => restored.smokeFailure);
+            TraceSmoke(tracePath, "parity:sidebar-interaction");
+            await restored.AssertSidebarInteractionAsync();
+            report["sidebarFocusAndBackgroundSave"] = true;
+            TraceSmoke(tracePath, "parity:tree-recycling");
+            await restored.AssertFileTreeRecyclingAsync();
+            report["fileTreeContainerRecycling"] = true;
+            TraceSmoke(tracePath, "parity:session-restore-close");
+            if (!await restored.commandGate.WaitAsync(TimeSpan.FromSeconds(20)))
+                throw new TimeoutException("等待恢复窗口命令锁超时。");
+            restored.busy = true;
+            try
+            {
+                if (restored.Current?.Path != document.Path || restored.Current.SidebarPage != "outline") throw new IOException("会话恢复未还原文件或侧栏。");
+                await restored.CloseDocumentAsync(restored.Current); restored.allowClose = true; restored.Close();
+            }
+            finally { restored.busy = false; restored.commandGate.Release(); }
         }
-        finally { restored.commandGate.Release(); }
+        finally
+        {
+            if (App.Windows.Contains(restored)) { restored.allowClose = true; restored.Close(); }
+        }
         report["sessionRestore"] = true;
 
+        TraceSmoke(tracePath, "parity:image-html");
         byte[] png = Convert.FromBase64String("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=");
         await EditorSession.NormalizeBitmapAsync(png);
         byte[] bmp = Convert.FromHexString("424D3A0000000000000036000000280000000100000001000000010018000000000004000000130B0000130B00000000000000000000FF000000");
@@ -181,37 +219,53 @@ public sealed partial class MainWindow
         string html = await editor.TextAsync("exportHTML", new JsonObject { ["mode"] = "html" });
         if (!html.Contains("data:image/png;base64,") || !html.Contains("<math") || !html.Contains("<svg")) throw new IOException("HTML 导出缺少内嵌图片、公式或图表。");
         report["localImagesMathMermaidAndHtml"] = true;
+        TraceSmoke(tracePath, "parity:pdf-export");
         var renderer = await RenderExportAsync();
-        string pdf = Path.Combine(folder, "smoke.pdf");
-        if (!await renderer.CoreWebView2.PrintToPdfAsync(pdf, PrintSettings(renderer.CoreWebView2)) || new FileInfo(pdf).Length < 1000) throw new IOException("真实 PDF 导出失败。");
-        Root.Children.Remove(renderer); renderer.Close(); printView = null;
+        try
+        {
+            string pdf = Path.Combine(folder, "smoke.pdf");
+            if (!await renderer.CoreWebView2.PrintToPdfAsync(pdf, PrintSettings(renderer.CoreWebView2)).AsTask().WaitAsync(TimeSpan.FromSeconds(30)) || new FileInfo(pdf).Length < 1000) throw new IOException("真实 PDF 导出失败。");
+        }
+        finally { DisposePrintView(); }
         report["pdfExport"] = true;
 
+        TraceSmoke(tracePath, "parity:table-math");
         await editor.OpenAsync("", Dark, L10n.Language);
         await editor.CommandAsync("insertTable");
         if (!(await editor.SnapshotAsync()).Text.Contains('|')) throw new IOException("插入表格失败。");
         await editor.CommandAsync("undo"); await editor.CommandAsync("insertMathBlock");
         if (!(await editor.SnapshotAsync()).Text.Contains("$$")) throw new IOException("插入公式块失败。");
         report["tableAndMathCommands"] = true;
+        TraceSmoke(tracePath, "parity:window-transfer");
         var beforeTransfer = await editor.SnapshotAsync();
         var target = App.OpenWindow();
-        if (!target.Root.IsLoaded)
-        { var loaded = new TaskCompletionSource(); target.Root.Loaded += (_, _) => loaded.TrySetResult(); await loaded.Task.WaitAsync(TimeSpan.FromSeconds(10)); }
-        await target.commandGate.WaitAsync();
         try
         {
-            if (target.Current is { } empty) await target.CloseDocumentAsync(empty);
-            await MoveTabAsync(document, target);
-            await target.AssertEditorVisibleAsync(document, "拆分窗口");
-            if (!ReferenceEquals(editor, document.Editor) || (await editor.SnapshotAsync()).Text != beforeTransfer.Text) throw new IOException("拆分窗口丢失了编辑器状态。");
-            await editor.CommandAsync("undo");
-            if ((await editor.SnapshotAsync()).Text != "") throw new IOException("拆分窗口丢失了撤销历史。");
-            await editor.CommandAsync("redo");
-            await target.MoveTabAsync(document, this);
-            target.allowClose = true; target.Close();
+            await WaitSmokeAsync(() => target.Root.IsLoaded && target.Current?.Editor?.State is not null && !target.busy,
+                "拆分目标窗口未就绪。", TimeSpan.FromSeconds(25), () => target.smokeFailure);
+            if (!await target.commandGate.WaitAsync(TimeSpan.FromSeconds(20)))
+                throw new TimeoutException("等待拆分目标窗口命令锁超时。");
+            target.busy = true;
+            try
+            {
+                if (target.Current is { } empty) await target.CloseDocumentAsync(empty);
+                await MoveTabAsync(document, target);
+                await target.AssertEditorVisibleAsync(document, "拆分窗口");
+                if (!ReferenceEquals(editor, document.Editor) || (await editor.SnapshotAsync()).Text != beforeTransfer.Text) throw new IOException("拆分窗口丢失了编辑器状态。");
+                await editor.CommandAsync("undo");
+                if ((await editor.SnapshotAsync()).Text != "") throw new IOException("拆分窗口丢失了撤销历史。");
+                await editor.CommandAsync("redo");
+                await target.MoveTabAsync(document, this);
+                target.allowClose = true; target.Close();
+            }
+            finally { target.busy = false; target.commandGate.Release(); }
         }
-        finally { target.commandGate.Release(); }
+        finally
+        {
+            if (App.Windows.Contains(target)) { target.allowClose = true; target.Close(); }
+        }
         report["windowTransferPreservesUndo"] = true;
+        TraceSmoke(tracePath, "parity:settings");
         App.ShowSettings(); await Task.Delay(250); App.ValidateSettingsLayout();
         App.ShowSettings(true); await Task.Delay(100); App.ValidateSettingsLayout(); App.CloseSettings(); Activate();
         report["settingsAndAbout"] = true;
@@ -219,10 +273,15 @@ public sealed partial class MainWindow
         RefreshSidebar();
     }
 
-    private static async Task WaitSmokeAsync(Func<bool> ready, string failure)
+    private static async Task WaitSmokeAsync(Func<bool> ready, string failure, TimeSpan? timeout = null, Func<Exception?>? abort = null)
     {
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-        while (!ready()) { if (DateTime.UtcNow > deadline) throw new IOException(failure); await Task.Delay(50); }
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(10));
+        while (!ready())
+        {
+            if (abort?.Invoke() is { } error) throw new IOException(failure, error);
+            if (DateTime.UtcNow > deadline) throw new IOException(failure);
+            await Task.Delay(50);
+        }
     }
 
     private async Task AssertSidebarInteractionAsync()
@@ -272,7 +331,7 @@ public sealed partial class MainWindow
     private async Task AssertFileTreeRecyclingAsync()
     {
         var document = Current!;
-        string originalFolder = document.Folder!;
+        string? originalFolder = document.Folder;
         string originalPage = document.SidebarPage;
         string fixture = Path.Combine(App.Data.DirectoryPath, "tree-recycling");
         string nested = Path.Combine(fixture, "子目录");
@@ -317,7 +376,8 @@ public sealed partial class MainWindow
         finally
         {
             Root.Children.Remove(mirror);
-            await OpenFolderAsync(originalFolder);
+            if (!string.IsNullOrEmpty(originalFolder) && Directory.Exists(originalFolder))
+                await OpenFolderAsync(originalFolder);
             await ShowSidebarAsync(originalPage);
         }
     }

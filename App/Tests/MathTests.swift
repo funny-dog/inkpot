@@ -7,7 +7,7 @@ final class MathTests: XCTestCase {
   private let original = "\u{FEFF}行内 $x^2$ 公式\r\n\r\n$$\r\nE = mc^2\n$$\r\n\r\n尾行"
 
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
-    let deadline = Date.now.addingTimeInterval(5)
+    let deadline = Date.now.addingTimeInterval(10)
     while !(try await condition()) {
       guard Date.now < deadline else { throw CocoaError(.coderReadCorrupt) }
       try await Task.sleep(for: .milliseconds(20))

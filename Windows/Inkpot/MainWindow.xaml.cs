@@ -28,6 +28,7 @@ public sealed partial class MainWindow : Window
     };
     private bool busy;
     private bool allowClose;
+    private Exception? smokeFailure;
     private readonly DispatcherTimer recoveryTimer = new() { Interval = TimeSpan.FromMilliseconds(500) };
     private readonly SavedWindow? restoredWindow;
     private new DocumentTab? Current => documents.FirstOrDefault(document => ReferenceEquals(document.Item, Tabs.SelectedItem));
@@ -43,8 +44,7 @@ public sealed partial class MainWindow : Window
         Title = "Inkpot";
         SystemBackdrop = new MicaBackdrop();
         WindowMetrics.Resize(this, 1100, 780);
-        try { environment = EditorSession.CreateEnvironmentAsync(); }
-        catch (Exception error) { environment = Task.FromException<CoreWebView2Environment>(error); }
+        environment = EditorSession.GetEnvironmentAsync();
         BuildMenus();
         InitializeWorkspace();
         Root.RequestedTheme = EffectiveTheme;
@@ -417,9 +417,12 @@ public sealed partial class MainWindow : Window
     }
 
     private Task<ContentDialogResult> DialogAsync(string title, string content, string? primary = null, string? secondary = null, string? close = null)
-        => new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme,
+    {
+        if (App.IsSmoke) return Task.FromException<ContentDialogResult>(new IOException($"冒烟模式下触发了阻塞弹窗：{title} — {content}"));
+        return new ContentDialog { XamlRoot = Root.XamlRoot, Style = App.DialogStyle, RequestedTheme = Root.ActualTheme,
             Title = title, Content = content, PrimaryButtonText = primary ?? "",
             SecondaryButtonText = secondary ?? "", CloseButtonText = close ?? L10n.Text("OK"), DefaultButton = ContentDialogButton.Close }.ShowAsync().AsTask();
+    }
 
     private async Task RunAsync(Func<Task> action)
     {
@@ -431,21 +434,29 @@ public sealed partial class MainWindow : Window
         try { await action(); }
         catch (Exception error)
         {
-            try
+            if (App.IsSmoke)
             {
-                if (Root.XamlRoot is null) { App.RecordFailure(error, "RunAsync(NoXamlRoot)"); }
-                else if (error is WebView2RuntimeMissingException)
-                {
-                    var answer = await DialogAsync(L10n.Text("RuntimeMissing"), L10n.Text("RuntimeHelp"), L10n.Text("Download"));
-                    if (answer == ContentDialogResult.Primary) await Launcher.LaunchUriAsync(new Uri("https://developer.microsoft.com/microsoft-edge/webview2/"));
-                }
-                else await DialogAsync(L10n.Text("Error"), error.Message);
+                smokeFailure ??= error;
+                App.RecordFailure(error, "RunAsync(Smoke)");
             }
-            catch (Exception dialogError)
+            else
             {
-                // 已有模态框打开或窗口关闭期间无法再弹 ContentDialog，记录原始错误避免 async void 进程崩溃。
-                App.RecordFailure(error, "RunAsync");
-                App.RecordFailure(dialogError, "RunAsync.Dialog");
+                try
+                {
+                    if (Root.XamlRoot is null) { App.RecordFailure(error, "RunAsync(NoXamlRoot)"); }
+                    else if (error is WebView2RuntimeMissingException)
+                    {
+                        var answer = await DialogAsync(L10n.Text("RuntimeMissing"), L10n.Text("RuntimeHelp"), L10n.Text("Download"));
+                        if (answer == ContentDialogResult.Primary) await Launcher.LaunchUriAsync(new Uri("https://developer.microsoft.com/microsoft-edge/webview2/"));
+                    }
+                    else await DialogAsync(L10n.Text("Error"), error.Message);
+                }
+                catch (Exception dialogError)
+                {
+                    // 已有模态框打开或窗口关闭期间无法再弹 ContentDialog，记录原始错误避免 async void 进程崩溃。
+                    App.RecordFailure(error, "RunAsync");
+                    App.RecordFailure(dialogError, "RunAsync.Dialog");
+                }
             }
         }
         finally { busy = false; Menus.IsEnabled = true; Tabs.IsEnabled = true; RefreshMenus(); commandGate.Release(); }

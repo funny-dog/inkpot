@@ -33,15 +33,26 @@ internal sealed class EditorSession : IDisposable
     internal double ReadyMilliseconds { get; private set; }
     internal long ReadyUnixMilliseconds { get; private set; }
 
-    internal static Task<CoreWebView2Environment> CreateEnvironmentAsync()
+    private static Task<CoreWebView2Environment>? sharedEnvironment;
+
+    internal static Task<CoreWebView2Environment> GetEnvironmentAsync()
     {
+        if (sharedEnvironment is { IsFaulted: false, IsCanceled: false }) return sharedEnvironment;
         try { CoreWebView2Environment.GetAvailableBrowserVersionString(); }
-        catch (Exception error) { throw new WebView2RuntimeMissingException(error); }
-        return CoreWebView2Environment.CreateWithOptionsAsync(
-            browserExecutableFolder: null,
-            userDataFolder: Path.Combine(
-                App.Data.DirectoryPath, "WebView2"),
-            options: null).AsTask();
+        catch (Exception error) { return Task.FromException<CoreWebView2Environment>(new WebView2RuntimeMissingException(error)); }
+        try
+        {
+            sharedEnvironment = CoreWebView2Environment.CreateWithOptionsAsync(
+                browserExecutableFolder: null,
+                userDataFolder: Path.Combine(
+                    App.Data.DirectoryPath, "WebView2"),
+                options: null).AsTask();
+            return sharedEnvironment;
+        }
+        catch (Exception error)
+        {
+            return Task.FromException<CoreWebView2Environment>(error);
+        }
     }
 
     internal async Task InitializeAsync(Task<CoreWebView2Environment> environment, bool dark)
@@ -55,8 +66,13 @@ internal sealed class EditorSession : IDisposable
             Control.Loaded += handler;
             try { await loaded.Task.WaitAsync(TimeSpan.FromSeconds(20)); }
             catch (TimeoutException error) { throw new IOException("编辑器控件未能进入可视树。", error); }
+            finally { Control.Loaded -= handler; }
         }
-        await Control.EnsureCoreWebView2Async(await environment);
+        CoreWebView2Environment resolvedEnvironment;
+        try { resolvedEnvironment = await environment.WaitAsync(TimeSpan.FromSeconds(30)); }
+        catch (TimeoutException error) { throw new IOException("WebView2 环境初始化超时。", error); }
+        try { await Control.EnsureCoreWebView2Async(resolvedEnvironment).AsTask().WaitAsync(TimeSpan.FromSeconds(30)); }
+        catch (TimeoutException error) { throw new IOException("WebView2 控件初始化超时。", error); }
         var core = Control.CoreWebView2;
         core.SetVirtualHostNameToFolderMapping("editor.inkpot.local", Path.Combine(AppContext.BaseDirectory, "Editor"), CoreWebView2HostResourceAccessKind.DenyCors);
         core.AddWebResourceRequestedFilter("https://images.inkpot.local/*", CoreWebView2WebResourceContext.All);
@@ -108,7 +124,7 @@ internal sealed class EditorSession : IDisposable
             if (!args.IsSuccess) Fail(new IOException($"WebView2: {args.WebErrorStatus}"));
         };
         core.Navigate(Page);
-        await pageReady.Task.WaitAsync(TimeSpan.FromSeconds(20));
+        await pageReady.Task.WaitAsync(TimeSpan.FromSeconds(25));
     }
 
     internal Task OpenAsync(string text, bool dark, string language)

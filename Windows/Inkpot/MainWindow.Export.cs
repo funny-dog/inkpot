@@ -30,14 +30,22 @@ public sealed partial class MainWindow
         try
         {
             if (!renderer.IsLoaded)
-            { var loaded = new TaskCompletionSource(); renderer.Loaded += (_, _) => loaded.TrySetResult(); await loaded.Task.WaitAsync(TimeSpan.FromSeconds(10)); }
-            await renderer.EnsureCoreWebView2Async(await environment);
+            {
+                var loaded = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                RoutedEventHandler? handler = null;
+                handler = (_, _) => { renderer.Loaded -= handler; loaded.TrySetResult(); };
+                renderer.Loaded += handler;
+                try { await loaded.Task.WaitAsync(TimeSpan.FromSeconds(10)); }
+                finally { renderer.Loaded -= handler; }
+            }
+            var resolvedEnvironment = await environment.WaitAsync(TimeSpan.FromSeconds(30));
+            await renderer.EnsureCoreWebView2Async(resolvedEnvironment).AsTask().WaitAsync(TimeSpan.FromSeconds(30));
             var core = renderer.CoreWebView2;
             core.SetVirtualHostNameToFolderMapping("editor.inkpot.local", Path.Combine(AppContext.BaseDirectory, "Editor"), CoreWebView2HostResourceAccessKind.Allow);
             core.Settings.AreDevToolsEnabled = false; core.Settings.IsStatusBarEnabled = false;
             core.PermissionRequested += (_, args) => args.State = CoreWebView2PermissionState.Deny;
             core.NewWindowRequested += (_, args) => args.Handled = true;
-            var completed = new TaskCompletionSource();
+            var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
             core.NavigationCompleted += (_, args) => { if (args.IsSuccess) completed.TrySetResult(); else completed.TrySetException(new IOException(args.WebErrorStatus.ToString())); };
             const string exportPage = "https://export.inkpot.local/document";
             core.AddWebResourceRequestedFilter(exportPage, CoreWebView2WebResourceContext.Document);
@@ -47,7 +55,7 @@ public sealed partial class MainWindow
             core.Navigate(exportPage);
             await completed.Task.WaitAsync(TimeSpan.FromSeconds(15));
             var deadline = DateTime.UtcNow.AddSeconds(15);
-            while (await core.ExecuteScriptAsync("document.readyState==='complete' && document.fonts.status==='loaded' && Array.from(document.images).every(i=>i.complete && i.naturalWidth>0)") != "true")
+            while (await core.ExecuteScriptAsync("document.readyState==='complete' && document.fonts.status==='loaded' && Array.from(document.images).every(i=>i.complete && i.naturalWidth>0)").AsTask().WaitAsync(TimeSpan.FromSeconds(15)) != "true")
             { if (DateTime.UtcNow > deadline) throw new IOException(T("导出资源未能加载，已取消。", "Export resources did not load; export cancelled.")); await Task.Delay(50); }
             await Task.Delay(100);
             if (injectFixedPageSize)
@@ -56,7 +64,7 @@ public sealed partial class MainWindow
                 string height = (App.Preferences.Landscape ? App.Preferences.PageWidth : App.Preferences.PageHeight).ToString(System.Globalization.CultureInfo.InvariantCulture);
                 string margin = App.Preferences.PageMargin.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 // The system print dialog uses the same page geometry as PDF export.
-                await core.ExecuteScriptAsync($"document.head.appendChild(document.createElement('style')).textContent='@page {{ size: {width}in {height}in; margin: {margin}in; }}'");
+                await core.ExecuteScriptAsync($"document.head.appendChild(document.createElement('style')).textContent='@page {{ size: {width}in {height}in; margin: {margin}in; }}'").AsTask().WaitAsync(TimeSpan.FromSeconds(15));
             }
             return renderer;
         }
@@ -94,7 +102,7 @@ public sealed partial class MainWindow
                 var settings = PrintSettings(renderer.CoreWebView2);
                 if (!App.Preferences.PaginatedPdf)
                 {
-                    double height = double.Parse(await renderer.CoreWebView2.ExecuteScriptAsync("Math.ceil(Math.max(document.body.scrollHeight,document.documentElement.scrollHeight))"), System.Globalization.CultureInfo.InvariantCulture) / 96 + 2 * App.Preferences.PageMargin;
+                    double height = double.Parse(await renderer.CoreWebView2.ExecuteScriptAsync("Math.ceil(Math.max(document.body.scrollHeight,document.documentElement.scrollHeight))").AsTask().WaitAsync(TimeSpan.FromSeconds(15)), System.Globalization.CultureInfo.InvariantCulture) / 96 + 2 * App.Preferences.PageMargin;
                     if (height > 200) throw new IOException(T("连续长页超过 PDF 200 英寸限制，请使用分页导出。", "The continuous page exceeds the PDF 200-inch limit. Use paginated export."));
                     double pageWidth = App.Preferences.Landscape ? App.Preferences.PageHeight : App.Preferences.PageWidth;
                     double pageHeight = Math.Max(1, height);
@@ -104,9 +112,9 @@ public sealed partial class MainWindow
                     string w = pageWidth.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     string h = pageHeight.ToString(System.Globalization.CultureInfo.InvariantCulture);
                     string m = App.Preferences.PageMargin.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                    await renderer.CoreWebView2.ExecuteScriptAsync($"document.head.appendChild(document.createElement('style')).textContent='@page {{ size: {w}in {h}in; margin: {m}in; }}'");
+                    await renderer.CoreWebView2.ExecuteScriptAsync($"document.head.appendChild(document.createElement('style')).textContent='@page {{ size: {w}in {h}in; margin: {m}in; }}'").AsTask().WaitAsync(TimeSpan.FromSeconds(15));
                 }
-                if (!await renderer.CoreWebView2.PrintToPdfAsync(temporary, settings)) throw new IOException(T("PDF 导出失败。", "PDF export failed."));
+                if (!await renderer.CoreWebView2.PrintToPdfAsync(temporary, settings).AsTask().WaitAsync(TimeSpan.FromSeconds(30))) throw new IOException(T("PDF 导出失败。", "PDF export failed."));
             }
             else
             {

@@ -204,8 +204,8 @@ private final class ExportNavigationLoader: NSObject, WKNavigationDelegate {
     }
   }
 
-  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-    navigationAction.navigationType == .other && allowInitialNavigation ? .allow : .cancel
+  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
+    decisionHandler(navigationAction.navigationType == .other && allowInitialNavigation ? .allow : .cancel)
   }
 
   func webView(_ webView: WKWebView, didFinish navigation: WKNavigation?) {

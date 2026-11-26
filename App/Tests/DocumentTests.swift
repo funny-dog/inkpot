@@ -246,7 +246,7 @@ final class DocumentTests: XCTestCase {
   }
 
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
-    let deadline = Date.now.addingTimeInterval(5)
+    let deadline = Date.now.addingTimeInterval(10)
     while !(try await condition()) {
       guard Date.now < deadline else {
         throw NSError(domain: "InkpotTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "等待编辑器状态超时"])

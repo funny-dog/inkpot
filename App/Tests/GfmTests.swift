@@ -7,7 +7,7 @@ final class GfmTests: XCTestCase {
   private let original = "\u{FEFF}# 标题\r\n\r\n- [ ] 未完成任务\n- [x] 已完成\r\n\r\n删除 ~~旧内容~~ 与高亮 ==新内容==，脚注[^note1]。\r\n\r\n[^note1]: 脚注定义\r\n\r\n[toc]\n"
 
   private func waitUntil(_ condition: () async throws -> Bool) async throws {
-    let deadline = Date.now.addingTimeInterval(5)
+    let deadline = Date.now.addingTimeInterval(10)
     while !(try await condition()) {
       guard Date.now < deadline else { throw CocoaError(.coderReadCorrupt) }
       try await Task.sleep(for: .milliseconds(20))

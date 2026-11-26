@@ -144,8 +144,8 @@ final class EditorViewController: NSViewController, WKNavigationDelegate, NSMenu
     }
   }
 
-  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction) async -> WKNavigationActionPolicy {
-    navigationAction.request.url == resourceURL && !pageReady ? .allow : .cancel
+  func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
+    decisionHandler(navigationAction.request.url == resourceURL && !pageReady ? .allow : .cancel)
   }
 
   func webView(_ webView: WKWebView, didFail navigation: WKNavigation?, withError error: Error) {
